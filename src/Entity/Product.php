@@ -10,11 +10,14 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Forumify\Core\Entity\AuditableEntityInterface;
 use Forumify\Core\Entity\IdentifiableEntityTrait;
+use Forumify\Core\Entity\Role;
 use Forumify\Core\Entity\SluggableEntityTrait;
 use Forumify\Core\Entity\SortableEntityInterface;
 use Forumify\Core\Entity\SortableEntityTrait;
 use Forumify\Core\Entity\TimestampableEntityTrait;
+use Forumify\Ecommerce\Fulfillment\Type\InstantFulfillmentType;
 use Forumify\Ecommerce\Repository\ProductRepository;
+use Forumify\Forum\Entity\Badge;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -57,6 +60,31 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\JoinTable('ecommerce_product_categories')]
     public Collection $categories;
 
+    #[ORM\Column(length: 64)]
+    public string $fulfillmentType = InstantFulfillmentType::KEY;
+
+    /** @var array<string, mixed> */
+    #[ORM\Column(type: Types::JSON)]
+    public array $fulfillmentSettings = [];
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    public ?Role $fulfillmentRole = null;
+
+    /** @var Collection<int, Role> */
+    #[ORM\ManyToMany(targetEntity: Role::class)]
+    #[ORM\JoinTable('ecommerce_product_granted_roles')]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
+    public Collection $grantedRoles;
+
+    /** @var Collection<int, Badge> */
+    #[ORM\ManyToMany(targetEntity: Badge::class)]
+    #[ORM\JoinTable('ecommerce_product_granted_badges')]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
+    public Collection $grantedBadges;
+
     /** @var Collection<int, ProductTier> */
     #[ORM\OneToMany(targetEntity: ProductTier::class, mappedBy: 'product', cascade: ['persist'])]
     #[ORM\OrderBy(['position' => 'ASC'])]
@@ -93,6 +121,8 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
     public function __construct()
     {
         $this->categories = new ArrayCollection();
+        $this->grantedRoles = new ArrayCollection();
+        $this->grantedBadges = new ArrayCollection();
         $this->tiers = new ArrayCollection();
         $this->images = new ArrayCollection();
     }

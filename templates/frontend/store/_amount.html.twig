@@ -1,0 +1,10 @@
+{% if price.free %}
+    <span class="ecommerce-amount-value">{{ 'ecommerce.price.free'|trans }}</span>
+{% else %}
+    {% set parts = price.amount|ecommerce_money_parts %}
+    <span class="ecommerce-amount-value">{{ parts.whole }}<span class="ecommerce-amount-fraction">{{ parts.fraction }}</span>{{ parts.rest }}</span>
+    <span class="ecommerce-amount-cadence text-small text-uppercase text-secondary">{{ 'ecommerce.price.cadence'|trans({
+        interval: price.billingInterval.value ?? 'none',
+        count: price.intervalCount ?? 1,
+    }) }}</span>
+{% endif %}

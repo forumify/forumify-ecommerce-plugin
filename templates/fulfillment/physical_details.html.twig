@@ -1,0 +1,12 @@
+{% set address = order.fulfillmentData %}
+{% if address.name is defined %}
+    <p><strong>{{ 'ecommerce.fulfillment.physical.ship_to'|trans }}</strong></p>
+    <address>
+        {{ address.name }}<br>
+        {{ address.line1 }}<br>
+        {% if address.line2 %}{{ address.line2 }}<br>{% endif %}
+        {{ address.postalCode }} {{ address.city }}<br>
+        {% if address.region %}{{ address.region }}<br>{% endif %}
+        {{ address.country|ecommerce_country_name }}
+    </address>
+{% endif %}

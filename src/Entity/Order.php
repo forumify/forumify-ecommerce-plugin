@@ -6,6 +6,7 @@ namespace Forumify\Ecommerce\Entity;
 
 use Brick\Money\Money;
 use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Forumify\Core\Entity\IdentifiableEntityTrait;
 use Forumify\Core\Entity\TimestampableEntityTrait;
@@ -39,7 +40,14 @@ class Order
     public ?string $providerReference = null;
 
     #[ORM\Column(nullable: true)]
+    public private(set) ?DateTimeImmutable $paidAt = null;
+
+    #[ORM\Column(nullable: true)]
     public private(set) ?DateTimeImmutable $completedAt = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    public private(set) ?User $completedBy = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
@@ -80,12 +88,30 @@ class Order
     #[ORM\Column(nullable: true)]
     public private(set) ?int $intervalCount;
 
+    #[ORM\Column(length: 64)]
+    public private(set) string $fulfillmentType;
+
+    /** @var array<string, mixed> */
+    #[ORM\Column(type: Types::JSON)]
+    public private(set) array $fulfillmentData;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    public private(set) ?string $fulfillmentNote = null;
+
     public Money $amount {
         get => Money::ofMinor($this->amountMinor, $this->currency);
     }
 
-    public function __construct(?User $user, ProductPrice $price, ?string $providerKey, ?Subscription $subscription = null)
-    {
+    /**
+     * @param array<string, mixed> $fulfillmentData
+     */
+    public function __construct(
+        ?User $user,
+        ProductPrice $price,
+        ?string $providerKey,
+        ?Subscription $subscription = null,
+        array $fulfillmentData = [],
+    ) {
         $tier = $price->tier;
         $product = $tier->product;
 
@@ -104,6 +130,8 @@ class Order
         $this->priceType = $price->type;
         $this->billingInterval = $price->billingInterval;
         $this->intervalCount = $price->intervalCount;
+        $this->fulfillmentType = $subscription?->initialOrder->fulfillmentType ?? $product->fulfillmentType;
+        $this->fulfillmentData = $subscription?->initialOrder->fulfillmentData ?? $fulfillmentData;
     }
 
     public function isOwnedBy(?UserInterface $user): bool
@@ -130,14 +158,28 @@ class Order
         return $this->billingInterval->addTo($start, $this->intervalCount ?? 1);
     }
 
-    public function complete(): bool
+    public function pay(): bool
     {
-        if ($this->status === OrderStatus::Completed) {
+        if ($this->status === OrderStatus::Paid || $this->status === OrderStatus::Completed) {
+            return false;
+        }
+
+        $this->status = OrderStatus::Paid;
+        $this->paidAt = new DateTimeImmutable();
+
+        return true;
+    }
+
+    public function complete(?User $by = null, ?string $note = null): bool
+    {
+        if ($this->status !== OrderStatus::Paid) {
             return false;
         }
 
         $this->status = OrderStatus::Completed;
         $this->completedAt = new DateTimeImmutable();
+        $this->completedBy = $by;
+        $this->fulfillmentNote = $note !== null && trim($note) !== '' ? trim($note) : null;
 
         return true;
     }

@@ -8,11 +8,15 @@ use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Exception\CheckoutException;
+use Forumify\Ecommerce\Fulfillment\FulfillmentTypeInterface;
+use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\Service\CheckoutService;
 use Forumify\Ecommerce\Service\PaymentEventHandler;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
@@ -25,6 +29,8 @@ class CheckoutController extends AbstractController
     public function __construct(
         private readonly CheckoutService $checkoutService,
         private readonly PaymentEventHandler $eventHandler,
+        private readonly FulfillmentTypeRegistry $fulfillmentTypes,
+        private readonly FormFactoryInterface $formFactory,
     ) {
     }
 
@@ -41,8 +47,17 @@ class CheckoutController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $fulfillmentType = $this->fulfillmentTypes->get($price->tier->product->fulfillmentType);
+        $fulfillmentForm = $this->createFulfillmentForm($fulfillmentType, $price, $user);
+        $fulfillmentForm?->handleRequest($request);
+
         if ($request->isMethod('POST')) {
-            $redirect = $this->startCheckout($request, $price);
+            $redirect = $this->startCheckout($request, $price, $user, $fulfillmentType, $fulfillmentForm);
             if ($redirect !== null) {
                 return $redirect;
             }
@@ -51,6 +66,7 @@ class CheckoutController extends AbstractController
         return $this->render('@ForumifyEcommercePlugin/frontend/checkout/checkout.html.twig', [
             'price' => $price,
             'providers' => $this->checkoutService->getProviderOptions($price),
+            'fulfillmentForm' => $fulfillmentForm?->createView(),
         ]);
     }
 
@@ -74,26 +90,57 @@ class CheckoutController extends AbstractController
         return $this->redirectToRoute('ecommerce_order', ['reference' => $order->reference]);
     }
 
-    private function startCheckout(Request $request, ProductPrice $price): ?Response
+    /**
+     * @return FormInterface<mixed>|null
+     */
+    private function createFulfillmentForm(?FulfillmentTypeInterface $type, ProductPrice $price, User $user): ?FormInterface
     {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            throw $this->createAccessDeniedException();
+        $formType = $type?->getCheckoutFormType();
+        if ($formType === null) {
+            return null;
         }
 
+        $form = $this->formFactory->createNamed('fulfillment', $formType, null, [
+            'csrf_protection' => false,
+            'product' => $price->tier->product,
+            'user' => $user,
+        ]);
+
+        return $form->count() > 0 ? $form : null;
+    }
+
+    /**
+     * @param FormInterface<mixed>|null $fulfillmentForm
+     */
+    private function startCheckout(
+        Request $request,
+        ProductPrice $price,
+        User $user,
+        ?FulfillmentTypeInterface $fulfillmentType,
+        ?FormInterface $fulfillmentForm,
+    ): ?Response {
         if (!$this->isCsrfTokenValid('ecommerce_checkout', $request->request->getString('_token'))) {
             $this->addFlash('error', 'ecommerce.checkout.error.invalid_token');
             return null;
         }
 
+        if ($fulfillmentForm !== null && (!$fulfillmentForm->isSubmitted() || !$fulfillmentForm->isValid())) {
+            return null;
+        }
+
+        $fulfillmentData = $fulfillmentForm !== null && $fulfillmentType !== null
+            ? $fulfillmentType->normalizeCheckoutData($fulfillmentForm->getData())
+            : [];
         $providerKey = $request->request->getString('provider');
 
         try {
-            return $this->redirect($this->checkoutService->checkout($user, $price, $providerKey !== '' ? $providerKey : null)->url);
+            $redirect = $this->checkoutService->checkout($user, $price, $providerKey !== '' ? $providerKey : null, $fulfillmentData);
         } catch (CheckoutException $e) {
             $this->addFlash('error', $e->getMessage());
             return null;
         }
+
+        return $this->redirect($redirect->url);
     }
 
     private function denyAccessUnlessOwner(Order $order): void

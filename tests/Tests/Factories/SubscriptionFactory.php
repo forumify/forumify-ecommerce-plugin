@@ -6,6 +6,7 @@ namespace PluginTests\Tests\Factories;
 
 use DateTimeImmutable;
 use Forumify\Ecommerce\Entity\Subscription;
+use ReflectionProperty;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
@@ -16,6 +17,14 @@ class SubscriptionFactory extends PersistentObjectFactory
     public static function class(): string
     {
         return Subscription::class;
+    }
+
+    public function pastDueSince(DateTimeImmutable $since): static
+    {
+        return $this->afterInstantiate(static function (Subscription $subscription) use ($since): void {
+            $subscription->markPastDue();
+            new ReflectionProperty(Subscription::class, 'pastDueSince')->setValue($subscription, $since);
+        });
     }
 
     protected function defaults(): array|callable

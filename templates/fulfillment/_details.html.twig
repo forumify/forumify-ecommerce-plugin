@@ -1,0 +1,18 @@
+{% set detailsTemplate = ecommerce_fulfillment_details_template(order) %}
+{% if detailsTemplate or order.fulfillmentNote %}
+    <section class="ecommerce-fulfillment-details flex flex-col gap-3 {{ class|default('box') }}" aria-label="{{ 'ecommerce.fulfillment.details'|trans }}">
+        {% block ecommerce_fulfillment_details %}
+            {% if detailsTemplate %}
+                {% include detailsTemplate with { order: order } only %}
+            {% endif %}
+        {% endblock %}
+        {% block ecommerce_fulfillment_note %}
+            {% if order.fulfillmentNote %}
+                <div class="ecommerce-fulfillment-note">
+                    <p class="text-small text-uppercase text-secondary mb-1">{{ 'ecommerce.fulfillment.note'|trans }}</p>
+                    <p>{{ order.fulfillmentNote|nl2br }}</p>
+                </div>
+            {% endif %}
+        {% endblock %}
+    </section>
+{% endif %}

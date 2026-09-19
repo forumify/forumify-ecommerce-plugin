@@ -30,6 +30,16 @@ ecommerce:
             image: 'Cover image'
             image_help: 'Shown on the product tile in the store, and first on the product page. Add more images on the Gallery tab.'
             delete_ordered: 'This product has been ordered, so it can no longer be deleted. Archive it instead.'
+            fulfillment_type: 'Fulfillment'
+            fulfillment_type_help: 'How customers get what they bought. Changing it only affects new orders.'
+            fulfillment_role: 'Fulfilled by'
+            fulfillment_role_help: 'Everyone with this role is notified when an order has to be fulfilled.'
+            fulfillment_role_placeholder: 'Choose a role'
+            fulfillment_role_required: 'Choose the role that fulfills the orders of this product.'
+            granted_roles: 'Grant roles'
+            granted_roles_help: 'Customers get these roles once they have paid. For a subscription, they lose them again when it ends.'
+            granted_badges: 'Grant badges'
+            granted_badges_help: 'Customers get these badges once they have paid. For a subscription, they lose them again when it ends.'
         order:
             plural: 'Orders'
             title: 'Order {reference}'
@@ -41,6 +51,18 @@ ecommerce:
             status: 'Status'
             date: 'Ordered'
             completed_at: 'Completed'
+            completed_by: 'by {user}'
+            paid_at: 'Paid'
+            fulfillment_type: 'Fulfillment'
+            complete: 'Mark as completed'
+            complete_help: 'Mark the order as completed once the customer has what they paid for. The customer is notified.'
+            complete_help_automatic: 'This order is normally completed automatically. Only complete it by hand when its integration got stuck and the customer already has what they paid for.'
+            complete_note: 'Note for the customer'
+            complete_note_help: 'Optional, for example a tracking link. It is shown on the order and in the notification.'
+            complete_confirm: 'I understand that this order is normally completed automatically'
+            complete_confirm_required: 'Confirm that you want to complete this order by hand.'
+            completed: 'The order was marked as completed.'
+            not_completable: 'Only paid orders can be marked as completed.'
             payment_provider: 'Payment provider'
             provider_reference: 'Provider reference'
             no_provider: 'None (free)'
@@ -157,6 +179,7 @@ ecommerce:
         required: 'This value is required.'
     order_status:
         pending: 'Pending'
+        paid: 'Paid'
         completed: 'Completed'
         failed: 'Failed'
         cancelled: 'Cancelled'
@@ -165,6 +188,8 @@ ecommerce:
         get_free: 'Get it for free'
         pay: 'Pay {price}'
         pay_with: 'Pay with'
+        details: 'Your details'
+        total: 'Total'
         back: 'Back to the product'
         error:
             not_purchasable: 'This product is not available right now.'
@@ -178,9 +203,13 @@ ecommerce:
         product: 'Product'
         price: 'Price'
         date: 'Ordered'
+        paid_at: 'Paid'
+        completed_at: 'Completed'
         try_again: 'Try again'
+        continue_shopping: 'Continue shopping'
         status:
             pending: 'We are waiting for your payment to be confirmed. This page updates automatically.'
+            paid: 'Payment received. Your order is being processed.'
             completed: 'Thank you! Your order is complete.'
             failed: 'Your payment did not go through. You have not been charged.'
             cancelled: 'You cancelled this order. You have not been charged.'
@@ -266,3 +295,48 @@ ecommerce:
                 year {{count, plural, one {{amount} per year} other {{amount} every # years}}}
                 other {{amount}}
             }
+    fulfillment:
+        details: 'Order details'
+        note: 'Note from the store'
+        instant:
+            label: 'Delivered instantly'
+        manual:
+            label: 'Delivered by an admin'
+            input_label: 'Ask the customer for'
+            input_label_help: 'For example "Minecraft username": customers fill it in at checkout, and it is shown on the order.'
+        physical:
+            label: 'Shipped'
+            ship_to: 'Shipping address'
+            name: 'Full name'
+            line1: 'Address'
+            line2: 'Address line 2'
+            postalCode: 'Postal code'
+            city: 'City'
+            region: 'State or region'
+            country: 'Country'
+            choose_country: 'Choose a country'
+    notification:
+        view_order: 'View order'
+        view_orders: 'View my orders'
+        fulfill_order: 'View order'
+        order_paid:
+            title: 'Payment received for {product}'
+            description: 'We received your payment for order {reference}, {product} - {tier}. We will let you know once it is ready.'
+        order_completed:
+            title: 'Your order of {product} is complete'
+            description: 'Order {reference}, {product} - {tier}, is complete. Thank you!'
+        order_failed:
+            title: 'Your payment for {product} failed'
+            description: 'The payment for order {reference}, {product} - {tier}, did not go through. You have not been charged.'
+        order_to_fulfill:
+            title: 'New order to fulfill: {product}'
+            description: 'Order {reference}, {product} - {tier}, is paid and waiting to be fulfilled.'
+        subscription_past_due:
+            title: 'Your payment for {product} failed'
+            description: 'We could not renew your {product} - {tier} subscription. Please update your payment method: it ends on {date, date, long} if the payment keeps failing.'
+        subscription_cancelled:
+            title: 'Your {product} subscription was cancelled'
+            description: 'Your {product} - {tier} subscription does not renew anymore. It runs until {date, date, long}.'
+        subscription_ended:
+            title: 'Your {product} subscription has ended'
+            description: 'Your {product} - {tier} subscription has ended.'

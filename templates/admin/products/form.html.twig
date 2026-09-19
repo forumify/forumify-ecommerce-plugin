@@ -7,10 +7,12 @@
         </div>
     </div>
     {% if data is null %}
-        {% include '@Forumify/admin/components/simple_form.html.twig' with {
-            cancelPath: path(route ~ '_list'),
-            title: null,
-        } %}
+        <div {{ stimulus_controller('forumify/forumify-ecommerce-plugin/fulfillment_form') }}>
+            {% include '@Forumify/admin/components/simple_form.html.twig' with {
+                cancelPath: path(route ~ '_list'),
+                title: null,
+            } %}
+        </div>
     {% else %}
         {% embed '@Forumify/components/tabs.html.twig' %}
             {% block tabs %}
@@ -19,7 +21,7 @@
                 <button type="button" class="btn-link" data-tab-id="gallery">{{ 'ecommerce.admin.gallery.title'|trans }}</button>
             {% endblock %}
             {% block tabpanels %}
-                <div id="product">
+                <div id="product" {{ stimulus_controller('forumify/forumify-ecommerce-plugin/fulfillment_form') }}>
                     {% include '@Forumify/admin/components/simple_form.html.twig' with {
                         cancelPath: path(route ~ '_list'),
                         title: null,

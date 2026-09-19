@@ -3,31 +3,56 @@
 {% set product = tier.product %}
 {% block title_page %}{{ 'ecommerce.checkout.title'|trans }}{% endblock %}
 {% block body %}
-    <div class="breadcrumbs text-small">
-        <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
-        <a href="{{ path('ecommerce_product', { slug: product.slug }) }}">{{ product.title }}</a> &gt;
-        <span class="text-secondary">{{ 'ecommerce.checkout.title'|trans }}</span>
-    </div>
-    <div class="ecommerce-checkout">
-        <h1>{{ 'ecommerce.checkout.title'|trans }}</h1>
-        {% block ecommerce_checkout_summary %}
-            <section class="ecommerce-checkout-summary box" aria-labelledby="ecommerce-checkout-summary-title">
-                <h2 id="ecommerce-checkout-summary-title">{{ product.title }}</h2>
-                <p class="ecommerce-checkout-tier">{{ tier.label }}</p>
-                <p class="ecommerce-checkout-price">{{ price|ecommerce_price }}</p>
-            </section>
-        {% endblock %}
-        {% block ecommerce_checkout_form %}
-            <form method="post" class="ecommerce-checkout-form">
-                <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_checkout') }}">
-                {% if price.free %}
-                    <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.get_free'|trans }}</button>
-                {% elseif providers is empty %}
-                    <p class="alert-warning">{{ 'ecommerce.checkout.error.no_provider'|trans }}</p>
-                {% else %}
-                    {% if providers|length > 1 %}
-                        <fieldset class="ecommerce-price-options">
-                            <legend class="text-small">{{ 'ecommerce.checkout.pay_with'|trans }}</legend>
+    <div class="ecommerce-page">
+        <div class="breadcrumbs text-small">
+            <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+            <a href="{{ path('ecommerce_product', { slug: product.slug }) }}">{{ product.title }}</a> &gt;
+            <span class="text-secondary">{{ 'ecommerce.checkout.title'|trans }}</span>
+        </div>
+        <h1 class="text-center mb-8">{{ 'ecommerce.checkout.title'|trans }}</h1>
+        <div class="ecommerce-checkout">
+            {% block ecommerce_checkout_summary %}
+                <section class="ecommerce-checkout-summary card" aria-labelledby="ecommerce-checkout-summary-title">
+                    {% block ecommerce_checkout_image %}
+                        <div class="ecommerce-product-tile-image">
+                            {% if product.image %}
+                                <img src="{{ asset(product.image, 'ecommerce.asset')|imagine_filter('ecommerce_tile') }}" alt="">
+                            {% else %}
+                                <span aria-hidden="true">{{ product.title|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                    {% endblock %}
+                    <div class="card-body flex flex-col gap-4 p-6">
+                        <div>
+                            <p class="ecommerce-checkout-tier text-small text-uppercase text-secondary mb-1">{{ tier.label }}</p>
+                            <h2 id="ecommerce-checkout-summary-title" class="m-0">{{ product.title }}</h2>
+                        </div>
+                        <p class="ecommerce-checkout-price ecommerce-amount is-large">
+                            {% include '@ForumifyEcommercePlugin/frontend/store/_amount.html.twig' with { price: price } only %}
+                        </p>
+                        {% block ecommerce_checkout_features %}
+                            {% if tier.description|striptags|trim is not empty %}
+                                <div class="ecommerce-tier-features border-t pt-4">{{ tier.description|rich }}</div>
+                            {% endif %}
+                        {% endblock %}
+                    </div>
+                </section>
+            {% endblock %}
+            {% block ecommerce_checkout_form %}
+                <form method="post" class="ecommerce-checkout-form box flex flex-col gap-6 p-6">
+                    <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_checkout') }}">
+                    {% block ecommerce_checkout_fulfillment %}
+                        {% if fulfillmentForm %}
+                            <fieldset class="ecommerce-checkout-fieldset ecommerce-checkout-fulfillment">
+                                <legend class="text-large text-bold mb-4">{{ 'ecommerce.checkout.details'|trans }}</legend>
+                                {{ form_errors(fulfillmentForm) }}
+                                {{ form_widget(fulfillmentForm) }}
+                            </fieldset>
+                        {% endif %}
+                    {% endblock %}
+                    {% if not price.free and providers|length > 1 %}
+                        <fieldset class="ecommerce-checkout-fieldset ecommerce-price-options flex flex-col gap-2">
+                            <legend class="text-large text-bold mb-4">{{ 'ecommerce.checkout.pay_with'|trans }}</legend>
                             {% for provider in providers %}
                                 <label class="ecommerce-price-option" for="ecommerce-provider-{{ provider.key }}">
                                     <input type="radio" name="provider" value="{{ provider.key }}" id="ecommerce-provider-{{ provider.key }}"{{ loop.first ? ' checked' }}>
@@ -36,10 +61,24 @@
                             {% endfor %}
                         </fieldset>
                     {% endif %}
-                    <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.pay'|trans({ price: price.amount|ecommerce_money }) }}</button>
-                {% endif %}
-                <a class="btn-outlined" href="{{ path('ecommerce_product', { slug: product.slug }) }}">{{ 'ecommerce.checkout.back'|trans }}</a>
-            </form>
-        {% endblock %}
+                    {% block ecommerce_checkout_total %}
+                        <div class="flex justify-between items-baseline gap-4 border-t pt-4">
+                            <span class="text-secondary">{{ 'ecommerce.checkout.total'|trans }}</span>
+                            <strong class="text-large">{{ price|ecommerce_price }}</strong>
+                        </div>
+                    {% endblock %}
+                    <div class="flex flex-col gap-3">
+                        {% if price.free %}
+                            <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.get_free'|trans }}</button>
+                        {% elseif providers is empty %}
+                            <p class="alert-warning">{{ 'ecommerce.checkout.error.no_provider'|trans }}</p>
+                        {% else %}
+                            <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.pay'|trans({ price: price.amount|ecommerce_money }) }}</button>
+                        {% endif %}
+                        <a class="btn-link" href="{{ path('ecommerce_product', { slug: product.slug }) }}">{{ 'ecommerce.checkout.back'|trans }}</a>
+                    </div>
+                </form>
+            {% endblock %}
+        </div>
     </div>
 {% endblock %}

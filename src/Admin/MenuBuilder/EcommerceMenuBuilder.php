@@ -7,12 +7,17 @@ namespace Forumify\Ecommerce\Admin\MenuBuilder;
 use Forumify\Admin\MenuBuilder\AdminMenuBuilderInterface;
 use Forumify\Core\MenuBuilder\Menu;
 use Forumify\Core\MenuBuilder\MenuItem;
+use Forumify\Ecommerce\Repository\OrderRepository;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class EcommerceMenuBuilder implements AdminMenuBuilderInterface
 {
-    public function __construct(private readonly UrlGeneratorInterface $urlGenerator)
-    {
+    public function __construct(
+        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly Security $security,
+        private readonly OrderRepository $orderRepository,
+    ) {
     }
 
     public function build(Menu $menu): void
@@ -28,7 +33,7 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
                 'icon' => 'ph ph-folders',
                 'permission' => 'ecommerce.admin.categories.view',
             ]),
-            new MenuItem('Orders', $u('ecommerce_admin_orders_list'), [
+            new MenuItem($this->getOrdersLabel(), $u('ecommerce_admin_orders_list'), [
                 'icon' => 'ph ph-receipt',
                 'permission' => 'ecommerce.admin.orders.view',
             ]),
@@ -45,5 +50,16 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
                 'permission' => 'ecommerce.admin.configuration.manage',
             ]),
         ]));
+    }
+
+    private function getOrdersLabel(): string
+    {
+        if (!$this->security->isGranted('ecommerce.admin.orders.fulfill')) {
+            return 'Orders';
+        }
+
+        $toFulfill = $this->orderRepository->countToFulfill();
+
+        return $toFulfill > 0 ? "Orders ({$toFulfill})" : 'Orders';
     }
 }

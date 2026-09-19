@@ -1,19 +1,23 @@
 {% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
 {% block title_page %}{{ 'ecommerce.fake_payment.title'|trans }}{% endblock %}
 {% block body %}
-    <div class="ecommerce-checkout">
-        <h1>{{ 'ecommerce.fake_payment.title'|trans }}</h1>
-        <p class="alert-warning mb-4">{{ 'ecommerce.fake_payment.warning'|trans }}</p>
-        <section class="ecommerce-checkout-summary box">
-            <h2>{{ order.productTitle }}</h2>
-            <p class="ecommerce-checkout-tier">{{ order.tierLabel }}</p>
-            <p class="ecommerce-checkout-price">{{ order|ecommerce_price }}</p>
+    <div class="ecommerce-page is-narrow">
+        <h1 class="text-center mb-8">{{ 'ecommerce.fake_payment.title'|trans }}</h1>
+        <p class="alert-warning mb-6">{{ 'ecommerce.fake_payment.warning'|trans }}</p>
+        <section class="box flex flex-col items-center gap-4 p-8 text-center">
+            <div>
+                <p class="text-small text-uppercase text-secondary mb-1">{{ order.tierLabel }}</p>
+                <h2 class="m-0">{{ order.productTitle }}</h2>
+            </div>
+            <p class="ecommerce-checkout-price ecommerce-amount is-large justify-center">
+                {% include '@ForumifyEcommercePlugin/frontend/store/_amount.html.twig' with { price: order } only %}
+            </p>
+            <form method="post" class="flex flex-wrap justify-center gap-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_fake_payment') }}">
+                <button type="submit" name="outcome" value="pay" class="btn-cta">{{ 'ecommerce.fake_payment.pay'|trans }}</button>
+                <button type="submit" name="outcome" value="fail" class="btn-primary">{{ 'ecommerce.fake_payment.fail'|trans }}</button>
+                <button type="submit" name="outcome" value="cancel" class="btn-outlined">{{ 'ecommerce.fake_payment.cancel'|trans }}</button>
+            </form>
         </section>
-        <form method="post" class="ecommerce-checkout-form">
-            <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_fake_payment') }}">
-            <button type="submit" name="outcome" value="pay" class="btn-cta">{{ 'ecommerce.fake_payment.pay'|trans }}</button>
-            <button type="submit" name="outcome" value="fail" class="btn-primary">{{ 'ecommerce.fake_payment.fail'|trans }}</button>
-            <button type="submit" name="outcome" value="cancel" class="btn-outlined">{{ 'ecommerce.fake_payment.cancel'|trans }}</button>
-        </form>
     </div>
 {% endblock %}

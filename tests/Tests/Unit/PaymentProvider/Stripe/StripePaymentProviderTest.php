@@ -11,6 +11,7 @@ use Forumify\Ecommerce\Entity\PaymentProviderConfig;
 use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Exception\InvalidWebhookException;
 use Forumify\Ecommerce\PaymentProvider\CheckoutUrls;
+use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
@@ -138,7 +139,7 @@ class StripePaymentProviderTest extends TestCase
         yield 'async payment still processing' => ['checkout.session.completed', $session(['status' => 'complete', 'payment_status' => 'unpaid']), []];
         yield 'async payment succeeded' => ['checkout.session.async_payment_succeeded', $session(['status' => 'complete', 'payment_status' => 'paid']), [new CheckoutCompleted('ORDER1', 'cus_1')]];
         yield 'async payment failed' => ['checkout.session.async_payment_failed', $session(['status' => 'complete', 'payment_status' => 'unpaid']), [new CheckoutFailed('ORDER1')]];
-        yield 'checkout expired' => ['checkout.session.expired', $session(['status' => 'expired', 'payment_status' => 'unpaid']), [new CheckoutFailed('ORDER1')]];
+        yield 'checkout expired' => ['checkout.session.expired', $session(['status' => 'expired', 'payment_status' => 'unpaid']), [new CheckoutCancelled('ORDER1')]];
         yield 'checkout of someone else' => ['checkout.session.completed', $session(['client_reference_id' => null, 'status' => 'complete', 'payment_status' => 'paid']), []];
         yield 'renewal invoice created' => ['invoice.created', $invoice('subscription_cycle'), [new SubscriptionRenewalStarted('sub_1', 'in_1')]];
         yield 'first invoice created' => ['invoice.created', $invoice('subscription_create'), []];

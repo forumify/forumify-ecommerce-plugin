@@ -4,6 +4,12 @@
     "version": "0.1.0",
     "symfony": {
         "controllers": {
+            "fulfillment_form": {
+                "main": "dist/fulfillment_form_controller.js",
+                "fetch": "lazy",
+                "enabled": true,
+                "autoimport": {}
+            },
             "price_form": {
                 "main": "dist/price_form_controller.js",
                 "fetch": "lazy",

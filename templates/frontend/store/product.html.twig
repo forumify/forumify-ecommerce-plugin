@@ -52,73 +52,75 @@
     {% endblock %}
 {% endblock %}
 {% block body %}
-    {% block ecommerce_product_breadcrumbs %}
-        {% set category = product.categories|first %}
-        <div class="breadcrumbs text-small">
-            <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
-            {% if category %}
-                <a href="{{ path('ecommerce_store', { category: category.slug }) }}">{{ category.title }}</a> &gt;
-            {% endif %}
-            <span class="text-secondary">{{ product.title }}</span>
-        </div>
-    {% endblock %}
-    {% set controller = 'forumify/forumify-ecommerce-plugin/product' %}
-    <article class="ecommerce-product" {{ stimulus_controller(controller) }}>
-        {% block ecommerce_product_hero %}
-            {% set gallery = product.gallery %}
-            <header class="ecommerce-product-hero{{ gallery is not empty ? ' has-gallery' }}">
-                {% block ecommerce_product_gallery %}
-                    {% if gallery is not empty %}
-                        {% include '@ForumifyEcommercePlugin/frontend/store/_gallery.html.twig' %}
-                    {% endif %}
-                {% endblock %}
-                <div class="ecommerce-product-intro">
-                    {% block ecommerce_product_intro %}
-                        <h1>{{ product.title }}</h1>
-                        {% if product.shortDescription %}
-                            <p class="ecommerce-product-summary">{{ product.shortDescription }}</p>
-                        {% endif %}
-                        {% if product.categories is not empty %}
-                            <ul class="ecommerce-product-categories">
-                                {% for productCategory in product.categories %}
-                                    <li><a href="{{ path('ecommerce_store', { category: productCategory.slug }) }}">{{ productCategory.title }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    {% endblock %}
-                    {% block ecommerce_product_purchase %}
-                        {% if tiers|length == 1 %}
-                            {% include '@ForumifyEcommercePlugin/frontend/store/_tier.html.twig' with { tier: tiers|first, standalone: true } %}
-                        {% elseif tiers is not empty %}
-                            <p class="ecommerce-product-starting-price">{{ product.activePrices|ecommerce_starting_price }}</p>
-                            <a class="btn-primary" href="#ecommerce-tiers">{{ 'ecommerce.store.compare_tiers'|trans }}</a>
-                        {% else %}
-                            <p class="ecommerce-product-unavailable">{{ 'ecommerce.store.unavailable'|trans }}</p>
-                        {% endif %}
-                    {% endblock %}
-                </div>
-            </header>
+    <div class="ecommerce-page">
+        {% block ecommerce_product_breadcrumbs %}
+            {% set category = product.categories|first %}
+            <div class="breadcrumbs text-small">
+                <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+                {% if category %}
+                    <a href="{{ path('ecommerce_store', { category: category.slug }) }}">{{ category.title }}</a> &gt;
+                {% endif %}
+                <span class="text-secondary">{{ product.title }}</span>
+            </div>
         {% endblock %}
-        {% block ecommerce_product_tiers %}
-            {% if tiers|length > 1 %}
-                <section id="ecommerce-tiers" class="ecommerce-tiers" aria-labelledby="ecommerce-tiers-title">
-                    <h2 id="ecommerce-tiers-title">{{ 'ecommerce.store.choose_tier'|trans }}</h2>
-                    <div class="ecommerce-tier-grid" style="--ecommerce-tier-count: {{ tiers|length }}">
-                        {% for tier in tiers %}
-                            {% include '@ForumifyEcommercePlugin/frontend/store/_tier.html.twig' with { tier: tier, standalone: false } %}
-                        {% endfor %}
+        {% set controller = 'forumify/forumify-ecommerce-plugin/product' %}
+        <article class="ecommerce-product" {{ stimulus_controller(controller) }}>
+            {% block ecommerce_product_hero %}
+                {% set gallery = product.gallery %}
+                <header class="ecommerce-product-hero{{ gallery is not empty ? ' has-gallery' }}">
+                    {% block ecommerce_product_gallery %}
+                        {% if gallery is not empty %}
+                            {% include '@ForumifyEcommercePlugin/frontend/store/_gallery.html.twig' %}
+                        {% endif %}
+                    {% endblock %}
+                    <div class="ecommerce-product-intro">
+                        {% block ecommerce_product_intro %}
+                            <h1>{{ product.title }}</h1>
+                            {% if product.shortDescription %}
+                                <p class="ecommerce-product-summary">{{ product.shortDescription }}</p>
+                            {% endif %}
+                            {% if product.categories is not empty %}
+                                <ul class="ecommerce-product-categories flex flex-wrap gap-2 mb-6">
+                                    {% for productCategory in product.categories %}
+                                        <li><a href="{{ path('ecommerce_store', { category: productCategory.slug }) }}">{{ productCategory.title }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% endblock %}
+                        {% block ecommerce_product_purchase %}
+                            {% if tiers|length == 1 %}
+                                {% include '@ForumifyEcommercePlugin/frontend/store/_tier.html.twig' with { tier: tiers|first, standalone: true } %}
+                            {% elseif tiers is not empty %}
+                                <p class="ecommerce-product-starting-price text-large mb-4">{{ product.activePrices|ecommerce_starting_price }}</p>
+                                <a class="btn-primary" href="#ecommerce-tiers">{{ 'ecommerce.store.compare_tiers'|trans }}</a>
+                            {% else %}
+                                <p class="text-secondary">{{ 'ecommerce.store.unavailable'|trans }}</p>
+                            {% endif %}
+                        {% endblock %}
                     </div>
-                </section>
-            {% endif %}
-        {% endblock %}
-        {% block ecommerce_product_description %}
-            {% if product.description|striptags|trim is not empty %}
-                <section class="ecommerce-product-description">
-                    <h2>{{ 'ecommerce.store.description'|trans({ product: product.title }) }}</h2>
-                    {{ product.description|rich }}
-                </section>
-            {% endif %}
-        {% endblock %}
-        {% block ecommerce_product_footer %}{% endblock %}
-    </article>
+                </header>
+            {% endblock %}
+            {% block ecommerce_product_tiers %}
+                {% if tiers|length > 1 %}
+                    <section id="ecommerce-tiers" class="ecommerce-tiers" aria-labelledby="ecommerce-tiers-title">
+                        <h2 id="ecommerce-tiers-title" class="text-center mb-8">{{ 'ecommerce.store.choose_tier'|trans }}</h2>
+                        <div class="ecommerce-tier-grid" style="--ecommerce-tier-count: {{ tiers|length }}">
+                            {% for tier in tiers %}
+                                {% include '@ForumifyEcommercePlugin/frontend/store/_tier.html.twig' with { tier: tier, standalone: false } %}
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_product_description %}
+                {% if product.description|striptags|trim is not empty %}
+                    <section class="ecommerce-product-description">
+                        <h2>{{ 'ecommerce.store.description'|trans({ product: product.title }) }}</h2>
+                        {{ product.description|rich }}
+                    </section>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_product_footer %}{% endblock %}
+        </article>
+    </div>
 {% endblock %}

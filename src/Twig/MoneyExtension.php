@@ -15,6 +15,7 @@ class MoneyExtension extends AbstractExtension
     {
         return [
             new TwigFilter('ecommerce_money', [MoneyFormatter::class, 'format']),
+            new TwigFilter('ecommerce_money_parts', [MoneyFormatter::class, 'formatParts']),
             new TwigFilter('ecommerce_price', [PriceFormatter::class, 'format']),
             new TwigFilter('ecommerce_starting_price', [PriceFormatter::class, 'formatStartingPrice']),
         ];

@@ -1,11 +1,11 @@
 {% extends '@Forumify/components/list.html.twig' %}
 {% block container %}
     {% block ecommerce_store_toolbar %}
-        <div class="ecommerce-store-toolbar mb-6">
+        <div class="ecommerce-store-toolbar flex flex-wrap items-center justify-between gap-4 mb-6">
             {% block ecommerce_category_filter %}
                 {% set categories = this.categories %}
                 {% if categories is not empty %}
-                    <nav class="ecommerce-category-filter" aria-label="{{ 'ecommerce.store.filter_label'|trans }}">
+                    <nav class="ecommerce-category-filter flex flex-wrap gap-2" aria-label="{{ 'ecommerce.store.filter_label'|trans }}">
                         <button
                             type="button"
                             aria-pressed="{{ this.category is null ? 'true' : 'false' }}"
@@ -73,7 +73,7 @@
             {% for product in this.result.rows %}
                 <li>
                     {% block ecommerce_product_tile %}
-                        <a class="ecommerce-product-tile" href="{{ path('ecommerce_product', { slug: product.slug }) }}">
+                        <a class="ecommerce-product-tile flex flex-col" href="{{ path('ecommerce_product', { slug: product.slug }) }}">
                             {% block ecommerce_product_tile_image %}
                                 <div class="ecommerce-product-tile-image">
                                     {% if product.image %}
@@ -84,7 +84,7 @@
                                 </div>
                             {% endblock %}
                             {% block ecommerce_product_tile_body %}
-                                <div class="ecommerce-product-tile-body">
+                                <div class="ecommerce-product-tile-body flex flex-col flex-grow gap-2">
                                     <h2 class="ecommerce-product-tile-title">{{ product.title }}</h2>
                                     {% if product.shortDescription %}
                                         <p class="ecommerce-product-tile-summary">{{ product.shortDescription }}</p>

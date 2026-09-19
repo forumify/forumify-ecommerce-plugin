@@ -9,6 +9,7 @@ use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\ProductStatus;
+use Forumify\Ecommerce\Event\OrderPlacedEvent;
 use Forumify\Ecommerce\Exception\CheckoutException;
 use Forumify\Ecommerce\PaymentProvider\CheckoutRedirect;
 use Forumify\Ecommerce\PaymentProvider\CheckoutUrls;
@@ -19,6 +20,7 @@ use Forumify\Ecommerce\PaymentProvider\PaymentProviderRegistry;
 use Forumify\Ecommerce\Repository\OrderRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 class CheckoutService
@@ -28,6 +30,7 @@ class CheckoutService
         private readonly OrderRepository $orderRepository,
         private readonly PaymentEventHandler $eventHandler,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -46,16 +49,17 @@ class CheckoutService
     }
 
     /**
+     * @param array<string, mixed> $fulfillmentData
      * @throws CheckoutException
      */
-    public function checkout(User $user, ProductPrice $price, ?string $providerKey = null): CheckoutRedirect
+    public function checkout(User $user, ProductPrice $price, ?string $providerKey = null, array $fulfillmentData = []): CheckoutRedirect
     {
         if (!$this->isPurchasable($price)) {
             throw CheckoutException::notPurchasable();
         }
 
         if ($price->isFree()) {
-            $order = $this->placeOrder($user, $price, null);
+            $order = $this->placeOrder($user, $price, null, $fulfillmentData);
             $this->eventHandler->handle(new CheckoutCompleted($order->reference), null);
 
             return new CheckoutRedirect($this->getOrderUrl($order));
@@ -63,7 +67,7 @@ class CheckoutService
 
         $provider = $this->chooseProvider($price, $providerKey);
 
-        return $this->startProviderCheckout($provider, $this->placeOrder($user, $price, $provider->getKey()));
+        return $this->startProviderCheckout($provider, $this->placeOrder($user, $price, $provider->getKey(), $fulfillmentData));
     }
 
     public function sync(Order $order): void
@@ -91,11 +95,24 @@ class CheckoutService
         $this->eventHandler->handleAll($events, $provider->getKey());
     }
 
-    private function placeOrder(User $user, ProductPrice $price, ?string $providerKey): Order
+    /**
+     * @param array<string, mixed> $fulfillmentData
+     * @throws CheckoutException
+     */
+    private function placeOrder(User $user, ProductPrice $price, ?string $providerKey, array $fulfillmentData): Order
     {
-        $order = new Order($user, $price, $providerKey);
+        $order = new Order($user, $price, $providerKey, fulfillmentData: $fulfillmentData);
         $price->lock();
         $this->orderRepository->save($order);
+
+        try {
+            $this->eventDispatcher->dispatch(new OrderPlacedEvent($order));
+        } catch (CheckoutException $e) {
+            $order->cancel();
+            $this->orderRepository->save($order);
+
+            throw $e;
+        }
 
         return $order;
     }

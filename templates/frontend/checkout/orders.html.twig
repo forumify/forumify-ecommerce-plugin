@@ -10,14 +10,14 @@
         {% if subscriptions is not empty %}
             <section class="mb-6" aria-labelledby="ecommerce-subscriptions-title">
                 <h2 id="ecommerce-subscriptions-title">{{ 'ecommerce.subscriptions.title'|trans }}</h2>
-                <ul class="ecommerce-order-list">
+                <ul class="ecommerce-order-list flex flex-col gap-3">
                     {% for subscription in subscriptions %}
                         {% set order = subscription.initialOrder %}
                         {% set status = subscription.status.value %}
                         <li>
                             {% block ecommerce_subscription_row %}
                                 <div class="ecommerce-order-row ecommerce-subscription-row">
-                                    <span class="ecommerce-order-row-product">
+                                    <span class="flex flex-col">
                                         <strong>{{ order.productTitle }}</strong>
                                         <span class="text-secondary">{{ order.tierLabel }}</span>
                                     </span>

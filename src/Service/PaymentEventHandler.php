@@ -9,13 +9,14 @@ use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\PriceType;
 use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Entity\SubscriptionStatus;
-use Forumify\Ecommerce\Event\OrderCompletedEvent;
 use Forumify\Ecommerce\Event\OrderFailedEvent;
+use Forumify\Ecommerce\Event\OrderPaidEvent;
 use Forumify\Ecommerce\Event\SubscriptionCancelledEvent;
 use Forumify\Ecommerce\Event\SubscriptionEndedEvent;
 use Forumify\Ecommerce\Event\SubscriptionPastDueEvent;
 use Forumify\Ecommerce\Event\SubscriptionRenewedEvent;
 use Forumify\Ecommerce\Event\SubscriptionStartedEvent;
+use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
@@ -38,6 +39,7 @@ class PaymentEventHandler
         private readonly OrderRepository $orderRepository,
         private readonly SubscriptionRepository $subscriptionRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly FulfillmentTypeRegistry $fulfillmentTypes,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -58,7 +60,7 @@ class PaymentEventHandler
             $event instanceof CheckoutCompleted => $this->applyToOrder(
                 $event->orderReference,
                 $providerKey,
-                fn (Order $order) => $this->completeOrder($order, $event),
+                fn (Order $order) => $this->payOrder($order, $event),
             ),
             $event instanceof CheckoutFailed => $this->applyToOrder(
                 $event->orderReference,
@@ -147,14 +149,14 @@ class PaymentEventHandler
     /**
      * @return list<Event>
      */
-    private function completeOrder(Order $order, CheckoutCompleted $event): array
+    private function payOrder(Order $order, CheckoutCompleted $event): array
     {
-        if (!$order->complete()) {
+        if (!$order->pay()) {
             return [];
         }
 
-        $events = [new OrderCompletedEvent($order)];
         $subscription = $this->startSubscription($order, $event);
+        $events = [new OrderPaidEvent($order, $subscription)];
         if ($subscription !== null) {
             $events[] = new SubscriptionStartedEvent($subscription);
         }
@@ -201,7 +203,9 @@ class PaymentEventHandler
     private function renewSubscription(Subscription $subscription, SubscriptionRenewed $event): array
     {
         $order = $this->findOrCreateRenewal($subscription, $event->externalPaymentId);
-        $order->complete();
+        if ($order->pay() && !$this->fulfillmentTypes->requiresManualFulfillment($order->fulfillmentType)) {
+            $order->complete();
+        }
 
         return $subscription->renew($event->periodEnd) ? [new SubscriptionRenewedEvent($subscription, $order)] : [];
     }

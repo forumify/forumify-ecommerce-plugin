@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forumify\Ecommerce\PaymentProvider\Stripe;
 
 use DateTimeImmutable;
+use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
@@ -61,7 +62,7 @@ class StripeEventMapper
         }
 
         if ($session->status === Session::STATUS_EXPIRED) {
-            return [new CheckoutFailed($reference)];
+            return [new CheckoutCancelled($reference)];
         }
 
         if ($session->status !== Session::STATUS_COMPLETE || $session->payment_status === Session::PAYMENT_STATUS_UNPAID) {

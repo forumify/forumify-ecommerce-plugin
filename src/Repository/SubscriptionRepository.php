@@ -49,6 +49,19 @@ class SubscriptionRepository extends AbstractRepository
     }
 
     /**
+     * @return list<Subscription>
+     */
+    public function findPastDue(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.pastDueSince IS NOT NULL')
+            ->andWhere('s.status IN (:statuses)')
+            ->setParameter('statuses', [SubscriptionStatus::PastDue, SubscriptionStatus::Cancelled])
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @template TResult
      * @param callable(Subscription): TResult $callback
      * @return TResult|null

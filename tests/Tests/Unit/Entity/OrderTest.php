@@ -34,19 +34,36 @@ class OrderTest extends TestCase
         self::assertEquals(new DateTimeImmutable('2026-01-15'), BillingInterval::Week->addTo(new DateTimeImmutable('2026-01-01'), 2));
     }
 
-    public function testOnlyPendingOrdersFailOrCancelAndCompletionAlwaysWins(): void
+    public function testOnlyPendingOrdersFailOrCancelAndPaymentAlwaysWins(): void
     {
         $order = $this->createOrder();
         self::assertTrue($order->cancel());
         self::assertFalse($order->fail());
         self::assertSame(OrderStatus::Cancelled, $order->status);
 
-        self::assertTrue($order->complete());
-        self::assertNotNull($order->completedAt);
-        self::assertFalse($order->complete());
+        self::assertTrue($order->pay());
+        self::assertNotNull($order->paidAt);
+        self::assertFalse($order->pay());
         self::assertFalse($order->fail());
         self::assertFalse($order->cancel());
+        self::assertSame(OrderStatus::Paid, $order->status);
+    }
+
+    public function testOnlyPaidOrdersComplete(): void
+    {
+        $order = $this->createOrder();
+        $admin = new User();
+        self::assertFalse($order->complete());
+        self::assertSame(OrderStatus::Pending, $order->status);
+
+        $order->pay();
+        self::assertTrue($order->complete($admin, "  Tracking: https://track.test/1 \n"));
+        self::assertFalse($order->complete());
         self::assertSame(OrderStatus::Completed, $order->status);
+        self::assertNotNull($order->completedAt);
+        self::assertSame($admin, $order->completedBy);
+        self::assertSame('Tracking: https://track.test/1', $order->fulfillmentNote);
+        self::assertFalse($order->pay());
     }
 
     private function createOrder(): Order

@@ -6,10 +6,12 @@ namespace PluginTests\Tests\Unit\Service;
 
 use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Entity\ProductTier;
+use Forumify\Ecommerce\Event\OrderPlacedEvent;
 use Forumify\Ecommerce\Exception\CheckoutException;
 use Forumify\Ecommerce\PaymentProvider\CheckoutRedirect;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
@@ -23,6 +25,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class CheckoutServiceTest extends TestCase
@@ -30,6 +33,7 @@ class CheckoutServiceTest extends TestCase
     private PaymentProviderRegistry&MockObject $registry;
     private OrderRepository&MockObject $orderRepository;
     private PaymentEventHandler&MockObject $eventHandler;
+    private EventDispatcher $dispatcher;
     private CheckoutService $service;
 
     protected function setUp(): void
@@ -43,19 +47,22 @@ class CheckoutServiceTest extends TestCase
             static fn (string $route, array $parameters) => "https://shop.test/$route/{$parameters['reference']}",
         );
 
-        $this->service = new CheckoutService($this->registry, $this->orderRepository, $this->eventHandler, $urlGenerator, new NullLogger());
+        $this->dispatcher = new EventDispatcher();
+        $this->service = new CheckoutService($this->registry, $this->orderRepository, $this->eventHandler, $urlGenerator, $this->dispatcher, new NullLogger());
     }
 
     public function testFreePriceCompletesWithoutProvider(): void
     {
         $price = $this->createPrice(0);
         $this->registry->expects(self::never())->method('findAvailableFor');
-        $this->orderRepository->expects(self::once())->method('save')->with(self::isInstanceOf(Order::class));
+        $this->orderRepository->expects(self::once())->method('save')->with(self::callback(
+            static fn (Order $order) => $order->fulfillmentType === 'instant' && $order->fulfillmentData === ['note' => 'hi'],
+        ));
         $this->eventHandler->expects(self::once())->method('handle')->with(self::callback(
             static fn (CheckoutCompleted $event) => strlen($event->orderReference) === 12,
         ), null);
 
-        $redirect = $this->service->checkout(new User(), $price);
+        $redirect = $this->service->checkout(new User(), $price, fulfillmentData: ['note' => 'hi']);
 
         self::assertStringStartsWith('https://shop.test/ecommerce_order/', $redirect->url);
         self::assertTrue($price->locked);
@@ -148,11 +155,31 @@ class CheckoutServiceTest extends TestCase
         $this->eventHandler->expects(self::once())->method('handleAll')->with($events, 'stripe');
 
         $pending = new Order(new User(), $this->createPrice(999), 'stripe');
-        $completed = new Order(new User(), $this->createPrice(999), 'stripe');
-        $completed->complete();
+        $paid = new Order(new User(), $this->createPrice(999), 'stripe');
+        $paid->pay();
 
-        $this->service->sync($completed);
+        $this->service->sync($paid);
         $this->service->sync($pending);
+    }
+
+    public function testOrderPlacedListenerCanAbortTheCheckout(): void
+    {
+        $provider = $this->createProvider('stripe');
+        $provider->expects(self::never())->method('startCheckout');
+        $this->registry->method('findAvailableFor')->willReturn([$provider]);
+        $this->dispatcher->addListener(OrderPlacedEvent::class, static fn () => throw CheckoutException::notPurchasable());
+        $savedOrders = [];
+        $this->orderRepository->method('save')->willReturnCallback(function (Order $order) use (&$savedOrders) {
+            $savedOrders[] = $order;
+        });
+
+        try {
+            $this->service->checkout(new User(), $this->createPrice(999));
+            self::fail('The checkout should have been aborted.');
+        } catch (CheckoutException) {
+        }
+
+        self::assertSame(OrderStatus::Cancelled, $savedOrders[0]->status);
     }
 
     private function createProvider(string $key): PaymentProviderInterface&MockObject

@@ -15,13 +15,16 @@ use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\ProductTier;
 use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Entity\SubscriptionStatus;
-use Forumify\Ecommerce\Event\OrderCompletedEvent;
 use Forumify\Ecommerce\Event\OrderFailedEvent;
+use Forumify\Ecommerce\Event\OrderPaidEvent;
 use Forumify\Ecommerce\Event\SubscriptionCancelledEvent;
 use Forumify\Ecommerce\Event\SubscriptionEndedEvent;
 use Forumify\Ecommerce\Event\SubscriptionPastDueEvent;
 use Forumify\Ecommerce\Event\SubscriptionRenewedEvent;
 use Forumify\Ecommerce\Event\SubscriptionStartedEvent;
+use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
+use Forumify\Ecommerce\Fulfillment\Type\InstantFulfillmentType;
+use Forumify\Ecommerce\Fulfillment\Type\ManualFulfillmentType;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
@@ -48,16 +51,18 @@ class PaymentEventHandlerTest extends TestCase
     /** @var list<Order> */
     private array $renewals = [];
 
-    public function testCompletionIsIdempotent(): void
+    public function testPaymentIsIdempotent(): void
     {
         $order = $this->createOrder();
         $handler = $this->createHandler($order);
 
         $handler->handleAll([new CheckoutCompleted($order->reference), new CheckoutCompleted($order->reference)], 'fake');
 
-        self::assertSame(OrderStatus::Completed, $order->status);
+        self::assertSame(OrderStatus::Paid, $order->status);
+        self::assertNotNull($order->paidAt);
+        self::assertNull($order->completedAt);
         self::assertCount(1, $this->dispatched);
-        self::assertInstanceOf(OrderCompletedEvent::class, $this->dispatched[0]);
+        self::assertInstanceOf(OrderPaidEvent::class, $this->dispatched[0]);
         self::assertSame($order, $this->dispatched[0]->order);
     }
 
@@ -73,25 +78,25 @@ class PaymentEventHandlerTest extends TestCase
         self::assertInstanceOf(OrderFailedEvent::class, $this->dispatched[0]);
     }
 
-    public function testFailureNeverOverwritesCompletedOrder(): void
+    public function testFailureNeverOverwritesPaidOrder(): void
     {
         $order = $this->createOrder();
         $handler = $this->createHandler($order);
 
         $handler->handleAll([new CheckoutCompleted($order->reference), new CheckoutFailed($order->reference), new CheckoutCancelled($order->reference)], 'fake');
 
-        self::assertSame(OrderStatus::Completed, $order->status);
+        self::assertSame(OrderStatus::Paid, $order->status);
         self::assertCount(1, $this->dispatched);
     }
 
-    public function testCancelledOrderStillCompletesWhenPaymentArrives(): void
+    public function testCancelledOrderIsStillPaidWhenPaymentArrives(): void
     {
         $order = $this->createOrder();
         $handler = $this->createHandler($order);
 
         $handler->handleAll([new CheckoutCancelled($order->reference), new CheckoutCompleted($order->reference)], 'fake');
 
-        self::assertSame(OrderStatus::Completed, $order->status);
+        self::assertSame(OrderStatus::Paid, $order->status);
         self::assertCount(1, $this->dispatched);
     }
 
@@ -116,7 +121,7 @@ class PaymentEventHandlerTest extends TestCase
         self::assertSame([], $this->dispatched);
     }
 
-    public function testRecurringOrderStartsSubscriptionWhenCompleted(): void
+    public function testRecurringOrderStartsSubscriptionWhenPaid(): void
     {
         $order = $this->createOrder(recurring: true);
         $handler = $this->createHandler($order);
@@ -124,15 +129,16 @@ class PaymentEventHandlerTest extends TestCase
         $handler->handle(new CheckoutCompleted($order->reference, externalSubscriptionId: 'sub_1'), 'fake');
         $handler->handle(new CheckoutCompleted($order->reference, externalSubscriptionId: 'sub_1'), 'fake');
 
-        self::assertSame([OrderCompletedEvent::class, SubscriptionStartedEvent::class], array_map(get_class(...), $this->dispatched));
+        self::assertSame([OrderPaidEvent::class, SubscriptionStartedEvent::class], array_map(get_class(...), $this->dispatched));
         self::assertCount(1, $this->saved);
         $subscription = $this->saved[0];
+        self::assertSame($subscription, $this->dispatched[0]->subscription);
         self::assertSame([$order, 'fake', 'sub_1'], [$subscription->initialOrder, $subscription->providerKey, $subscription->providerReference]);
         self::assertEqualsWithDelta(new DateTimeImmutable('+1 month'), $subscription->currentPeriodEnd, 5);
 
         $withoutProviderSubscription = $this->createOrder(recurring: true);
         $this->createHandler($withoutProviderSubscription)->handle(new CheckoutCompleted($withoutProviderSubscription->reference), 'fake');
-        self::assertSame(OrderStatus::Completed, $withoutProviderSubscription->status);
+        self::assertSame(OrderStatus::Paid, $withoutProviderSubscription->status);
         self::assertCount(1, $this->saved);
     }
 
@@ -193,6 +199,22 @@ class PaymentEventHandlerTest extends TestCase
         self::assertSame(SubscriptionStatus::Active, $subscription->status);
     }
 
+    public function testManualRenewalStaysPaidForAnAdminToFulfill(): void
+    {
+        $initial = $this->createOrder(recurring: true, fulfillmentType: ManualFulfillmentType::KEY, fulfillmentData: ['label' => 'Username', 'value' => 'jannes']);
+        $initial->pay();
+        $subscription = new Subscription($initial, 'sub_1', new DateTimeImmutable('2026-10-01'));
+        $initial->product->fulfillmentType = InstantFulfillmentType::KEY;
+        $handler = $this->createHandler($initial, $subscription);
+
+        $handler->handle(new SubscriptionRenewed('sub_1', 'in_1', new DateTimeImmutable('2026-11-01')), 'fake');
+
+        self::assertSame(OrderStatus::Paid, $this->renewals[0]->status);
+        self::assertSame(ManualFulfillmentType::KEY, $this->renewals[0]->fulfillmentType);
+        self::assertSame(['label' => 'Username', 'value' => 'jannes'], $this->renewals[0]->fulfillmentData);
+        self::assertSame([SubscriptionRenewedEvent::class], array_map(get_class(...), $this->dispatched));
+    }
+
     public function testResumedSubscriptionIsActiveAgain(): void
     {
         $subscription = new Subscription($this->createOrder(recurring: true), 'sub_1', new DateTimeImmutable('2026-10-01'));
@@ -247,12 +269,18 @@ class PaymentEventHandlerTest extends TestCase
             $this->saved[] = $saved;
         });
 
-        return new PaymentEventHandler($repository, $subscriptionRepository, $dispatcher, new NullLogger());
+        $fulfillmentTypes = new FulfillmentTypeRegistry([new InstantFulfillmentType(), new ManualFulfillmentType()]);
+
+        return new PaymentEventHandler($repository, $subscriptionRepository, $dispatcher, $fulfillmentTypes, new NullLogger());
     }
 
-    private function createOrder(bool $recurring = false): Order
+    /**
+     * @param array<string, mixed> $fulfillmentData
+     */
+    private function createOrder(bool $recurring = false, string $fulfillmentType = InstantFulfillmentType::KEY, array $fulfillmentData = []): Order
     {
         $product = new Product();
+        $product->fulfillmentType = $fulfillmentType;
         $product->title = 'Milsim';
         $product->key = 'milsim';
         $tier = new ProductTier($product);
@@ -266,6 +294,6 @@ class PaymentEventHandlerTest extends TestCase
             $price->intervalCount = 1;
         }
 
-        return new Order(new User(), $price, 'fake');
+        return new Order(new User(), $price, 'fake', fulfillmentData: $fulfillmentData);
     }
 }

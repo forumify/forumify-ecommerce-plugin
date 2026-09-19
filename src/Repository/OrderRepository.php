@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Repository;
 
+use Forumify\Core\Entity\User;
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
@@ -38,6 +39,32 @@ class OrderRepository extends AbstractRepository
     public function findPendingRenewals(Subscription $subscription): array
     {
         return $this->findBy(['subscription' => $subscription, 'status' => OrderStatus::Pending]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findLatestFulfillmentData(User $user, string $fulfillmentType): ?array
+    {
+        $order = $this->createQueryBuilder('o')
+            ->where('o.user = :user')
+            ->andWhere('o.fulfillmentType = :type')
+            ->andWhere('o.status IN (:statuses)')
+            ->setParameter('user', $user)
+            ->setParameter('type', $fulfillmentType)
+            ->setParameter('statuses', [OrderStatus::Paid, OrderStatus::Completed])
+            ->orderBy('o.createdAt', 'DESC')
+            ->addOrderBy('o.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $order instanceof Order && $order->fulfillmentData !== [] ? $order->fulfillmentData : null;
+    }
+
+    public function countToFulfill(): int
+    {
+        return $this->count(['status' => OrderStatus::Paid]);
     }
 
     /**

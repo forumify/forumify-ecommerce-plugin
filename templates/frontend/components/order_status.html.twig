@@ -1,34 +1,66 @@
 {% set order = this.order %}
-{% set statusClasses = { pending: 'alert-info', completed: 'alert-success', failed: 'alert-error', cancelled: 'alert-warning' } %}
-<div {{ attributes }}{% if this.pending %} data-poll="delay(3000)|$render"{% endif %}>
+{% set status = order.status.value %}
+{% set statusIcons = { pending: 'ph-spinner-gap ecommerce-order-spinner', paid: 'ph-package', completed: 'ph-check', failed: 'ph-x', cancelled: 'ph-prohibit' } %}
+<div {{ attributes.defaults({ class: 'flex flex-col gap-6' }) }}{% if this.pending %} data-poll="delay(3000)|$render"{% endif %}>
     {% block ecommerce_order_status_message %}
-        <p class="ecommerce-order-status {{ statusClasses[order.status.value] }}" role="status">
-            {% if this.pending %}<i class="ph ph-spinner-gap ecommerce-order-spinner" aria-hidden="true"></i>{% endif %}
-            {% if order.renewal and order.status.value in ['pending', 'failed'] %}
-                {{ ('ecommerce.order.renewal_status.' ~ order.status.value)|trans }}
-            {% else %}
-                {{ ('ecommerce.order.status.' ~ order.status.value)|trans }}
-            {% endif %}
-        </p>
-    {% endblock %}
-    {% block ecommerce_order_summary %}
-        <section class="ecommerce-order-summary box" aria-label="{{ 'ecommerce.order.summary'|trans }}">
-            <dl>
-                <dt>{{ 'ecommerce.order.product'|trans }}</dt>
-                <dd>{{ order.productTitle }} - {{ order.tierLabel }}</dd>
-                <dt>{{ 'ecommerce.order.price'|trans }}</dt>
-                <dd>{{ order|ecommerce_price }}</dd>
-                <dt>{{ 'ecommerce.order.date'|trans }}</dt>
-                <dd>{{ order.createdAt|date('Y-m-d H:i') }}</dd>
-            </dl>
+        <section class="box flex flex-col items-center gap-4 p-8 text-center">
+            <span class="ecommerce-order-icon is-{{ status }}" aria-hidden="true"><i class="ph {{ statusIcons[status] }}"></i></span>
+            <p class="ecommerce-order-status text-large" role="status">
+                {% if order.renewal and status in ['pending', 'failed'] %}
+                    {{ ('ecommerce.order.renewal_status.' ~ status)|trans }}
+                {% else %}
+                    {{ ('ecommerce.order.status.' ~ status)|trans }}
+                {% endif %}
+            </p>
+            {% block ecommerce_order_actions %}
+                {% if order.price and not order.renewal and status in ['failed', 'cancelled'] %}
+                    <a class="btn-primary" href="{{ path('ecommerce_checkout', { price: order.price.id }) }}">{{ 'ecommerce.order.try_again'|trans }}</a>
+                {% elseif status in ['paid', 'completed'] %}
+                    <a class="btn-outlined" href="{{ path('ecommerce_store') }}">{{ 'ecommerce.order.continue_shopping'|trans }}</a>
+                {% endif %}
+            {% endblock %}
         </section>
     {% endblock %}
-    {% block ecommerce_order_actions %}
-        <div class="ecommerce-order-actions">
-            {% if order.price and not order.renewal and order.status.value in ['failed', 'cancelled'] %}
-                <a class="btn-primary" href="{{ path('ecommerce_checkout', { price: order.price.id }) }}">{{ 'ecommerce.order.try_again'|trans }}</a>
-            {% endif %}
-            <a class="btn-outlined" href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a>
-        </div>
+    {% block ecommerce_order_summary %}
+        <section class="ecommerce-order-summary card" aria-labelledby="ecommerce-order-summary-title">
+            <div class="card-title items-center">
+                <h2 id="ecommerce-order-summary-title" class="text-large m-0">{{ 'ecommerce.order.summary'|trans }}</h2>
+                <span class="tag{{ status in ['failed', 'cancelled'] ? ' tag-error' }}">{{ ('ecommerce.order_status.' ~ status)|trans }}</span>
+            </div>
+            <div class="card-body flex items-center gap-4">
+                {% set product = order.product %}
+                <div class="ecommerce-order-thumb ecommerce-product-tile-image rounded">
+                    {% if product and product.image %}
+                        <img src="{{ asset(product.image, 'ecommerce.asset')|imagine_filter('ecommerce_thumb') }}" alt="">
+                    {% else %}
+                        <span aria-hidden="true">{{ order.productTitle|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <div class="flex flex-col flex-grow">
+                    <strong>{{ order.productTitle }}</strong>
+                    <span class="text-secondary">{{ order.tierLabel }}{% if order.renewal %} · {{ 'ecommerce.orders.renewal'|trans }}{% endif %}</span>
+                </div>
+                <strong class="ecommerce-order-price">{{ order|ecommerce_price }}</strong>
+            </div>
+            <dl class="ecommerce-order-facts card-body border-t m-0">
+                {% block ecommerce_order_facts %}
+                    <dt>{{ 'ecommerce.order.date'|trans }}</dt>
+                    <dd>{{ order.createdAt|date('Y-m-d H:i') }}</dd>
+                    {% if order.paidAt %}
+                        <dt>{{ 'ecommerce.order.paid_at'|trans }}</dt>
+                        <dd>{{ order.paidAt|date('Y-m-d H:i') }}</dd>
+                    {% endif %}
+                    {% if order.completedAt %}
+                        <dt>{{ 'ecommerce.order.completed_at'|trans }}</dt>
+                        <dd>{{ order.completedAt|date('Y-m-d H:i') }}</dd>
+                    {% endif %}
+                {% endblock %}
+            </dl>
+            {% block ecommerce_order_fulfillment %}
+                {% if status in ['paid', 'completed'] %}
+                    {% include '@ForumifyEcommercePlugin/fulfillment/_details.html.twig' with { order: order, class: 'card-body border-t' } only %}
+                {% endif %}
+            {% endblock %}
+        </section>
     {% endblock %}
 </div>

@@ -2,10 +2,12 @@
 {% set title = 'ecommerce.admin.order.title'|trans({ reference: order.reference }) %}
 {% block title_page %}{{ title }}{% endblock %}
 {% block body %}
-    <div class="mb-4 flex flex-wrap items-center justify-between">
-        <h1 class="mb-0">{{ title }}</h1>
-        <a class="btn-outlined" href="{{ path('ecommerce_admin_orders_list') }}">{{ 'ecommerce.admin.order.back'|trans }}</a>
-    </div>
+    <p class="mb-2">
+        <a href="{{ path('ecommerce_admin_orders_list') }}">
+            <i class="ph ph-arrow-left"></i> {{ 'ecommerce.admin.order.back'|trans }}
+        </a>
+    </p>
+    <h1 class="mb-4">{{ title }}</h1>
     <div class="box">
         <table>
             <tbody class="text-left">
@@ -46,8 +48,21 @@
                         <td>{{ order.createdAt|date('Y-m-d H:i') }}</td>
                     </tr>
                     <tr>
+                        <th>{{ 'ecommerce.admin.order.paid_at'|trans }}</th>
+                        <td>{{ order.paidAt ? order.paidAt|date('Y-m-d H:i') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.fulfillment_type'|trans }}</th>
+                        <td>{{ ecommerce_fulfillment_label(order.fulfillmentType)|trans }}</td>
+                    </tr>
+                    <tr>
                         <th>{{ 'ecommerce.admin.order.completed_at'|trans }}</th>
-                        <td>{{ order.completedAt ? order.completedAt|date('Y-m-d H:i') : '-' }}</td>
+                        <td>
+                            {{ order.completedAt ? order.completedAt|date('Y-m-d H:i') : '-' }}
+                            {% if order.completedBy %}
+                                <span class="text-secondary">{{ 'ecommerce.admin.order.completed_by'|trans({ user: order.completedBy.displayName }) }}</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% if subscription %}
                         <tr>
@@ -69,4 +84,21 @@
             </tbody>
         </table>
     </div>
+    {% block ecommerce_admin_order_fulfillment %}
+        <div class="mt-4">
+            {% include '@ForumifyEcommercePlugin/fulfillment/_details.html.twig' with { order: order } only %}
+        </div>
+        {% if completeForm %}
+            <div class="box mt-4">
+                <h2 class="mt-0">{{ 'ecommerce.admin.order.complete'|trans }}</h2>
+                <p class="help-text mb-4">
+                    {{ (ecommerce_fulfillment_is_manual(order.fulfillmentType) ? 'ecommerce.admin.order.complete_help' : 'ecommerce.admin.order.complete_help_automatic')|trans }}
+                </p>
+                {{ form_start(completeForm) }}
+                {{ form_widget(completeForm) }}
+                <button type="submit" class="btn-primary">{{ 'ecommerce.admin.order.complete'|trans }}</button>
+                {{ form_end(completeForm) }}
+            </div>
+        {% endif %}
+    {% endblock %}
 {% endblock %}

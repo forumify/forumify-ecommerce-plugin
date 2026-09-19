@@ -16,6 +16,7 @@ use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Entity\SubscriptionStatus;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 class SubscriptionTest extends TestCase
 {
@@ -53,6 +54,27 @@ class SubscriptionTest extends TestCase
         self::assertEquals(new DateTimeImmutable('2026-10-01'), $subscription->currentPeriodEnd);
     }
 
+    public function testGraceEndsAtTheEndOfTheUnpaidPeriodOrAfterThirtyDays(): void
+    {
+        $monthly = self::createSubscription(new DateTimeImmutable('2026-10-01'));
+        self::assertNull($monthly->graceEndsAt);
+        self::assertTrue($monthly->markPastDue());
+        self::setPastDueSince($monthly, new DateTimeImmutable('2026-10-15'));
+        self::assertEquals(new DateTimeImmutable('2026-11-01'), $monthly->graceEndsAt);
+
+        $yearly = self::createSubscription(new DateTimeImmutable('2026-10-01'), BillingInterval::Year);
+        $yearly->markPastDue();
+        self::setPastDueSince($yearly, new DateTimeImmutable('2026-10-01'));
+        self::assertEquals(new DateTimeImmutable('2026-10-31'), $yearly->graceEndsAt);
+
+        self::assertTrue($yearly->cancel());
+        self::assertTrue($yearly->resume());
+        self::assertSame(SubscriptionStatus::PastDue, $yearly->status);
+        self::assertTrue($yearly->renew(new DateTimeImmutable('2027-10-01')));
+        self::assertNull($yearly->pastDueSince);
+        self::assertNull($yearly->graceEndsAt);
+    }
+
     public function testOnlyRecurringProviderOrdersStartSubscriptions(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -60,12 +82,17 @@ class SubscriptionTest extends TestCase
         new Subscription(new Order(new User(), self::createPrice(PriceType::OneTime), 'fake'), 'sub_1', new DateTimeImmutable());
     }
 
-    private static function createSubscription(DateTimeImmutable $periodEnd): Subscription
+    private static function createSubscription(DateTimeImmutable $periodEnd, BillingInterval $interval = BillingInterval::Month): Subscription
     {
-        return new Subscription(new Order(new User(), self::createPrice(PriceType::Recurring), 'fake'), 'sub_1', $periodEnd);
+        return new Subscription(new Order(new User(), self::createPrice(PriceType::Recurring, $interval), 'fake'), 'sub_1', $periodEnd);
     }
 
-    private static function createPrice(PriceType $type): ProductPrice
+    private static function setPastDueSince(Subscription $subscription, DateTimeImmutable $since): void
+    {
+        new ReflectionProperty(Subscription::class, 'pastDueSince')->setValue($subscription, $since);
+    }
+
+    private static function createPrice(PriceType $type, BillingInterval $interval = BillingInterval::Month): ProductPrice
     {
         $product = new Product();
         $product->title = 'Milsim';
@@ -77,7 +104,7 @@ class SubscriptionTest extends TestCase
         $price->amountMinor = 999;
         $price->type = $type;
         if ($type === PriceType::Recurring) {
-            $price->billingInterval = BillingInterval::Month;
+            $price->billingInterval = $interval;
             $price->intervalCount = 1;
         }
 

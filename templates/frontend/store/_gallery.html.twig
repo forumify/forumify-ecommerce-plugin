@@ -1,5 +1,5 @@
 {% set controller = 'forumify/forumify-ecommerce-plugin/product' %}
-<div class="ecommerce-gallery" role="group" aria-label="{{ 'ecommerce.store.gallery'|trans }}" {{ stimulus_action(controller, 'navigate', 'keydown') }}>
+<div class="ecommerce-gallery flex flex-col gap-3" role="group" aria-label="{{ 'ecommerce.store.gallery'|trans }}" {{ stimulus_action(controller, 'navigate', 'keydown') }}>
     <div class="ecommerce-gallery-stage">
         <button type="button" class="ecommerce-gallery-enlarge" aria-label="{{ 'ecommerce.store.enlarge_image'|trans }}" {{ stimulus_action(controller, 'enlarge') }}>
             <img
@@ -19,7 +19,7 @@
         {% endif %}
     </div>
     {% if gallery|length > 1 %}
-        <ul class="ecommerce-gallery-thumbs">
+        <ul class="ecommerce-gallery-thumbs flex gap-2">
             {% for image in gallery %}
                 <li>
                     <button

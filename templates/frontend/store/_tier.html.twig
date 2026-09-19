@@ -1,9 +1,9 @@
 {% set prices = tier.activePrices %}
 {% set highlighted = tier.highlighted and not standalone %}
-<form id="ecommerce-tier-{{ tier.id }}" data-tier action="{{ path('ecommerce_checkout_select') }}" method="get" class="ecommerce-tier{{ highlighted ? ' is-highlighted' }}{{ standalone ? ' is-standalone' }}">
+<form id="ecommerce-tier-{{ tier.id }}" data-tier action="{{ path('ecommerce_checkout_select') }}" method="get" class="ecommerce-tier flex flex-col gap-5{{ highlighted ? ' is-highlighted' }}{{ standalone ? ' is-standalone' }}">
     {% block ecommerce_tier_heading %}
         {% if not standalone %}
-            <div class="ecommerce-tier-heading">
+            <div class="ecommerce-tier-heading flex flex-wrap items-center justify-between gap-2">
                 <h3>{{ tier.label }}</h3>
                 {% if highlighted %}
                     <span class="ecommerce-tier-badge">{{ 'ecommerce.store.recommended'|trans }}</span>
@@ -14,16 +14,8 @@
     {% block ecommerce_tier_price %}
         <div class="ecommerce-tier-price">
             {% for price in prices %}
-                <p class="ecommerce-tier-amount" data-price="{{ price.id }}"{{ not loop.first ? ' hidden' }}>
-                    {% if price.free %}
-                        <span class="ecommerce-tier-amount-value">{{ 'ecommerce.price.free'|trans }}</span>
-                    {% else %}
-                        <span class="ecommerce-tier-amount-value">{{ price.amount|ecommerce_money }}</span>
-                        <span class="ecommerce-tier-amount-cadence">{{ 'ecommerce.price.cadence'|trans({
-                            interval: price.billingInterval.value ?? 'none',
-                            count: price.intervalCount ?? 1,
-                        }) }}</span>
-                    {% endif %}
+                <p class="ecommerce-tier-amount ecommerce-amount" data-price="{{ price.id }}"{{ not loop.first ? ' hidden' }}>
+                    {% include '@ForumifyEcommercePlugin/frontend/store/_amount.html.twig' with { price: price } only %}
                 </p>
             {% endfor %}
         </div>
@@ -33,10 +25,10 @@
             <div class="ecommerce-tier-features">{{ tier.description|rich }}</div>
         {% endif %}
     {% endblock %}
-    <div class="ecommerce-tier-actions">
+    <div class="ecommerce-tier-actions flex flex-col gap-3">
         {% block ecommerce_tier_price_options %}
             {% if prices|length > 1 %}
-                <fieldset class="ecommerce-price-options">
+                <fieldset class="ecommerce-price-options flex flex-col gap-2">
                     <legend class="text-small">{{ 'ecommerce.store.choose_price'|trans }}</legend>
                     {% for price in prices %}
                         <label class="ecommerce-price-option" for="ecommerce-price-{{ price.id }}">

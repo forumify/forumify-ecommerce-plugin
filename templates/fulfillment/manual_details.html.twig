@@ -1,0 +1,3 @@
+{% if order.fulfillmentData.value is defined %}
+    <p><strong>{{ order.fulfillmentData.label }}:</strong> {{ order.fulfillmentData.value }}</p>
+{% endif %}

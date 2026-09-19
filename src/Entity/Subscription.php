@@ -18,6 +18,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\UniqueConstraint(fields: ['providerKey', 'providerReference'])]
 class Subscription
 {
+    public const GRACE_DAYS = 30;
+
     use IdentifiableEntityTrait;
     use TimestampableEntityTrait;
 
@@ -47,6 +49,16 @@ class Subscription
 
     #[ORM\Column(nullable: true)]
     public private(set) ?DateTimeImmutable $endedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    public private(set) ?DateTimeImmutable $pastDueSince = null;
+
+    public ?DateTimeImmutable $graceEndsAt {
+        get => $this->pastDueSince === null ? null : min(
+            $this->pastDueSince->modify('+' . self::GRACE_DAYS . ' days'),
+            $this->initialOrder->periodEndFrom($this->currentPeriodEnd),
+        );
+    }
 
     public function __construct(Order $initialOrder, string $providerReference, DateTimeImmutable $currentPeriodEnd)
     {
@@ -79,13 +91,20 @@ class Subscription
 
         $this->currentPeriodEnd = max($this->currentPeriodEnd, $periodEnd);
         $this->status = SubscriptionStatus::Active;
+        $this->pastDueSince = null;
 
         return true;
     }
 
     public function markPastDue(): bool
     {
-        return $this->transition([SubscriptionStatus::Active], SubscriptionStatus::PastDue);
+        if (!$this->transition([SubscriptionStatus::Active], SubscriptionStatus::PastDue)) {
+            return false;
+        }
+
+        $this->pastDueSince ??= new DateTimeImmutable();
+
+        return true;
     }
 
     public function cancel(): bool
@@ -95,7 +114,10 @@ class Subscription
 
     public function resume(): bool
     {
-        return $this->transition([SubscriptionStatus::Cancelled], SubscriptionStatus::Active);
+        return $this->transition(
+            [SubscriptionStatus::Cancelled],
+            $this->pastDueSince === null ? SubscriptionStatus::Active : SubscriptionStatus::PastDue,
+        );
     }
 
     public function end(): bool
