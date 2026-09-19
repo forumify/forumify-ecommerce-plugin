@@ -1,0 +1,15 @@
+# Routes are only loaded while your plugin is active. Uncomment once you add controllers.
+#
+# forumify_ecommerce:
+#     resource: ../src/Controller
+#     type: attribute
+#     name_prefix: forumify_forumify_ecommerce_plugin_
+#
+# Admin controllers belong behind the /admin prefix, and forumify expects their route
+# names to start with forumify_admin_:
+#
+# forumify_ecommerce_admin:
+#     resource: ../src/Admin/Controller
+#     type: attribute
+#     name_prefix: forumify_admin_
+#     prefix: admin/

@@ -1,0 +1,11 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Anything directly under tests/Tests (factories, stories, helpers) becomes a service.
+    PluginTests\Tests\:
+        resource: '../Tests/'
+        exclude:
+            - '../Tests/Application/'
+            - '../Tests/Unit/'
