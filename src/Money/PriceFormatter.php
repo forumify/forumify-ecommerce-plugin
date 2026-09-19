@@ -6,8 +6,9 @@ namespace Forumify\Ecommerce\Money;
 
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Extension\RuntimeExtensionInterface;
 
-class PriceFormatter
+class PriceFormatter implements RuntimeExtensionInterface
 {
     public function __construct(
         private readonly MoneyFormatter $moneyFormatter,
@@ -17,6 +18,10 @@ class PriceFormatter
 
     public function format(ProductPrice $price): string
     {
+        if ($price->isFree()) {
+            return $this->translator->trans('ecommerce.price.free');
+        }
+
         $amount = $this->moneyFormatter->format($price->amount);
         $interval = $price->billingInterval;
         if ($interval === null) {
@@ -28,5 +33,22 @@ class PriceFormatter
             'count' => $price->intervalCount ?? 1,
             'interval' => $interval->value,
         ]);
+    }
+
+    /**
+     * @param list<ProductPrice> $prices
+     */
+    public function formatStartingPrice(array $prices): ?string
+    {
+        $cheapest = ProductPrice::cheapest($prices);
+        if ($cheapest === null) {
+            return null;
+        }
+
+        if (count($prices) === 1 || $cheapest->isFree()) {
+            return $this->format($cheapest);
+        }
+
+        return $this->translator->trans('ecommerce.price.starting_at', ['price' => $this->format($cheapest)]);
     }
 }

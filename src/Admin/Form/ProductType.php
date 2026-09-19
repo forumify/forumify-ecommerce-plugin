@@ -71,6 +71,7 @@ class ProductType extends AbstractType
                 'asset_package' => 'ecommerce.asset',
                 'file_constraints' => [new Assert\Image(maxSize: '2M')],
                 'filesystem' => 'ecommerce_asset.storage',
+                'help' => 'ecommerce.admin.product.image_help',
                 'label' => 'ecommerce.admin.product.image',
                 'required' => false,
             ])

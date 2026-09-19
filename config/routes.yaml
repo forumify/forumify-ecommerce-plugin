@@ -3,3 +3,10 @@ ecommerce_admin:
     type: attribute
     prefix: admin/ecommerce/
     name_prefix: ecommerce_admin_
+
+ecommerce:
+    resource: ../src/Controller
+    type: attribute
+    prefix: store
+    trailing_slash_on_root: false
+    name_prefix: ecommerce_

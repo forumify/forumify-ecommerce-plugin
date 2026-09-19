@@ -16,6 +16,7 @@
             {% block tabs %}
                 <button type="button" class="btn-link" data-tab-id="product">{{ 'ecommerce.admin.product.crud.single'|trans|capitalize }}</button>
                 <button type="button" class="btn-link" data-tab-id="tiers">{{ 'ecommerce.admin.tier.plural'|trans }}</button>
+                <button type="button" class="btn-link" data-tab-id="gallery">{{ 'ecommerce.admin.gallery.title'|trans }}</button>
             {% endblock %}
             {% block tabpanels %}
                 <div id="product">
@@ -37,6 +38,20 @@
                     </h2>
                     <p class="help-text mb-2">{{ 'ecommerce.admin.tier.help'|trans }}</p>
                     {{ component('Ecommerce\\ProductTierTable', { productId: data.id }) }}
+                </div>
+                <div id="gallery">
+                    <h2 class="mb-2">
+                        {{ 'ecommerce.admin.gallery.title'|trans }}
+                        <a
+                            class="btn-primary btn-small btn-icon"
+                            aria-label="{{ 'ecommerce.admin.gallery.create'|trans({ product: data.title }) }}"
+                            href="{{ path('ecommerce_admin_products_image_create', { id: data.id }) }}"
+                        >
+                            <i class="ph ph-plus"></i>
+                        </a>
+                    </h2>
+                    <p class="help-text mb-2">{{ 'ecommerce.admin.gallery.help'|trans }}</p>
+                    {{ component('Ecommerce\\ProductImageTable', { productId: data.id }) }}
                 </div>
             {% endblock %}
         {% endembed %}

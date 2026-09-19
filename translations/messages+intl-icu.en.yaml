@@ -12,6 +12,8 @@ ecommerce:
         category:
             title: 'Title'
             slug: 'Slug'
+            description: 'Description'
+            description_help: 'Shown in the store above the products when customers pick this category.'
         product:
             crud:
                 single: 'product'
@@ -25,7 +27,17 @@ ecommerce:
             short_description: 'Short description'
             short_description_help: 'A one-line summary shown in the product catalog.'
             description: 'Description'
+            image: 'Cover image'
+            image_help: 'Shown on the product tile in the store, and first on the product page. Add more images on the Gallery tab.'
+        gallery:
+            title: 'Gallery'
+            help: 'Extra images shown on the product page after the cover image. Reorder them to change the order customers see them in.'
+            create: 'Add images to {product}'
+            images: 'Images'
+            images_help: 'Each image can be up to 4 MB.'
             image: 'Image'
+            saved: 'The images were added to the gallery.'
+            deleted: 'The image was removed from the gallery.'
         tier:
             plural: 'Tiers'
             help: 'Every product needs at least one tier. A tier is a variant of the product, like "Free" or "Premium", and has one or more prices.'
@@ -38,7 +50,9 @@ ecommerce:
             key: 'Key'
             key_help: 'A stable identifier for this tier, such as "free", "basic" or "premium". Integrations use it together with the product key, so it can no longer be changed once the tier has been sold.'
             description: 'Description'
-            description_help: 'What the tier includes, for example a list of features.'
+            description_help: 'What the tier includes. A bulleted list is shown as a feature list with check marks.'
+            highlighted: 'Recommended'
+            highlighted_help: 'Draws attention to this tier when customers compare tiers.'
             saved: 'The tier was saved.'
             deleted: 'The tier was deleted.'
             delete_locked: 'This tier has prices that have been ordered, so it can no longer be deleted.'
@@ -89,7 +103,40 @@ ecommerce:
     tier:
         key_taken: 'This product already has a tier with this key.'
         key_format: 'Use only lowercase letters, numbers, dashes and underscores.'
+    store:
+        title: 'Store'
+        all_products: 'All'
+        filter_label: 'Filter products by category'
+        search: 'Search products'
+        empty: 'Nothing is for sale yet. Check back soon.'
+        empty_category: 'There are no products in this category yet.'
+        empty_search: 'No products match "{query}".'
+        show_all: 'Show all products'
+        compare_tiers: 'Compare options'
+        choose_tier: 'Choose an option'
+        choose_price: 'Billing'
+        recommended: 'Recommended'
+        get_tier: 'Get {tier}'
+        checkout_unavailable: 'Checkout is not available yet.'
+        unavailable: 'This product is not available right now.'
+        description: 'About {product}'
+        gallery: 'Product images'
+        enlarge_image: 'View full size'
+        previous_image: 'Previous image'
+        next_image: 'Next image'
+        show_image: 'Show image {number} of {total}'
+        close_image: 'Close'
     price:
+        free: 'Free'
+        starting_at: 'From {price}'
+        cadence: >-
+            {interval, select,
+                day {{count, plural, one {per day} other {every # days}}}
+                week {{count, plural, one {per week} other {every # weeks}}}
+                month {{count, plural, one {per month} other {every # months}}}
+                year {{count, plural, one {per year} other {every # years}}}
+                other {one-time}
+            }
         amount_invalid: 'Please enter a valid amount.'
         interval_required: 'A recurring price needs a billing interval.'
         interval_not_allowed: 'A one-time price cannot have a billing interval.'

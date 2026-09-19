@@ -45,10 +45,22 @@ class ProductTier implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\Column(type: Types::TEXT)]
     public string $description = '';
 
+    #[ORM\Column]
+    public bool $highlighted = false;
+
     /** @var Collection<int, ProductPrice> */
     #[ORM\OneToMany(targetEntity: ProductPrice::class, mappedBy: 'tier', cascade: ['persist'])]
     #[ORM\OrderBy(['position' => 'ASC'])]
     public private(set) Collection $prices;
+
+    /** @var list<ProductPrice> */
+    public array $activePrices {
+        get => array_values($this->prices->filter(static fn (ProductPrice $price) => $price->active)->toArray());
+    }
+
+    public ?ProductPrice $cheapestPrice {
+        get => ProductPrice::cheapest($this->activePrices);
+    }
 
     public function __construct(Product $product)
     {

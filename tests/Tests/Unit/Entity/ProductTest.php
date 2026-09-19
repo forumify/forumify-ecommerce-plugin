@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PluginTests\Tests\Unit\Entity;
 
 use Forumify\Ecommerce\Entity\Product;
+use Forumify\Ecommerce\Entity\ProductImage;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\ProductTier;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -53,5 +54,15 @@ class ProductTest extends TestCase
 
         $price->lock();
         self::assertTrue($product->hasLockedPrices());
+    }
+
+    public function testGalleryStartsWithTheCoverImage(): void
+    {
+        $product = new Product();
+        $product->images->add(new ProductImage($product, 'screenshot.png'));
+        self::assertSame(['screenshot.png'], $product->gallery);
+
+        $product->image = 'cover.png';
+        self::assertSame(['cover.png', 'screenshot.png'], $product->gallery);
     }
 }

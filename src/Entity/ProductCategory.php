@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Forumify\Core\Entity\AuditableEntityInterface;
 use Forumify\Core\Entity\IdentifiableEntityTrait;
@@ -27,6 +28,9 @@ class ProductCategory implements SortableEntityInterface, AuditableEntityInterfa
     #[Assert\NotBlank(allowNull: false)]
     #[Assert\Length(max: 255)]
     public string $title;
+
+    #[ORM\Column(type: Types::TEXT)]
+    public string $description = '';
 
     public function getIdentifierForAudit(): string
     {

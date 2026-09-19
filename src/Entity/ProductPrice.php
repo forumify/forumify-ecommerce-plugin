@@ -92,6 +92,21 @@ class ProductPrice implements SortableEntityInterface, AuditableEntityInterface
         $this->currency = $currency;
     }
 
+    /**
+     * @param iterable<ProductPrice> $prices
+     */
+    public static function cheapest(iterable $prices): ?self
+    {
+        $cheapest = null;
+        foreach ($prices as $price) {
+            if ($cheapest === null || $price->amount->getAmount()->isLessThan($cheapest->amount->getAmount())) {
+                $cheapest = $price;
+            }
+        }
+
+        return $cheapest;
+    }
+
     public function isFree(): bool
     {
         return $this->amountMinor === 0;

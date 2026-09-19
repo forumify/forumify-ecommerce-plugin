@@ -62,10 +62,39 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\OrderBy(['position' => 'ASC'])]
     public private(set) Collection $tiers;
 
+    /** @var Collection<int, ProductImage> */
+    #[ORM\OneToMany(targetEntity: ProductImage::class, mappedBy: 'product')]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    public private(set) Collection $images;
+
+    /** @var list<string> */
+    public array $gallery {
+        get {
+            $images = $this->images->map(static fn (ProductImage $image) => $image->image)->getValues();
+
+            return $this->image === null ? $images : [$this->image, ...$images];
+        }
+    }
+
+    /** @var list<ProductTier> */
+    public array $purchasableTiers {
+        get => array_values($this->tiers->filter(static fn (ProductTier $tier) => $tier->activePrices !== [])->toArray());
+    }
+
+    /** @var list<ProductPrice> */
+    public array $activePrices {
+        get => array_merge(...array_map(static fn (ProductTier $tier) => $tier->activePrices, $this->tiers->toArray()));
+    }
+
+    public ?ProductPrice $cheapestPrice {
+        get => ProductPrice::cheapest($this->activePrices);
+    }
+
     public function __construct()
     {
         $this->categories = new ArrayCollection();
         $this->tiers = new ArrayCollection();
+        $this->images = new ArrayCollection();
     }
 
     public function hasLockedPrices(): bool

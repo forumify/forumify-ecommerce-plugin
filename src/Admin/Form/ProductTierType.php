@@ -7,6 +7,7 @@ namespace Forumify\Ecommerce\Admin\Form;
 use Forumify\Core\Form\RichTextEditorType;
 use Forumify\Ecommerce\Entity\ProductTier;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -39,6 +40,11 @@ class ProductTierType extends AbstractType
                 'empty_data' => '',
                 'help' => 'ecommerce.admin.tier.description_help',
                 'label' => 'ecommerce.admin.tier.description',
+                'required' => false,
+            ])
+            ->add('highlighted', CheckboxType::class, [
+                'help' => 'ecommerce.admin.tier.highlighted_help',
+                'label' => 'ecommerce.admin.tier.highlighted',
                 'required' => false,
             ])
         ;

@@ -1,0 +1,19 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% set metaDescription = category ? category.description : null %}
+{% set metaCanonical = category ? url('ecommerce_store', { category: category.slug }) : url('ecommerce_store') %}
+{% block title_page %}
+    {%- if category -%}
+        {{ category.title }} - {{ 'ecommerce.store.title'|trans }}
+    {%- else -%}
+        {{ 'ecommerce.store.title'|trans }}
+    {%- endif -%}
+{% endblock %}
+{% block body %}
+    {% block ecommerce_store_header %}
+        <h1>{{ 'ecommerce.store.title'|trans }}</h1>
+    {% endblock %}
+    {% block ecommerce_store_products %}
+        {{ component('Ecommerce\\ProductList', { limit: 12 }) }}
+    {% endblock %}
+    {% block ecommerce_store_footer %}{% endblock %}
+{% endblock %}

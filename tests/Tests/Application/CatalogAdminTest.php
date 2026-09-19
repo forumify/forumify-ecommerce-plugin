@@ -8,8 +8,10 @@ use Forumify\Ecommerce\Entity\BillingInterval;
 use Forumify\Ecommerce\Entity\PriceType;
 use Forumify\Ecommerce\Entity\ProductState;
 use Forumify\Ecommerce\Repository\ProductCategoryRepository;
+use Forumify\Ecommerce\Repository\ProductImageRepository;
 use Forumify\Ecommerce\Repository\ProductPriceRepository;
 use Forumify\Ecommerce\Repository\ProductRepository;
+use PluginTests\Tests\Factories\ProductFactory;
 use PluginTests\Tests\Factories\ProductPriceFactory;
 
 class CatalogAdminTest extends EcommerceWebTestCase
@@ -92,6 +94,28 @@ class CatalogAdminTest extends EcommerceWebTestCase
         self::assertSame(1200, $replacement->amountMinor);
         self::assertSame(BillingInterval::Month, $replacement->billingInterval);
         self::assertSame(1000, $price->amountMinor);
+    }
+
+    public function testAdminAddsGalleryImages(): void
+    {
+        $product = ProductFactory::createOne(['image' => 'cover.png']);
+
+        foreach ([1, 2] as $_) {
+            $crawler = $this->client->request('GET', "/admin/ecommerce/products/{$product->getId()}/images/create");
+            $form = $crawler->selectButton('Save')->form();
+            $form['product_images[images][file]'][0]->upload(TEST_DATA_DIR . '/product.png');
+            $this->client->submit($form);
+            self::assertSelectorTextContains('body', 'The images were added to the gallery.');
+        }
+
+        $images = self::getContainer()->get(ProductImageRepository::class)->findBy(['product' => $product->getId()], ['position' => 'ASC']);
+        self::assertCount(2, $images);
+
+        $this->client->request('GET', "/admin/ecommerce/products/images/{$images[0]->getId()}/delete");
+        self::assertSelectorTextContains('body', 'The image was removed from the gallery.');
+
+        $product = self::getContainer()->get(ProductRepository::class)->find($product->getId());
+        self::assertSame(['cover.png', $images[1]->image], $product->gallery);
     }
 
     /**

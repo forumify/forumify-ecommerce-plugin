@@ -1,0 +1,14 @@
+liip_imagine:
+    filter_sets:
+        ecommerce_tile:
+            filters:
+                thumbnail: { size: [800, 500], mode: outbound }
+        ecommerce_product:
+            filters:
+                downscale: { max: [1600, 1600] }
+        ecommerce_thumb:
+            filters:
+                thumbnail: { size: [192, 120], mode: outbound }
+        ecommerce_social:
+            filters:
+                thumbnail: { size: [1200, 630], mode: outbound }

@@ -5,17 +5,24 @@ declare(strict_types=1);
 namespace Forumify\Ecommerce\Admin\Controller;
 
 use Forumify\Admin\Crud\AbstractCrudController;
+use Forumify\Core\Form\UploadType;
+use Forumify\Core\Service\UploadTransaction;
 use Forumify\Ecommerce\Admin\Form\NewProductTierType;
+use Forumify\Ecommerce\Admin\Form\ProductImagesType;
 use Forumify\Ecommerce\Admin\Form\ProductPriceType;
 use Forumify\Ecommerce\Admin\Form\ProductTierType;
 use Forumify\Ecommerce\Admin\Form\ProductType;
 use Forumify\Ecommerce\Entity\Product;
+use Forumify\Ecommerce\Entity\ProductImage;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\ProductTier;
+use Forumify\Ecommerce\Repository\ProductImageRepository;
 use Forumify\Ecommerce\Repository\ProductPriceRepository;
 use Forumify\Ecommerce\Repository\ProductTierRepository;
 use Forumify\Ecommerce\Service\PriceChangeService;
 use Forumify\Ecommerce\Service\StoreSettings;
+use League\Flysystem\FilesystemOperator;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,6 +48,10 @@ class ProductController extends AbstractCrudController
         private readonly ProductPriceRepository $priceRepository,
         private readonly PriceChangeService $priceChangeService,
         private readonly StoreSettings $storeSettings,
+        private readonly ProductImageRepository $imageRepository,
+        private readonly UploadTransaction $uploadTransaction,
+        #[Autowire(service: 'ecommerce_asset.storage')]
+        private readonly FilesystemOperator $assetStorage,
     ) {
     }
 
@@ -129,6 +140,43 @@ class ProductController extends AbstractCrudController
 
         $this->addFlash('success', 'ecommerce.admin.tier.deleted');
         return $this->redirectToProduct($product);
+    }
+
+    #[Route('/{id}/images/create', '_image_create')]
+    #[IsGranted('ecommerce.admin.products.manage')]
+    public function createImages(Request $request, Product $product): Response
+    {
+        $form = $this->createForm(ProductImagesType::class);
+        $form->handleRequest($request);
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            return $this->render('@Forumify/form/simple_form_page.html.twig', [
+                'admin' => true,
+                'cancelPath' => $this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . '#tab-gallery',
+                'form' => $form->createView(),
+                'title' => 'ecommerce.admin.gallery.create',
+                'titleArgs' => ['product' => $product->title],
+            ]);
+        }
+
+        $images = array_map(
+            static fn (string $path) => new ProductImage($product, $path),
+            UploadType::toPaths($form->get('images')->getData()),
+        );
+        $this->imageRepository->saveAll($images);
+
+        $this->addFlash('success', 'ecommerce.admin.gallery.saved');
+        return $this->redirectToGallery($product);
+    }
+
+    #[Route('/images/{id}/delete', '_image_delete')]
+    #[IsGranted('ecommerce.admin.products.manage')]
+    public function deleteImage(ProductImage $image): Response
+    {
+        $this->uploadTransaction->stageDeletion($this->assetStorage, $image->image);
+        $this->imageRepository->remove($image);
+
+        $this->addFlash('success', 'ecommerce.admin.gallery.deleted');
+        return $this->redirectToGallery($image->product);
     }
 
     #[Route('/tiers/{id}/prices/create', '_price_create')]
@@ -220,6 +268,11 @@ class ProductController extends AbstractCrudController
     private function redirectToProduct(Product $product): Response
     {
         return $this->redirect($this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . '#tab-tiers');
+    }
+
+    private function redirectToGallery(Product $product): Response
+    {
+        return $this->redirect($this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . '#tab-gallery');
     }
 
     private function redirectToTier(ProductTier $tier): Response

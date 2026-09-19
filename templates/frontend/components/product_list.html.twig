@@ -1,0 +1,107 @@
+{% extends '@Forumify/components/list.html.twig' %}
+{% block container %}
+    {% block ecommerce_store_toolbar %}
+        <div class="ecommerce-store-toolbar mb-6">
+            {% block ecommerce_category_filter %}
+                {% set categories = this.categories %}
+                {% if categories is not empty %}
+                    <nav class="ecommerce-category-filter" aria-label="{{ 'ecommerce.store.filter_label'|trans }}">
+                        <button
+                            type="button"
+                            aria-pressed="{{ this.category is null ? 'true' : 'false' }}"
+                            data-action="live#action"
+                            data-live-action-param="filter"
+                            data-live-category-param=""
+                        >{{ 'ecommerce.store.all_products'|trans }}</button>
+                        {% for category in categories %}
+                            <button
+                                type="button"
+                                aria-pressed="{{ this.category == category.slug ? 'true' : 'false' }}"
+                                data-action="live#action"
+                                data-live-action-param="filter"
+                                data-live-category-param="{{ category.slug }}"
+                            >{{ category.title }}</button>
+                        {% endfor %}
+                    </nav>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_store_search %}
+                <div class="ecommerce-store-search" role="search">
+                    <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                    <input
+                        type="search"
+                        value="{{ this.query }}"
+                        placeholder="{{ 'ecommerce.store.search'|trans }}"
+                        aria-label="{{ 'ecommerce.store.search'|trans }}"
+                        data-model="debounce(300)|query"
+                    >
+                </div>
+            {% endblock %}
+        </div>
+    {% endblock %}
+    {% block ecommerce_category_description %}
+        {% set selectedCategory = this.selectedCategory %}
+        {% if selectedCategory and selectedCategory.description|trim is not empty %}
+            <p class="ecommerce-category-description mb-6">{{ selectedCategory.description|nl2br }}</p>
+        {% endif %}
+    {% endblock %}
+    {% if this.result.rows is empty %}
+        {% block ecommerce_store_empty %}
+            <div class="ecommerce-store-empty box">
+                {% set query = this.query|default('')|trim %}
+                {% if query != '' or this.category is not null %}
+                    <p>
+                        {% if query != '' %}
+                            {{ 'ecommerce.store.empty_search'|trans({ query: query }) }}
+                        {% else %}
+                            {{ 'ecommerce.store.empty_category'|trans }}
+                        {% endif %}
+                    </p>
+                    <button
+                        type="button"
+                        class="btn-outlined mt-4"
+                        data-action="live#action"
+                        data-live-action-param="clear"
+                    >{{ 'ecommerce.store.show_all'|trans }}</button>
+                {% else %}
+                    <p>{{ 'ecommerce.store.empty'|trans }}</p>
+                {% endif %}
+            </div>
+        {% endblock %}
+    {% else %}
+        <ul class="ecommerce-product-grid">
+            {% for product in this.result.rows %}
+                <li>
+                    {% block ecommerce_product_tile %}
+                        <a class="ecommerce-product-tile" href="{{ path('ecommerce_product', { slug: product.slug }) }}">
+                            {% block ecommerce_product_tile_image %}
+                                <div class="ecommerce-product-tile-image">
+                                    {% if product.image %}
+                                        <img src="{{ asset(product.image, 'ecommerce.asset')|imagine_filter('ecommerce_tile') }}" alt="" loading="lazy">
+                                    {% else %}
+                                        <span aria-hidden="true">{{ product.title|first|upper }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endblock %}
+                            {% block ecommerce_product_tile_body %}
+                                <div class="ecommerce-product-tile-body">
+                                    <h2 class="ecommerce-product-tile-title">{{ product.title }}</h2>
+                                    {% if product.shortDescription %}
+                                        <p class="ecommerce-product-tile-summary">{{ product.shortDescription }}</p>
+                                    {% endif %}
+                                    {% set startingPrice = product.activePrices|ecommerce_starting_price %}
+                                    {% if startingPrice %}
+                                        <p class="ecommerce-product-tile-price">{{ startingPrice }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endblock %}
+                        </a>
+                    {% endblock %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% block pagination_bottom %}
+        {% include '@Forumify/components/components/pagination.html.twig' with { class: 'mt-6' } %}
+    {% endblock %}
+{% endblock %}

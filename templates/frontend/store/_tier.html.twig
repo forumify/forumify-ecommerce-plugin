@@ -1,0 +1,59 @@
+{% set prices = tier.activePrices %}
+{% set highlighted = tier.highlighted and not standalone %}
+<form id="ecommerce-tier-{{ tier.id }}" data-tier class="ecommerce-tier{{ highlighted ? ' is-highlighted' }}{{ standalone ? ' is-standalone' }}">
+    {% block ecommerce_tier_heading %}
+        {% if not standalone %}
+            <div class="ecommerce-tier-heading">
+                <h3>{{ tier.label }}</h3>
+                {% if highlighted %}
+                    <span class="ecommerce-tier-badge">{{ 'ecommerce.store.recommended'|trans }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endblock %}
+    {% block ecommerce_tier_price %}
+        <div class="ecommerce-tier-price">
+            {% for price in prices %}
+                <p class="ecommerce-tier-amount" data-price="{{ price.id }}"{{ not loop.first ? ' hidden' }}>
+                    {% if price.free %}
+                        <span class="ecommerce-tier-amount-value">{{ 'ecommerce.price.free'|trans }}</span>
+                    {% else %}
+                        <span class="ecommerce-tier-amount-value">{{ price.amount|ecommerce_money }}</span>
+                        <span class="ecommerce-tier-amount-cadence">{{ 'ecommerce.price.cadence'|trans({
+                            interval: price.billingInterval.value ?? 'none',
+                            count: price.intervalCount ?? 1,
+                        }) }}</span>
+                    {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+    {% endblock %}
+    {% block ecommerce_tier_features %}
+        {% if tier.description|striptags|trim is not empty %}
+            <div class="ecommerce-tier-features">{{ tier.description|rich }}</div>
+        {% endif %}
+    {% endblock %}
+    <div class="ecommerce-tier-actions">
+        {% block ecommerce_tier_price_options %}
+            {% if prices|length > 1 %}
+                <fieldset class="ecommerce-price-options">
+                    <legend class="text-small">{{ 'ecommerce.store.choose_price'|trans }}</legend>
+                    {% for price in prices %}
+                        <label class="ecommerce-price-option" for="ecommerce-price-{{ price.id }}">
+                            <input type="radio" name="price" value="{{ price.id }}" id="ecommerce-price-{{ price.id }}"{{ loop.first ? ' checked' }} {{ stimulus_action('forumify/forumify-ecommerce-plugin/product', 'selectPrice', 'change') }}>
+                            <span>{{ price|ecommerce_price }}</span>
+                        </label>
+                    {% endfor %}
+                </fieldset>
+            {% else %}
+                <input type="hidden" name="price" value="{{ prices[0].id }}">
+            {% endif %}
+        {% endblock %}
+        {% block ecommerce_tier_checkout %}
+            <button type="submit" class="{{ highlighted ? 'btn-cta' : 'btn-primary' }}" disabled aria-describedby="ecommerce-tier-{{ tier.id }}-unavailable">
+                {{ 'ecommerce.store.get_tier'|trans({ tier: standalone ? tier.product.title : tier.label }) }}
+            </button>
+            <p id="ecommerce-tier-{{ tier.id }}-unavailable" class="help-text text-center">{{ 'ecommerce.store.checkout_unavailable'|trans }}</p>
+        {% endblock %}
+    </div>
+</form>

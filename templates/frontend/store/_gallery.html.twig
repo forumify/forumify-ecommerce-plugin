@@ -1,0 +1,46 @@
+{% set controller = 'forumify/forumify-ecommerce-plugin/product' %}
+<div class="ecommerce-gallery" role="group" aria-label="{{ 'ecommerce.store.gallery'|trans }}" {{ stimulus_action(controller, 'navigate', 'keydown') }}>
+    <div class="ecommerce-gallery-stage">
+        <button type="button" class="ecommerce-gallery-enlarge" aria-label="{{ 'ecommerce.store.enlarge_image'|trans }}" {{ stimulus_action(controller, 'enlarge') }}>
+            <img
+                src="{{ asset(gallery[0], 'ecommerce.asset')|imagine_filter('ecommerce_product') }}"
+                data-full-src="{{ asset(gallery[0], 'ecommerce.asset') }}"
+                alt="{{ product.title }}"
+                {{ stimulus_target(controller, 'stage') }}
+            >
+        </button>
+        {% if gallery|length > 1 %}
+            <button type="button" class="ecommerce-gallery-step is-previous" aria-label="{{ 'ecommerce.store.previous_image'|trans }}" {{ stimulus_action(controller, 'previous') }}>
+                <i class="ph ph-caret-left"></i>
+            </button>
+            <button type="button" class="ecommerce-gallery-step is-next" aria-label="{{ 'ecommerce.store.next_image'|trans }}" {{ stimulus_action(controller, 'next') }}>
+                <i class="ph ph-caret-right"></i>
+            </button>
+        {% endif %}
+    </div>
+    {% if gallery|length > 1 %}
+        <ul class="ecommerce-gallery-thumbs">
+            {% for image in gallery %}
+                <li>
+                    <button
+                        type="button"
+                        aria-label="{{ 'ecommerce.store.show_image'|trans({ number: loop.index, total: gallery|length }) }}"
+                        aria-current="{{ loop.first ? 'true' : 'false' }}"
+                        data-stage-src="{{ asset(image, 'ecommerce.asset')|imagine_filter('ecommerce_product') }}"
+                        data-full-src="{{ asset(image, 'ecommerce.asset') }}"
+                        {{ stimulus_target(controller, 'thumb') }}
+                        {{ stimulus_action(controller, 'show', 'click', { index: loop.index0 }) }}
+                    >
+                        <img src="{{ asset(image, 'ecommerce.asset')|imagine_filter('ecommerce_thumb') }}" alt="" loading="lazy">
+                    </button>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <dialog class="ecommerce-gallery-lightbox" {{ stimulus_target(controller, 'lightbox') }} {{ stimulus_action(controller, 'closeLightbox', 'click') }}>
+        <img alt="{{ product.title }}" {{ stimulus_target(controller, 'lightboxImage') }}>
+        <button type="button" class="ecommerce-gallery-close btn-primary btn-icon" aria-label="{{ 'ecommerce.store.close_image'|trans }}">
+            <i class="ph ph-x"></i>
+        </button>
+    </dialog>
+</div>
