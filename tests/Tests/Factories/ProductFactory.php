@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PluginTests\Tests\Factories;
 
 use Forumify\Ecommerce\Entity\Product;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
@@ -24,7 +24,7 @@ class ProductFactory extends PersistentObjectFactory
             'title' => self::faker()->unique()->words(3, true),
             'key' => self::faker()->unique()->slug(3),
             'shortDescription' => self::faker()->sentence(),
-            'state' => ProductState::Published,
+            'status' => ProductStatus::Published,
         ];
     }
 }

@@ -11,10 +11,12 @@ use Forumify\Core\Entity\IdentifiableEntityTrait;
 use Forumify\Core\Entity\TimestampableEntityTrait;
 use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Repository\OrderRepository;
+use LogicException;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table('ecommerce_order')]
+#[ORM\UniqueConstraint(fields: ['providerKey', 'providerReference'])]
 class Order
 {
     use IdentifiableEntityTrait;
@@ -38,6 +40,10 @@ class Order
 
     #[ORM\Column(nullable: true)]
     public private(set) ?DateTimeImmutable $completedAt = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    public private(set) ?Subscription $subscription;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
@@ -78,7 +84,7 @@ class Order
         get => Money::ofMinor($this->amountMinor, $this->currency);
     }
 
-    public function __construct(User $user, ProductPrice $price, ?string $providerKey)
+    public function __construct(?User $user, ProductPrice $price, ?string $providerKey, ?Subscription $subscription = null)
     {
         $tier = $price->tier;
         $product = $tier->product;
@@ -86,6 +92,7 @@ class Order
         $this->reference = strtoupper(bin2hex(random_bytes(6)));
         $this->user = $user;
         $this->providerKey = $providerKey;
+        $this->subscription = $subscription;
         $this->product = $product;
         $this->price = $price;
         $this->productKey = $product->key;
@@ -104,9 +111,23 @@ class Order
         return $user instanceof User && $this->user?->getId() === $user->getId();
     }
 
+    public function isRenewal(): bool
+    {
+        return $this->subscription !== null;
+    }
+
     public function isFree(): bool
     {
         return $this->amountMinor === 0;
+    }
+
+    public function periodEndFrom(DateTimeImmutable $start): DateTimeImmutable
+    {
+        if ($this->billingInterval === null) {
+            throw new LogicException('Only a recurring order has a billing period.');
+        }
+
+        return $this->billingInterval->addTo($start, $this->intervalCount ?? 1);
     }
 
     public function complete(): bool

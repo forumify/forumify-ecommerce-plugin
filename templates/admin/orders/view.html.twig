@@ -8,7 +8,7 @@
     </div>
     <div class="box">
         <table>
-            <tbody>
+            <tbody class="text-left">
                 {% block ecommerce_admin_order_details %}
                     <tr>
                         <th>{{ 'ecommerce.admin.order.reference'|trans }}</th>
@@ -49,6 +49,22 @@
                         <th>{{ 'ecommerce.admin.order.completed_at'|trans }}</th>
                         <td>{{ order.completedAt ? order.completedAt|date('Y-m-d H:i') : '-' }}</td>
                     </tr>
+                    {% if subscription %}
+                        <tr>
+                            <th>{{ 'ecommerce.admin.subscription.single'|trans }}</th>
+                            <td>
+                                {% set subscriptionStatus = ('ecommerce.subscription_status.' ~ subscription.status.value)|trans %}
+                                {% if is_granted('ecommerce.admin.subscriptions.view') %}
+                                    <a href="{{ path('ecommerce_admin_subscriptions_view', { id: subscription.id }) }}">{{ subscriptionStatus }}</a>
+                                {% else %}
+                                    {{ subscriptionStatus }}
+                                {% endif %}
+                                {% if order.renewal %}
+                                    <span class="tag">{{ 'ecommerce.orders.renewal'|trans }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
                 {% endblock %}
             </tbody>
         </table>

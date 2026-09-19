@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Repository;
 
-use Doctrine\DBAL\LockMode;
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Entity\OrderStatus;
+use Forumify\Ecommerce\Entity\Subscription;
 
 /**
  * @extends AbstractRepository<Order>
  */
 class OrderRepository extends AbstractRepository
 {
+    /** @use LockingRepositoryTrait<Order> */
+    use LockingRepositoryTrait;
+
     public static function getEntityClass(): string
     {
         return Order::class;
@@ -23,6 +27,19 @@ class OrderRepository extends AbstractRepository
         return $this->findOneBy(['reference' => $reference]);
     }
 
+    public function findOneByProviderReference(string $providerKey, string $providerReference): ?Order
+    {
+        return $this->findOneBy(['providerKey' => $providerKey, 'providerReference' => $providerReference]);
+    }
+
+    /**
+     * @return list<Order>
+     */
+    public function findPendingRenewals(Subscription $subscription): array
+    {
+        return $this->findBy(['subscription' => $subscription, 'status' => OrderStatus::Pending]);
+    }
+
     /**
      * @template TResult
      * @param callable(Order): TResult $callback
@@ -30,17 +47,6 @@ class OrderRepository extends AbstractRepository
      */
     public function withLockedOrder(string $reference, callable $callback): mixed
     {
-        $em = $this->getEntityManager();
-
-        return $em->wrapInTransaction(function () use ($em, $reference, $callback) {
-            $order = $this->findOneByReference($reference);
-            if ($order === null) {
-                return null;
-            }
-
-            $em->refresh($order, LockMode::PESSIMISTIC_WRITE);
-
-            return $callback($order);
-        });
+        return $this->withLocked(['reference' => $reference], $callback);
     }
 }

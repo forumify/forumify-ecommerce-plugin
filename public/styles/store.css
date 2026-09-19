@@ -625,7 +625,7 @@
     border-radius: var(--border-radius);
 }
 
-.ecommerce-order-row:hover {
+a.ecommerce-order-row:hover {
     color: var(--c-text-primary);
     border-color: var(--c-primary-accent);
 }

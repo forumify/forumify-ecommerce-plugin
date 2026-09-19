@@ -49,8 +49,8 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\Column(length: 255, nullable: true)]
     public ?string $image = null;
 
-    #[ORM\Column(length: 16, enumType: ProductState::class)]
-    public ProductState $state = ProductState::Draft;
+    #[ORM\Column(length: 16, enumType: ProductStatus::class)]
+    public ProductStatus $status = ProductStatus::Draft;
 
     /** @var Collection<int, ProductCategory> */
     #[ORM\ManyToMany(targetEntity: ProductCategory::class)]

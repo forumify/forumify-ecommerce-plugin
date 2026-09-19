@@ -6,7 +6,7 @@ namespace Forumify\Ecommerce\Repository;
 
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\Product;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 
 /**
  * @extends AbstractRepository<Product>
@@ -20,6 +20,6 @@ class ProductRepository extends AbstractRepository
 
     public function findPublishedBySlug(string $slug): ?Product
     {
-        return $this->findOneBy(['slug' => $slug, 'state' => ProductState::Published]);
+        return $this->findOneBy(['slug' => $slug, 'status' => ProductStatus::Published]);
     }
 }

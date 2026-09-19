@@ -16,3 +16,4 @@ ecommerce_fake_payment:
     type: attribute
     prefix: store
     name_prefix: ecommerce_
+    condition: "'%kernel.environment%' != 'prod'"

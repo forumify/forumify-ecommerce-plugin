@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PluginTests\Tests\Unit\Entity;
 
+use DateTimeImmutable;
 use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Entity\BillingInterval;
 use Forumify\Ecommerce\Entity\Order;
@@ -28,6 +29,9 @@ class OrderTest extends TestCase
         self::assertSame([PriceType::Recurring, BillingInterval::Month, 1], [$order->priceType, $order->billingInterval, $order->intervalCount]);
         self::assertFalse($order->isFree());
         self::assertNotSame($order->reference, $this->createOrder()->reference);
+        self::assertEquals(new DateTimeImmutable('2026-02-28 12:00'), $order->periodEndFrom(new DateTimeImmutable('2026-01-31 12:00')));
+        self::assertEquals(new DateTimeImmutable('2028-02-29'), BillingInterval::Year->addTo(new DateTimeImmutable('2024-02-29'), 4));
+        self::assertEquals(new DateTimeImmutable('2026-01-15'), BillingInterval::Week->addTo(new DateTimeImmutable('2026-01-01'), 2));
     }
 
     public function testOnlyPendingOrdersFailOrCancelAndCompletionAlwaysWins(): void

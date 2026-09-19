@@ -1,0 +1,93 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set order = subscription.initialOrder %}
+{% set status = subscription.status.value %}
+{% set title = 'ecommerce.admin.subscription.title'|trans({ product: order.productTitle ~ ' - ' ~ order.tierLabel }) %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <p class="mb-2">
+        <a href="{{ path('ecommerce_admin_subscriptions_list') }}">
+            <i class="ph ph-arrow-left"></i> {{ 'ecommerce.admin.subscription.back'|trans }}
+        </a>
+    </p>
+    <div class="mb-4 flex flex-wrap items-start justify-between gap-2">
+        <h1 class="mb-0">{{ title }}</h1>
+        {% block ecommerce_admin_subscription_actions %}
+            {% set canCancel = status != 'ended' and is_granted('ecommerce.admin.subscriptions.manage') %}
+            {% if canCancel %}
+                {% embed '@Forumify/components/menu.html.twig' with { placement: 'bottom-end', buttonClass: 'btn-primary' } %}
+                    {% block button_text %}
+                        <i class="ph ph-lightning"></i>{{ 'ecommerce.admin.subscription.actions'|trans }}
+                    {% endblock %}
+                    {% block menu_items %}
+                        {% block ecommerce_admin_subscription_action_items %}
+                            <a class="btn-link" href="{{ path('ecommerce_admin_subscriptions_cancel', { id: subscription.id }) }}">
+                                <i class="ph ph-x-circle"></i>{{ 'ecommerce.admin.subscription.cancel'|trans }}
+                            </a>
+                        {% endblock %}
+                    {% endblock %}
+                {% endembed %}
+            {% endif %}
+        {% endblock %}
+    </div>
+    <div class="box">
+        <table>
+            <tbody class="text-left">
+                {% block ecommerce_admin_subscription_details %}
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.status'|trans }}</th>
+                        <td>{{ ('ecommerce.subscription_status.' ~ status)|trans }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.customer'|trans }}</th>
+                        <td>{{ subscription.user ? subscription.user.displayName : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.product'|trans }}</th>
+                        <td>
+                            {{ order.productTitle }} - {{ order.tierLabel }}
+                            <span class="text-secondary">(<code>{{ order.productKey }}</code> / <code>{{ order.tierKey }}</code>)</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.price'|trans }}</th>
+                        <td>{{ order|ecommerce_price }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.payment_provider'|trans }}</th>
+                        <td>{{ subscription.providerKey }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.provider_reference'|trans }}</th>
+                        <td><code>{{ subscription.providerReference }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.subscription.started'|trans }}</th>
+                        <td>{{ subscription.createdAt|date('Y-m-d H:i') }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.subscription.period_end'|trans }}</th>
+                        <td>{{ subscription.currentPeriodEnd|date('Y-m-d H:i') }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.subscription.ended_at'|trans }}</th>
+                        <td>{{ subscription.endedAt ? subscription.endedAt|date('Y-m-d H:i') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.subscription.initial_order'|trans }}</th>
+                        <td>
+                            {% if is_granted('ecommerce.admin.orders.view') %}
+                                <a href="{{ path('ecommerce_admin_orders_view', { id: order.id }) }}"><code>{{ order.reference }}</code></a>
+                            {% else %}
+                                <code>{{ order.reference }}</code>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endblock %}
+            </tbody>
+        </table>
+    </div>
+    {% block ecommerce_admin_subscription_orders %}
+        <h2 class="mt-6 mb-2">{{ 'ecommerce.admin.order.plural'|trans }}</h2>
+        {{ component('Ecommerce\\OrderTable', { subscription: subscription.id }) }}
+    {% endblock %}
+{% endblock %}

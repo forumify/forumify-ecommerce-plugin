@@ -6,7 +6,7 @@ namespace PluginTests\Tests\Application;
 
 use Forumify\Ecommerce\Entity\BillingInterval;
 use Forumify\Ecommerce\Entity\PriceType;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Repository\ProductCategoryRepository;
 use Forumify\Ecommerce\Repository\ProductImageRepository;
 use Forumify\Ecommerce\Repository\ProductPriceRepository;
@@ -31,7 +31,7 @@ class CatalogAdminTest extends EcommerceWebTestCase
         $this->client->submitForm('Save', [
             'product[title]' => 'Milsim Plugin',
             'product[key]' => 'forumify/forumify-milhq-plugin',
-            'product[state]' => ProductState::Published->value,
+            'product[status]' => ProductStatus::Published->value,
             'product[categories]' => [(string)$category->getId()],
             'product[shortDescription]' => 'Run your unit with forumify.',
         ]);
@@ -41,7 +41,9 @@ class CatalogAdminTest extends EcommerceWebTestCase
 
         $this->addTier($product->getId(), 'Free', 'free', [
             'new_product_tier[price][amountMinor]' => '0',
-            'new_product_tier[price][type]' => PriceType::OneTime->value,
+            'new_product_tier[price][type]' => PriceType::Recurring->value,
+            'new_product_tier[price][intervalCount]' => '1',
+            'new_product_tier[price][billingInterval]' => BillingInterval::Month->value,
         ]);
         $this->addTier($product->getId(), 'Premium', 'premium', [
             'new_product_tier[price][amountMinor]' => '9.99',
@@ -60,13 +62,15 @@ class CatalogAdminTest extends EcommerceWebTestCase
 
         self::getContainer()->get(ProductRepository::class)->getEntityManager()->clear();
         $product = self::getContainer()->get(ProductRepository::class)->find($product->getId());
-        self::assertSame(ProductState::Published, $product->state);
+        self::assertSame(ProductStatus::Published, $product->status);
         self::assertSame('forumify/forumify-milhq-plugin', $product->key);
         self::assertSame(['Plugins'], $product->categories->map(fn ($c) => $c->title)->toArray());
 
         [$free, $premium] = $product->tiers->toArray();
         self::assertSame('free', $free->key);
-        self::assertTrue($free->prices->first()->isFree());
+        $freePrice = $free->prices->first();
+        self::assertTrue($freePrice->isFree());
+        self::assertSame([PriceType::OneTime, null, null], [$freePrice->type, $freePrice->billingInterval, $freePrice->intervalCount]);
 
         $monthly = $premium->prices->first();
         self::assertSame('premium', $premium->key);

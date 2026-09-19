@@ -7,7 +7,7 @@ namespace Forumify\Ecommerce\Repository;
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductCategory;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 
 /**
  * @extends AbstractRepository<ProductCategory>
@@ -29,11 +29,11 @@ class ProductCategoryRepository extends AbstractRepository
             ->from(Product::class, 'p')
             ->innerJoin('p.categories', 'pc')
             ->where('pc = c')
-            ->andWhere('p.state = :published');
+            ->andWhere('p.status = :published');
 
         return $this->createQueryBuilder('c')
             ->where("EXISTS ({$publishedProducts->getDQL()})")
-            ->setParameter('published', ProductState::Published)
+            ->setParameter('published', ProductStatus::Published)
             ->orderBy('c.position', 'ASC')
             ->getQuery()
             ->getResult();

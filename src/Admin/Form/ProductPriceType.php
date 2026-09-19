@@ -13,6 +13,8 @@ use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -37,6 +39,7 @@ class ProductPriceType extends AbstractType
 
         $builder
             ->add('amountMinor', MoneyAmountType::class, [
+                'attr' => ['data-price-amount' => ''],
                 'money_currency' => $price->currency,
                 'disabled' => $locked,
                 'help' => 'ecommerce.admin.price.amount_help',
@@ -62,6 +65,17 @@ class ProductPriceType extends AbstractType
                 'placeholder' => 'ecommerce.admin.price.choose_interval',
             ])
         ;
+
+        $builder->addEventListener(FormEvents::SUBMIT, static function (FormEvent $event): void {
+            $price = $event->getData();
+            if (!$price instanceof ProductPrice || $price->locked || !$price->isFree()) {
+                return;
+            }
+
+            $price->type = PriceType::OneTime;
+            $price->billingInterval = null;
+            $price->intervalCount = null;
+        });
 
         if ($options['show_active']) {
             $builder->add('active', CheckboxType::class, [

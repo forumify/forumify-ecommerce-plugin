@@ -11,6 +11,7 @@ use Forumify\Core\Component\Table\AbstractDoctrineTable;
 use Forumify\Core\Service\TimezoneResolver;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
+use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Money\PriceFormatter;
 use Forumify\Ecommerce\Repository\ProductRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -27,6 +28,9 @@ class OrderTable extends AbstractDoctrineTable
 
     #[LiveProp(writable: true, onUpdated: 'resetPage')]
     public string $productFilter = '';
+
+    #[LiveProp]
+    public ?int $subscription = null;
 
     public function __construct(
         private readonly TranslatorInterface $translator,
@@ -84,7 +88,8 @@ class OrderTable extends AbstractDoctrineTable
             ->addColumn('product', [
                 'field' => 'productTitle',
                 'label' => $this->translator->trans('ecommerce.admin.order.product'),
-                'renderer' => fn (string $title, Order $order) => htmlspecialchars("$title - {$order->tierLabel}"),
+                'renderer' => fn (string $title, Order $order) => htmlspecialchars("$title - {$order->tierLabel}")
+                    . ($order->isRenewal() ? ' <span class="tag">' . htmlspecialchars($this->translator->trans('ecommerce.orders.renewal')) . '</span>' : ''),
             ])
             ->addColumn('customer', [
                 'field' => 'user?.username',
@@ -121,6 +126,12 @@ class OrderTable extends AbstractDoctrineTable
         $status = OrderStatus::tryFrom($this->statusFilter);
         if ($status !== null) {
             $qb->andWhere('e.status = :status')->setParameter('status', $status);
+        }
+
+        if ($this->subscription !== null) {
+            $qb
+                ->andWhere(sprintf('IDENTITY(e.subscription) = :subscription OR e.id IN (SELECT IDENTITY(s.initialOrder) FROM %s s WHERE s.id = :subscription)', Subscription::class))
+                ->setParameter('subscription', $this->subscription);
         }
 
         if ($this->productFilter !== '') {

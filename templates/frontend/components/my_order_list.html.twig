@@ -15,7 +15,9 @@
                         <a class="ecommerce-order-row" href="{{ path('ecommerce_order', { reference: order.reference }) }}">
                             <span class="ecommerce-order-row-product">
                                 <strong>{{ order.productTitle }}</strong>
-                                <span class="text-secondary">{{ order.tierLabel }}</span>
+                                <span class="text-secondary">
+                                    {{ order.tierLabel }}{% if order.renewal %} · {{ 'ecommerce.orders.renewal'|trans }}{% endif %}
+                                </span>
                             </span>
                             <span class="ecommerce-order-row-price">{{ order|ecommerce_price }}</span>
                             <span class="text-secondary">{{ order.createdAt|date('Y-m-d') }}</span>

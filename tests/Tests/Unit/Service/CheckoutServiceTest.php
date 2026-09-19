@@ -8,7 +8,7 @@ use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductPrice;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Entity\ProductTier;
 use Forumify\Ecommerce\Exception\CheckoutException;
 use Forumify\Ecommerce\PaymentProvider\CheckoutRedirect;
@@ -120,7 +120,7 @@ class CheckoutServiceTest extends TestCase
     {
         $inactive = $this->createPrice(999);
         $inactive->active = false;
-        $draft = $this->createPrice(999, ProductState::Draft);
+        $draft = $this->createPrice(999, ProductStatus::Draft);
 
         self::assertFalse($this->service->isPurchasable($inactive));
         self::assertFalse($this->service->isPurchasable($draft));
@@ -163,12 +163,12 @@ class CheckoutServiceTest extends TestCase
         return $provider;
     }
 
-    private function createPrice(int $amountMinor, ProductState $state = ProductState::Published): ProductPrice
+    private function createPrice(int $amountMinor, ProductStatus $status = ProductStatus::Published): ProductPrice
     {
         $product = new Product();
         $product->title = 'Milsim';
         $product->key = 'milsim';
-        $product->state = $state;
+        $product->status = $status;
         $tier = new ProductTier($product);
         $tier->key = 'premium';
         $tier->label = 'Premium';

@@ -6,7 +6,7 @@ namespace PluginTests\Tests\Application;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Forumify\Ecommerce\Entity\BillingInterval;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use PluginTests\Tests\Factories\ProductCategoryFactory;
 use PluginTests\Tests\Factories\ProductFactory;
 use PluginTests\Tests\Factories\ProductImageFactory;
@@ -29,7 +29,7 @@ class StorefrontTest extends EcommerceWebTestCase
         ProductFactory::createOne(['title' => 'Dark Theme', 'categories' => new ArrayCollection([$themes])]);
         $draft = ProductFactory::createOne([
             'title' => 'Secret Plugin',
-            'state' => ProductState::Draft,
+            'status' => ProductStatus::Draft,
             'categories' => new ArrayCollection([$plugins]),
         ]);
 

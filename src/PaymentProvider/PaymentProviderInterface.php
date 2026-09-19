@@ -7,6 +7,7 @@ namespace Forumify\Ecommerce\PaymentProvider;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\PaymentProviderConfig;
 use Forumify\Ecommerce\Entity\ProductPrice;
+use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Exception\InvalidWebhookException;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -43,4 +44,9 @@ interface PaymentProviderInterface
      * @throws InvalidWebhookException
      */
     public function handleWebhook(Request $request): array;
+
+    /**
+     * @return list<PaymentEvent>
+     */
+    public function cancelSubscription(Subscription $subscription, bool $atPeriodEnd): array;
 }

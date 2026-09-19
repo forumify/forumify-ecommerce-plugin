@@ -12,13 +12,47 @@ export default class extends Controller {
     this.billingInterval = this.recurringFields.querySelector('select');
     this.editableInputs = [this.intervalCount, this.billingInterval].filter((input) => input && !input.disabled);
 
+    this.amountInput = this.element.querySelector('[data-price-amount]');
+    this.billingFields = this.element.querySelector('[data-price-billing]');
+    this.typeBeforeFree = null;
+
     this.toggle = this._toggle.bind(this);
+    this.toggleFree = this._toggleFree.bind(this);
     this.typeSelect.addEventListener('change', this.toggle);
-    this._toggle();
+    this.amountInput?.addEventListener('input', this.toggleFree);
+    this._toggleFree();
   }
 
   disconnect() {
     this.typeSelect?.removeEventListener('change', this.toggle);
+    this.amountInput?.removeEventListener('input', this.toggleFree);
+  }
+
+  _toggleFree() {
+    if (!this.amountInput || !this.billingFields) {
+      this._toggle();
+      return;
+    }
+
+    const free = this._isFree();
+    this.billingFields.classList.toggle('d-none', free);
+
+    if (!this.typeSelect.disabled) {
+      if (free && this.typeBeforeFree === null) {
+        this.typeBeforeFree = this.typeSelect.value;
+        this.typeSelect.value = 'one_time';
+      } else if (!free && this.typeBeforeFree !== null) {
+        this.typeSelect.value = this.typeBeforeFree;
+        this.typeBeforeFree = null;
+      }
+    }
+
+    this._toggle();
+  }
+
+  _isFree() {
+    const value = this.amountInput.value.replace(/\s/g, '').replace(',', '.');
+    return value !== '' && Number(value) === 0;
   }
 
   _toggle() {

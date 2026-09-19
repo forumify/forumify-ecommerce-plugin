@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Forumify\Ecommerce\Repository;
+
+use Forumify\Core\Entity\User;
+use Forumify\Core\Repository\AbstractRepository;
+use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Entity\Subscription;
+use Forumify\Ecommerce\Entity\SubscriptionStatus;
+
+/**
+ * @extends AbstractRepository<Subscription>
+ */
+class SubscriptionRepository extends AbstractRepository
+{
+    /** @use LockingRepositoryTrait<Subscription> */
+    use LockingRepositoryTrait;
+
+    public static function getEntityClass(): string
+    {
+        return Subscription::class;
+    }
+
+    public function findOneByProviderReference(string $providerKey, string $providerReference): ?Subscription
+    {
+        return $this->findOneBy(['providerKey' => $providerKey, 'providerReference' => $providerReference]);
+    }
+
+    public function findOneByInitialOrder(Order $order): ?Subscription
+    {
+        return $this->findOneBy(['initialOrder' => $order]);
+    }
+
+    /**
+     * @return list<Subscription>
+     */
+    public function findCurrentForUser(User $user): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.user = :user')
+            ->andWhere('s.status != :ended')
+            ->setParameter('user', $user)
+            ->setParameter('ended', SubscriptionStatus::Ended)
+            ->orderBy('s.currentPeriodEnd', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @template TResult
+     * @param callable(Subscription): TResult $callback
+     * @return TResult|null
+     */
+    public function withLockedSubscription(string $providerKey, string $providerReference, callable $callback): mixed
+    {
+        return $this->withLocked(['providerKey' => $providerKey, 'providerReference' => $providerReference], $callback);
+    }
+}

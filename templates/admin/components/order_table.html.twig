@@ -11,16 +11,18 @@
                 <option value="{{ value }}"{{ this.statusFilter == value ? ' selected' }}>{{ label }}</option>
             {% endfor %}
         </select>
-        <select
-            style="flex: 0 1 16rem"
-            aria-label="{{ 'ecommerce.admin.order.product'|trans }}"
-            data-model="productFilter"
-        >
-            <option value="">{{ 'ecommerce.admin.order.all_products'|trans }}</option>
-            {% for id, title in this.productChoices %}
-                <option value="{{ id }}"{{ this.productFilter == id ? ' selected' }}>{{ title }}</option>
-            {% endfor %}
-        </select>
+        {% if this.subscription is null %}
+            <select
+                style="flex: 0 1 16rem"
+                aria-label="{{ 'ecommerce.admin.order.product'|trans }}"
+                data-model="productFilter"
+            >
+                <option value="">{{ 'ecommerce.admin.order.all_products'|trans }}</option>
+                {% for id, title in this.productChoices %}
+                    <option value="{{ id }}"{{ this.productFilter == id ? ' selected' }}>{{ title }}</option>
+                {% endfor %}
+            </select>
+        {% endif %}
     </div>
     {{ parent() }}
 {% endblock %}

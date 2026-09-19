@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Forumify\Ecommerce\Admin\Controller;
 
 use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Repository\SubscriptionRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -14,6 +15,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ecommerce.admin.orders.view')]
 class OrderController extends AbstractController
 {
+    public function __construct(private readonly SubscriptionRepository $subscriptionRepository)
+    {
+    }
+
     #[Route('', '_list')]
     public function list(): Response
     {
@@ -25,6 +30,7 @@ class OrderController extends AbstractController
     {
         return $this->render('@ForumifyEcommercePlugin/admin/orders/view.html.twig', [
             'order' => $order,
+            'subscription' => $order->subscription ?? $this->subscriptionRepository->findOneByInitialOrder($order),
         ]);
     }
 }

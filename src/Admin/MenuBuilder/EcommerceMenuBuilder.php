@@ -32,6 +32,10 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
                 'icon' => 'ph ph-receipt',
                 'permission' => 'ecommerce.admin.orders.view',
             ]),
+            new MenuItem('Subscriptions', $u('ecommerce_admin_subscriptions_list'), [
+                'icon' => 'ph ph-arrows-clockwise',
+                'permission' => 'ecommerce.admin.subscriptions.view',
+            ]),
             new MenuItem('Payment providers', $u('ecommerce_admin_payment_providers_list'), [
                 'icon' => 'ph ph-credit-card',
                 'permission' => 'ecommerce.admin.payment_providers.manage',

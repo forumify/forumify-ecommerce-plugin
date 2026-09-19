@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/fake-payment', 'fake_payment', env: ['dev', 'test'])]
+#[Route('/fake-payment', 'fake_payment')]
 #[IsGranted('ROLE_USER')]
 #[WhenNot(env: 'prod')]
 class FakePaymentController extends AbstractController
@@ -39,7 +39,7 @@ class FakePaymentController extends AbstractController
 
         if ($request->isMethod('POST') && $this->isCsrfTokenValid('ecommerce_fake_payment', $request->request->getString('_token'))) {
             return match ($request->request->getString('outcome')) {
-                'pay' => $this->finish($order, new CheckoutCompleted($order->reference)),
+                'pay' => $this->finish($order, FakePaymentProvider::completed($order->reference)),
                 'fail' => $this->finish($order, new CheckoutFailed($order->reference)),
                 'cancel' => $this->redirectToRoute('ecommerce_order_cancel', ['reference' => $order->reference]),
                 default => $this->redirectToRoute('ecommerce_fake_payment_pay', ['reference' => $order->reference]),

@@ -4,7 +4,11 @@
     {% block ecommerce_order_status_message %}
         <p class="ecommerce-order-status {{ statusClasses[order.status.value] }}" role="status">
             {% if this.pending %}<i class="ph ph-spinner-gap ecommerce-order-spinner" aria-hidden="true"></i>{% endif %}
-            {{ ('ecommerce.order.status.' ~ order.status.value)|trans }}
+            {% if order.renewal and order.status.value in ['pending', 'failed'] %}
+                {{ ('ecommerce.order.renewal_status.' ~ order.status.value)|trans }}
+            {% else %}
+                {{ ('ecommerce.order.status.' ~ order.status.value)|trans }}
+            {% endif %}
         </p>
     {% endblock %}
     {% block ecommerce_order_summary %}
@@ -21,7 +25,7 @@
     {% endblock %}
     {% block ecommerce_order_actions %}
         <div class="ecommerce-order-actions">
-            {% if order.price and order.status.value in ['failed', 'cancelled'] %}
+            {% if order.price and not order.renewal and order.status.value in ['failed', 'cancelled'] %}
                 <a class="btn-primary" href="{{ path('ecommerce_checkout', { price: order.price.id }) }}">{{ 'ecommerce.order.try_again'|trans }}</a>
             {% endif %}
             <a class="btn-outlined" href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a>

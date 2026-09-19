@@ -6,7 +6,7 @@ namespace Forumify\Ecommerce\Admin\Component;
 
 use Forumify\Core\Component\Table\AbstractDoctrineTable;
 use Forumify\Ecommerce\Entity\Product;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
@@ -40,10 +40,10 @@ class ProductTable extends AbstractDoctrineTable
                 'label' => $this->translator->trans('ecommerce.admin.product.key'),
                 'renderer' => static fn (string $key) => '<code>' . htmlspecialchars($key) . '</code>',
             ])
-            ->addColumn('state', [
-                'field' => 'state',
-                'label' => $this->translator->trans('ecommerce.admin.product.state'),
-                'renderer' => fn (ProductState $state) => $this->translator->trans('ecommerce.product_state.' . $state->value),
+            ->addColumn('status', [
+                'field' => 'status',
+                'label' => $this->translator->trans('ecommerce.admin.product.status'),
+                'renderer' => fn (ProductStatus $status) => $this->translator->trans('ecommerce.product_status.' . $status->value),
                 'searchable' => false,
             ])
             ->addActionColumn($this->renderActions(...))

@@ -8,7 +8,7 @@ use Doctrine\ORM\QueryBuilder;
 use Forumify\Core\Component\List\AbstractDoctrineList;
 use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductCategory;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Repository\ProductCategoryRepository;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
@@ -83,8 +83,8 @@ class ProductList extends AbstractDoctrineList
     protected function getQuery(): QueryBuilder
     {
         $qb = parent::getQuery()
-            ->andWhere('e.state = :published')
-            ->setParameter('published', ProductState::Published);
+            ->andWhere('e.status = :published')
+            ->setParameter('published', ProductStatus::Published);
 
         if ($this->category !== null) {
             $qb->innerJoin('e.categories', 'c')

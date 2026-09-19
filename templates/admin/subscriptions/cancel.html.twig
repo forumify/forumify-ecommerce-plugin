@@ -1,0 +1,36 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set order = subscription.initialOrder %}
+{% set title = 'ecommerce.admin.subscription.cancel_title'|trans({ product: order.productTitle ~ ' - ' ~ order.tierLabel }) %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <p class="mb-2">
+        <a href="{{ cancelPath }}">
+            <i class="ph ph-arrow-left"></i> {{ 'ecommerce.admin.subscription.single'|trans }}
+        </a>
+    </p>
+    {% embed '@Forumify/admin/components/simple_form.html.twig' %}
+        {% block form_widget %}
+            <p class="mb-4">
+                {{ 'ecommerce.admin.subscription.cancel_summary'|trans({
+                    customer: subscription.user ? subscription.user.displayName : '-',
+                    date: subscription.currentPeriodEnd|date('Y-m-d'),
+                }) }}
+            </p>
+            {{ form_label(form.atPeriodEnd) }}
+            {% for choice in form.atPeriodEnd %}
+                <div class="flex items-center gap-2 mb-2">
+                    {{ form_widget(choice) }}
+                    {{ form_label(choice) }}
+                </div>
+            {% endfor %}
+            <div class="mb-4">{{ form_help(form.atPeriodEnd) }}</div>
+            {{ form_rest(form) }}
+        {% endblock %}
+        {% block form_actions %}
+            <div class="flex justify-center items-center gap-2">
+                <button type="submit" class="btn-primary">{{ 'ecommerce.admin.subscription.cancel'|trans }}</button>
+                <a href="{{ cancelPath }}" class="btn-outlined">{{ 'ecommerce.admin.subscription.keep'|trans }}</a>
+            </div>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

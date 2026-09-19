@@ -6,6 +6,33 @@
         <span class="text-secondary">{{ 'ecommerce.orders.title'|trans }}</span>
     </div>
     <h1>{{ 'ecommerce.orders.title'|trans }}</h1>
+    {% block ecommerce_orders_subscriptions %}
+        {% if subscriptions is not empty %}
+            <section class="mb-6" aria-labelledby="ecommerce-subscriptions-title">
+                <h2 id="ecommerce-subscriptions-title">{{ 'ecommerce.subscriptions.title'|trans }}</h2>
+                <ul class="ecommerce-order-list">
+                    {% for subscription in subscriptions %}
+                        {% set order = subscription.initialOrder %}
+                        {% set status = subscription.status.value %}
+                        <li>
+                            {% block ecommerce_subscription_row %}
+                                <div class="ecommerce-order-row ecommerce-subscription-row">
+                                    <span class="ecommerce-order-row-product">
+                                        <strong>{{ order.productTitle }}</strong>
+                                        <span class="text-secondary">{{ order.tierLabel }}</span>
+                                    </span>
+                                    <span class="ecommerce-order-row-price">{{ order|ecommerce_price }}</span>
+                                    <span class="text-secondary">{{ ('ecommerce.subscriptions.period_end.' ~ status)|trans({ date: subscription.currentPeriodEnd|date('Y-m-d') }) }}</span>
+                                    <span class="tag{{ status == 'past_due' ? ' tag-error' }}">{{ ('ecommerce.subscription_status.' ~ status)|trans }}</span>
+                                </div>
+                            {% endblock %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+            <h2>{{ 'ecommerce.orders.history'|trans }}</h2>
+        {% endif %}
+    {% endblock %}
     {% block ecommerce_orders_list %}
         {{ component('Ecommerce\\MyOrderList', { limit: 10 }) }}
     {% endblock %}

@@ -9,7 +9,7 @@ use Forumify\Core\Form\RichTextEditorType;
 use Forumify\Core\Form\UploadType;
 use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductCategory;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -41,11 +41,11 @@ class ProductType extends AbstractType
                 'help' => 'ecommerce.admin.product.key_help',
                 'label' => 'ecommerce.admin.product.key',
             ])
-            ->add('state', EnumType::class, [
-                'class' => ProductState::class,
-                'choice_label' => static fn (ProductState $state) => 'ecommerce.product_state.' . $state->value,
-                'help' => 'ecommerce.admin.product.state_help',
-                'label' => 'ecommerce.admin.product.state',
+            ->add('status', EnumType::class, [
+                'class' => ProductStatus::class,
+                'choice_label' => static fn (ProductStatus $status) => 'ecommerce.product_status.' . $status->value,
+                'help' => 'ecommerce.admin.product.status_help',
+                'label' => 'ecommerce.admin.product.status',
             ])
             ->add('categories', EntityType::class, [
                 'autocomplete' => true,

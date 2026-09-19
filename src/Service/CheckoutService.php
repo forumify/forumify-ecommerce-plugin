@@ -8,7 +8,7 @@ use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\ProductPrice;
-use Forumify\Ecommerce\Entity\ProductState;
+use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Exception\CheckoutException;
 use Forumify\Ecommerce\PaymentProvider\CheckoutRedirect;
 use Forumify\Ecommerce\PaymentProvider\CheckoutUrls;
@@ -34,7 +34,7 @@ class CheckoutService
 
     public function isPurchasable(ProductPrice $price): bool
     {
-        return $price->active && $price->tier->product->state === ProductState::Published;
+        return $price->active && $price->tier->product->status === ProductStatus::Published;
     }
 
     /**
@@ -68,7 +68,7 @@ class CheckoutService
 
     public function sync(Order $order): void
     {
-        if ($order->status !== OrderStatus::Pending || $order->providerKey === null) {
+        if ($order->status !== OrderStatus::Pending || $order->providerKey === null || $order->isRenewal()) {
             return;
         }
 
