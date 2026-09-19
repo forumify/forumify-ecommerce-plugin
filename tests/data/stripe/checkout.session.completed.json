@@ -1,0 +1,44 @@
+{
+  "id": "evt_1SfQ0kF7xAbCdEfGhIjKlMnO",
+  "object": "event",
+  "api_version": "2026-08-26.dahlia",
+  "created": 1789840000,
+  "data": {
+    "object": {
+      "id": "cs_test_a1B2c3D4e5F6g7H8i9J0",
+      "object": "checkout.session",
+      "amount_subtotal": 999,
+      "amount_total": 999,
+      "cancel_url": "https://localhost/store/order/%ORDER_REFERENCE%/cancel",
+      "client_reference_id": "%ORDER_REFERENCE%",
+      "created": 1789839900,
+      "currency": "usd",
+      "customer": "cus_TestCustomer01",
+      "customer_details": {
+        "email": "customer@example.com",
+        "name": "Test Customer"
+      },
+      "expires_at": 1789926300,
+      "invoice": null,
+      "livemode": false,
+      "metadata": {
+        "ecommerce_order_reference": "%ORDER_REFERENCE%"
+      },
+      "mode": "payment",
+      "payment_intent": "pi_3SfQ0jF7xAbCdEfG0abcdefg",
+      "payment_status": "paid",
+      "status": "complete",
+      "subscription": null,
+      "success_url": "https://localhost/store/order/%ORDER_REFERENCE%",
+      "ui_mode": "hosted_page",
+      "url": null
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 1,
+  "request": {
+    "id": null,
+    "idempotency_key": null
+  },
+  "type": "checkout.session.completed"
+}

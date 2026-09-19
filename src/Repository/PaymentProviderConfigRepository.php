@@ -17,6 +17,11 @@ class PaymentProviderConfigRepository extends AbstractRepository
         return PaymentProviderConfig::class;
     }
 
+    public function findOneByKey(string $providerKey): ?PaymentProviderConfig
+    {
+        return $this->findOneBy(['providerKey' => $providerKey]);
+    }
+
     /**
      * @return array<string, PaymentProviderConfig>
      */

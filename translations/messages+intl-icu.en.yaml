@@ -147,6 +147,14 @@ ecommerce:
         pay: 'Pay successfully'
         fail: 'Fail the payment'
         cancel: 'Cancel and go back'
+    stripe:
+        secretKey: 'Secret key'
+        secretKey_help: 'Find it under <i>Developers → API keys</i> in the Stripe dashboard. A restricted key (<code>rk_…</code>) needs write access to Checkout Sessions, Customers, Products, Prices and Subscriptions. Test mode keys keep their own products, prices and customers, so you can switch to live keys later. Leave empty to keep the saved key.'
+        secretKey_invalid: 'This is not a Stripe secret key. It starts with sk_test_, sk_live_, rk_test_ or rk_live_.'
+        webhookSecret: 'Webhook signing secret'
+        webhookSecret_help: 'In the Stripe dashboard, add a webhook endpoint with the URL above and select these events: <code>{events}</code>. Then paste its signing secret here. Leave empty to keep the saved secret.'
+        webhookSecret_invalid: 'This is not a Stripe webhook signing secret. It starts with whsec_.'
+        required: 'This value is required.'
     order_status:
         pending: 'Pending'
         completed: 'Completed'

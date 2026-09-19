@@ -48,6 +48,10 @@ class ProductTier implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\Column]
     public bool $highlighted = false;
 
+    /** @var array<string, string> */
+    #[ORM\Column(type: Types::JSON)]
+    public array $providerReferences = [];
+
     /** @var Collection<int, ProductPrice> */
     #[ORM\OneToMany(targetEntity: ProductPrice::class, mappedBy: 'tier', cascade: ['persist'])]
     #[ORM\OrderBy(['position' => 'ASC'])]
