@@ -1,0 +1,15 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set pageTitle = 'ecommerce.admin.payment_provider.edit'|trans({ provider: provider.label }) %}
+{% block title_page %}{{ pageTitle }}{% endblock %}
+{% block body %}
+    <h1 class="mb-4">{{ pageTitle }}</h1>
+    {% block ecommerce_admin_provider_webhook %}
+        <div class="alert-info mb-4">
+            <p>{{ 'ecommerce.admin.payment_provider.webhook_help'|trans }}</p>
+            <p><code>{{ webhookUrl }}</code></p>
+        </div>
+    {% endblock %}
+    {% include '@Forumify/admin/components/simple_form.html.twig' with {
+        cancelPath: path('ecommerce_admin_payment_providers_list'),
+    } %}
+{% endblock %}

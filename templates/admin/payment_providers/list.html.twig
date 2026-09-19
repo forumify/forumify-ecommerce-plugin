@@ -1,0 +1,39 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = 'ecommerce.admin.payment_provider.plural'|trans %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <h2>{{ title }}</h2>
+    <p class="help-text mb-2">{{ 'ecommerce.admin.payment_provider.help'|trans }}</p>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ 'ecommerce.admin.payment_provider.single'|trans }}</th>
+                    <th>{{ 'ecommerce.admin.payment_provider.status'|trans }}</th>
+                    <th>{{ 'ecommerce.admin.payment_provider.configuration'|trans }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ row.provider.label }}</td>
+                        <td>{{ (row.enabled ? 'ecommerce.admin.payment_provider.enabled' : 'ecommerce.admin.payment_provider.disabled')|trans }}</td>
+                        <td>{{ (row.configured ? 'ecommerce.admin.payment_provider.configured' : 'ecommerce.admin.payment_provider.not_configured')|trans }}</td>
+                        <td class="text-right">
+                            <a
+                                class="btn-link btn-icon btn-small"
+                                aria-label="{{ 'ecommerce.admin.payment_provider.edit'|trans({ provider: row.provider.label }) }}"
+                                href="{{ path('ecommerce_admin_payment_providers_edit', { key: row.provider.key }) }}"
+                            ><i class="ph ph-pencil-simple-line"></i></a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4">{{ 'ecommerce.admin.payment_provider.none'|trans }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

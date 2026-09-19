@@ -1,6 +1,6 @@
 {% set prices = tier.activePrices %}
 {% set highlighted = tier.highlighted and not standalone %}
-<form id="ecommerce-tier-{{ tier.id }}" data-tier class="ecommerce-tier{{ highlighted ? ' is-highlighted' }}{{ standalone ? ' is-standalone' }}">
+<form id="ecommerce-tier-{{ tier.id }}" data-tier action="{{ path('ecommerce_checkout_select') }}" method="get" class="ecommerce-tier{{ highlighted ? ' is-highlighted' }}{{ standalone ? ' is-standalone' }}">
     {% block ecommerce_tier_heading %}
         {% if not standalone %}
             <div class="ecommerce-tier-heading">
@@ -50,10 +50,9 @@
             {% endif %}
         {% endblock %}
         {% block ecommerce_tier_checkout %}
-            <button type="submit" class="{{ highlighted ? 'btn-cta' : 'btn-primary' }}" disabled aria-describedby="ecommerce-tier-{{ tier.id }}-unavailable">
+            <button type="submit" class="{{ highlighted ? 'btn-cta' : 'btn-primary' }}">
                 {{ 'ecommerce.store.get_tier'|trans({ tier: standalone ? tier.product.title : tier.label }) }}
             </button>
-            <p id="ecommerce-tier-{{ tier.id }}-unavailable" class="help-text text-center">{{ 'ecommerce.store.checkout_unavailable'|trans }}</p>
         {% endblock %}
     </div>
 </form>

@@ -1,0 +1,13 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% block title_page %}{{ 'ecommerce.order.title'|trans({ reference: order.reference }) }}{% endblock %}
+{% block body %}
+    <div class="breadcrumbs text-small">
+        <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+        <a href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a> &gt;
+        <span class="text-secondary">{{ order.reference }}</span>
+    </div>
+    <h1>{{ 'ecommerce.order.title'|trans({ reference: order.reference }) }}</h1>
+    {% block ecommerce_order_status %}
+        {{ component('Ecommerce\\OrderStatus', { order: order }) }}
+    {% endblock %}
+{% endblock %}

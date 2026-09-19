@@ -1,0 +1,19 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% block title_page %}{{ 'ecommerce.fake_payment.title'|trans }}{% endblock %}
+{% block body %}
+    <div class="ecommerce-checkout">
+        <h1>{{ 'ecommerce.fake_payment.title'|trans }}</h1>
+        <p class="alert-warning mb-4">{{ 'ecommerce.fake_payment.warning'|trans }}</p>
+        <section class="ecommerce-checkout-summary box">
+            <h2>{{ order.productTitle }}</h2>
+            <p class="ecommerce-checkout-tier">{{ order.tierLabel }}</p>
+            <p class="ecommerce-checkout-price">{{ order|ecommerce_price }}</p>
+        </section>
+        <form method="post" class="ecommerce-checkout-form">
+            <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_fake_payment') }}">
+            <button type="submit" name="outcome" value="pay" class="btn-cta">{{ 'ecommerce.fake_payment.pay'|trans }}</button>
+            <button type="submit" name="outcome" value="fail" class="btn-primary">{{ 'ecommerce.fake_payment.fail'|trans }}</button>
+            <button type="submit" name="outcome" value="cancel" class="btn-outlined">{{ 'ecommerce.fake_payment.cancel'|trans }}</button>
+        </form>
+    </div>
+{% endblock %}

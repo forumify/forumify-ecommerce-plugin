@@ -10,7 +10,12 @@
 {% endblock %}
 {% block body %}
     {% block ecommerce_store_header %}
-        <h1>{{ 'ecommerce.store.title'|trans }}</h1>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h1 class="mb-0">{{ 'ecommerce.store.title'|trans }}</h1>
+            {% if is_granted('ROLE_USER') %}
+                <a class="btn-outlined" href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a>
+            {% endif %}
+        </div>
     {% endblock %}
     {% block ecommerce_store_products %}
         {{ component('Ecommerce\\ProductList', { limit: 12 }) }}

@@ -1,0 +1,7 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = 'ecommerce.admin.order.plural'|trans %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <h2>{{ title }}</h2>
+    {{ component('Ecommerce\\OrderTable') }}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% set order = this.order %}
+{% set statusClasses = { pending: 'alert-info', completed: 'alert-success', failed: 'alert-error', cancelled: 'alert-warning' } %}
+<div {{ attributes }}{% if this.pending %} data-poll="delay(3000)|$render"{% endif %}>
+    {% block ecommerce_order_status_message %}
+        <p class="ecommerce-order-status {{ statusClasses[order.status.value] }}" role="status">
+            {% if this.pending %}<i class="ph ph-spinner-gap ecommerce-order-spinner" aria-hidden="true"></i>{% endif %}
+            {{ ('ecommerce.order.status.' ~ order.status.value)|trans }}
+        </p>
+    {% endblock %}
+    {% block ecommerce_order_summary %}
+        <section class="ecommerce-order-summary box" aria-label="{{ 'ecommerce.order.summary'|trans }}">
+            <dl>
+                <dt>{{ 'ecommerce.order.product'|trans }}</dt>
+                <dd>{{ order.productTitle }} - {{ order.tierLabel }}</dd>
+                <dt>{{ 'ecommerce.order.price'|trans }}</dt>
+                <dd>{{ order|ecommerce_price }}</dd>
+                <dt>{{ 'ecommerce.order.date'|trans }}</dt>
+                <dd>{{ order.createdAt|date('Y-m-d H:i') }}</dd>
+            </dl>
+        </section>
+    {% endblock %}
+    {% block ecommerce_order_actions %}
+        <div class="ecommerce-order-actions">
+            {% if order.price and order.status.value in ['failed', 'cancelled'] %}
+                <a class="btn-primary" href="{{ path('ecommerce_checkout', { price: order.price.id }) }}">{{ 'ecommerce.order.try_again'|trans }}</a>
+            {% endif %}
+            <a class="btn-outlined" href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a>
+        </div>
+    {% endblock %}
+</div>

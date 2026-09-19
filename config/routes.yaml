@@ -10,3 +10,9 @@ ecommerce:
     prefix: store
     trailing_slash_on_root: false
     name_prefix: ecommerce_
+
+ecommerce_fake_payment:
+    resource: ../src/PaymentProvider/Fake
+    type: attribute
+    prefix: store
+    name_prefix: ecommerce_

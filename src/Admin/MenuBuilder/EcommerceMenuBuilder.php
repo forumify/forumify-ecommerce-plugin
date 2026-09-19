@@ -28,6 +28,14 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
                 'icon' => 'ph ph-folders',
                 'permission' => 'ecommerce.admin.categories.view',
             ]),
+            new MenuItem('Orders', $u('ecommerce_admin_orders_list'), [
+                'icon' => 'ph ph-receipt',
+                'permission' => 'ecommerce.admin.orders.view',
+            ]),
+            new MenuItem('Payment providers', $u('ecommerce_admin_payment_providers_list'), [
+                'icon' => 'ph ph-credit-card',
+                'permission' => 'ecommerce.admin.payment_providers.manage',
+            ]),
             new MenuItem('Configuration', $u('ecommerce_admin_configuration'), [
                 'icon' => 'ph ph-wrench',
                 'permission' => 'ecommerce.admin.configuration.manage',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Money;
 
+use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\RuntimeExtensionInterface;
@@ -16,7 +17,7 @@ class PriceFormatter implements RuntimeExtensionInterface
     ) {
     }
 
-    public function format(ProductPrice $price): string
+    public function format(ProductPrice|Order $price): string
     {
         if ($price->isFree()) {
             return $this->translator->trans('ecommerce.price.free');

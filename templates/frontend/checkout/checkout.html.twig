@@ -1,0 +1,45 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% set tier = price.tier %}
+{% set product = tier.product %}
+{% block title_page %}{{ 'ecommerce.checkout.title'|trans }}{% endblock %}
+{% block body %}
+    <div class="breadcrumbs text-small">
+        <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+        <a href="{{ path('ecommerce_product', { slug: product.slug }) }}">{{ product.title }}</a> &gt;
+        <span class="text-secondary">{{ 'ecommerce.checkout.title'|trans }}</span>
+    </div>
+    <div class="ecommerce-checkout">
+        <h1>{{ 'ecommerce.checkout.title'|trans }}</h1>
+        {% block ecommerce_checkout_summary %}
+            <section class="ecommerce-checkout-summary box" aria-labelledby="ecommerce-checkout-summary-title">
+                <h2 id="ecommerce-checkout-summary-title">{{ product.title }}</h2>
+                <p class="ecommerce-checkout-tier">{{ tier.label }}</p>
+                <p class="ecommerce-checkout-price">{{ price|ecommerce_price }}</p>
+            </section>
+        {% endblock %}
+        {% block ecommerce_checkout_form %}
+            <form method="post" class="ecommerce-checkout-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_checkout') }}">
+                {% if price.free %}
+                    <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.get_free'|trans }}</button>
+                {% elseif providers is empty %}
+                    <p class="alert-warning">{{ 'ecommerce.checkout.error.no_provider'|trans }}</p>
+                {% else %}
+                    {% if providers|length > 1 %}
+                        <fieldset class="ecommerce-price-options">
+                            <legend class="text-small">{{ 'ecommerce.checkout.pay_with'|trans }}</legend>
+                            {% for provider in providers %}
+                                <label class="ecommerce-price-option" for="ecommerce-provider-{{ provider.key }}">
+                                    <input type="radio" name="provider" value="{{ provider.key }}" id="ecommerce-provider-{{ provider.key }}"{{ loop.first ? ' checked' }}>
+                                    <span>{{ provider.label }}</span>
+                                </label>
+                            {% endfor %}
+                        </fieldset>
+                    {% endif %}
+                    <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.pay'|trans({ price: price.amount|ecommerce_money }) }}</button>
+                {% endif %}
+                <a class="btn-outlined" href="{{ path('ecommerce_product', { slug: product.slug }) }}">{{ 'ecommerce.checkout.back'|trans }}</a>
+            </form>
+        {% endblock %}
+    </div>
+{% endblock %}

@@ -536,3 +536,123 @@
         transition: color 150ms ease-in-out, border-color 150ms ease-in-out, box-shadow 150ms ease-in-out, opacity 150ms ease-in-out;
     }
 }
+
+.ecommerce-checkout,
+.ecommerce-order-status,
+.ecommerce-order-summary,
+.ecommerce-order-actions {
+    max-width: 640px;
+}
+
+.ecommerce-checkout-summary h2 {
+    margin: 0;
+}
+
+.ecommerce-checkout-tier {
+    margin: var(--spacing-1) 0 var(--spacing-4);
+    color: var(--c-text-secondary);
+}
+
+.ecommerce-checkout-price {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ecommerce-checkout-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+    align-items: center;
+    margin-top: var(--spacing-6);
+}
+
+.ecommerce-checkout-form .ecommerce-price-options {
+    flex-basis: 100%;
+}
+
+.ecommerce-order-status {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+    margin: var(--spacing-4) 0;
+}
+
+.ecommerce-order-summary {
+    margin-bottom: var(--spacing-4);
+}
+
+.ecommerce-order-summary dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--spacing-2) var(--spacing-6);
+    margin: 0;
+}
+
+.ecommerce-order-summary dt {
+    color: var(--c-text-secondary);
+}
+
+.ecommerce-order-summary dd {
+    margin: 0;
+}
+
+.ecommerce-order-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+}
+
+.ecommerce-order-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    padding: 0;
+    list-style: none;
+}
+
+.ecommerce-order-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: var(--spacing-4);
+    align-items: center;
+    padding: var(--spacing-4);
+    color: var(--c-text-primary);
+    font-weight: 300;
+    background-color: var(--c-elevation-1);
+    border: var(--border);
+    border-radius: var(--border-radius);
+}
+
+.ecommerce-order-row:hover {
+    color: var(--c-text-primary);
+    border-color: var(--c-primary-accent);
+}
+
+.ecommerce-order-row-product {
+    display: flex;
+    flex-direction: column;
+}
+
+.ecommerce-order-row-price {
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 599px) {
+    .ecommerce-order-row {
+        grid-template-columns: 1fr auto;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ecommerce-order-spinner {
+        animation: ecommerce-spin 1s linear infinite;
+    }
+
+    @keyframes ecommerce-spin {
+        to {
+            rotate: 360deg;
+        }
+    }
+}

@@ -1,0 +1,32 @@
+{% extends '@Forumify/components/list.html.twig' %}
+{% block container %}
+    {% if this.result.rows is empty %}
+        {% block ecommerce_orders_empty %}
+            <div class="ecommerce-store-empty box">
+                <p>{{ 'ecommerce.orders.empty'|trans }}</p>
+                <a class="btn-primary mt-4" href="{{ path('ecommerce_store') }}">{{ 'ecommerce.orders.browse'|trans }}</a>
+            </div>
+        {% endblock %}
+    {% else %}
+        <ul class="ecommerce-order-list">
+            {% for order in this.result.rows %}
+                <li>
+                    {% block ecommerce_order_row %}
+                        <a class="ecommerce-order-row" href="{{ path('ecommerce_order', { reference: order.reference }) }}">
+                            <span class="ecommerce-order-row-product">
+                                <strong>{{ order.productTitle }}</strong>
+                                <span class="text-secondary">{{ order.tierLabel }}</span>
+                            </span>
+                            <span class="ecommerce-order-row-price">{{ order|ecommerce_price }}</span>
+                            <span class="text-secondary">{{ order.createdAt|date('Y-m-d') }}</span>
+                            <span class="tag{{ order.status.value in ['failed', 'cancelled'] ? ' tag-error' }}">{{ ('ecommerce.order_status.' ~ order.status.value)|trans }}</span>
+                        </a>
+                    {% endblock %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% block pagination_bottom %}
+        {% include '@Forumify/components/components/pagination.html.twig' with { class: 'mt-6' } %}
+    {% endblock %}
+{% endblock %}

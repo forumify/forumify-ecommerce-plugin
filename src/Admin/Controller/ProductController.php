@@ -82,6 +82,17 @@ class ProductController extends AbstractCrudController
             : $this->redirectToRoute('ecommerce_admin_products_list');
     }
 
+    #[Route('/{identifier}/delete', '_delete')]
+    public function delete(Request $request, string $identifier): Response
+    {
+        if ($this->repository->find($identifier)?->hasLockedPrices()) {
+            $this->addFlash('error', 'ecommerce.admin.product.delete_ordered');
+            return $this->redirectToRoute('ecommerce_admin_products_list');
+        }
+
+        return parent::delete($request, $identifier);
+    }
+
     #[Route('/{id}/tiers/create', '_tier_create')]
     #[IsGranted('ecommerce.admin.products.manage')]
     public function createTier(Request $request, Product $product): Response

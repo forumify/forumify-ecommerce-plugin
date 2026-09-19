@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PluginTests\Tests\Unit\Entity;
+
+use Forumify\Core\Entity\User;
+use Forumify\Ecommerce\Entity\BillingInterval;
+use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Entity\OrderStatus;
+use Forumify\Ecommerce\Entity\PriceType;
+use Forumify\Ecommerce\Entity\Product;
+use Forumify\Ecommerce\Entity\ProductPrice;
+use Forumify\Ecommerce\Entity\ProductTier;
+use PHPUnit\Framework\TestCase;
+
+class OrderTest extends TestCase
+{
+    public function testOrderSnapshotsWhatWasBought(): void
+    {
+        $order = $this->createOrder();
+        $order->providerReference = 'cs_123';
+
+        self::assertSame(OrderStatus::Pending, $order->status);
+        self::assertMatchesRegularExpression('/^[0-9A-F]{12}$/', $order->reference);
+        self::assertSame(['Milsim', 'forumify/milsim', 'Premium', 'premium'], [$order->productTitle, $order->productKey, $order->tierLabel, $order->tierKey]);
+        self::assertSame('EUR 9.99', (string)$order->amount);
+        self::assertSame([PriceType::Recurring, BillingInterval::Month, 1], [$order->priceType, $order->billingInterval, $order->intervalCount]);
+        self::assertFalse($order->isFree());
+        self::assertNotSame($order->reference, $this->createOrder()->reference);
+    }
+
+    public function testOnlyPendingOrdersFailOrCancelAndCompletionAlwaysWins(): void
+    {
+        $order = $this->createOrder();
+        self::assertTrue($order->cancel());
+        self::assertFalse($order->fail());
+        self::assertSame(OrderStatus::Cancelled, $order->status);
+
+        self::assertTrue($order->complete());
+        self::assertNotNull($order->completedAt);
+        self::assertFalse($order->complete());
+        self::assertFalse($order->fail());
+        self::assertFalse($order->cancel());
+        self::assertSame(OrderStatus::Completed, $order->status);
+    }
+
+    private function createOrder(): Order
+    {
+        $product = new Product();
+        $product->title = 'Milsim';
+        $product->key = 'forumify/milsim';
+        $tier = new ProductTier($product);
+        $tier->key = 'premium';
+        $tier->label = 'Premium';
+        $price = new ProductPrice($tier, 'EUR');
+        $price->type = PriceType::Recurring;
+        $price->billingInterval = BillingInterval::Month;
+        $price->intervalCount = 1;
+        $price->amountMinor = 999;
+
+        return new Order(new User(), $price, 'fake');
+    }
+}

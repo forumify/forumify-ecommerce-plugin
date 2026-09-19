@@ -1,0 +1,12 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% block title_page %}{{ 'ecommerce.orders.title'|trans }}{% endblock %}
+{% block body %}
+    <div class="breadcrumbs text-small">
+        <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+        <span class="text-secondary">{{ 'ecommerce.orders.title'|trans }}</span>
+    </div>
+    <h1>{{ 'ecommerce.orders.title'|trans }}</h1>
+    {% block ecommerce_orders_list %}
+        {{ component('Ecommerce\\MyOrderList', { limit: 10 }) }}
+    {% endblock %}
+{% endblock %}

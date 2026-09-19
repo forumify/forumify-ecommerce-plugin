@@ -1,0 +1,56 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = 'ecommerce.admin.order.title'|trans({ reference: order.reference }) %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <div class="mb-4 flex flex-wrap items-center justify-between">
+        <h1 class="mb-0">{{ title }}</h1>
+        <a class="btn-outlined" href="{{ path('ecommerce_admin_orders_list') }}">{{ 'ecommerce.admin.order.back'|trans }}</a>
+    </div>
+    <div class="box">
+        <table>
+            <tbody>
+                {% block ecommerce_admin_order_details %}
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.reference'|trans }}</th>
+                        <td><code>{{ order.reference }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.status'|trans }}</th>
+                        <td>{{ ('ecommerce.order_status.' ~ order.status.value)|trans }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.customer'|trans }}</th>
+                        <td>{{ order.user ? order.user.displayName : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.product'|trans }}</th>
+                        <td>
+                            {{ order.productTitle }} - {{ order.tierLabel }}
+                            <span class="text-secondary">(<code>{{ order.productKey }}</code> / <code>{{ order.tierKey }}</code>)</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.price'|trans }}</th>
+                        <td>{{ order|ecommerce_price }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.payment_provider'|trans }}</th>
+                        <td>{{ order.providerKey ?? ('ecommerce.admin.order.no_provider'|trans) }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.provider_reference'|trans }}</th>
+                        <td>{% if order.providerReference %}<code>{{ order.providerReference }}</code>{% else %}-{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.date'|trans }}</th>
+                        <td>{{ order.createdAt|date('Y-m-d H:i') }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'ecommerce.admin.order.completed_at'|trans }}</th>
+                        <td>{{ order.completedAt ? order.completedAt|date('Y-m-d H:i') : '-' }}</td>
+                    </tr>
+                {% endblock %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
