@@ -1,0 +1,22 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = title|trans({ tier: tier.label }) %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <p class="mb-2">
+        <a href="{{ path('ecommerce_admin_products_tier_edit', { id: tier.id }) }}#tab-prices">
+            <i class="ph ph-arrow-left"></i> {{ tier.product.title }} - {{ tier.label }}
+        </a>
+    </p>
+    <div {{ stimulus_controller('forumify/forumify-ecommerce-plugin/price_form') }}>
+        {% embed '@Forumify/admin/components/simple_form.html.twig' with {
+            cancelPath: path('ecommerce_admin_products_tier_edit', { id: tier.id }) ~ '#tab-prices',
+        } %}
+            {% block form_widget %}
+                {% if help is not null %}
+                    <p class="help-text mb-4">{{ help|trans }}</p>
+                {% endif %}
+                {% include '@ForumifyEcommercePlugin/admin/products/_price_fields.html.twig' with { priceForm: form } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% endblock %}

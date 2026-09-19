@@ -1,0 +1,10 @@
+{{ form_row(priceForm.amountMinor) }}
+{{ form_row(priceForm.type) }}
+<div data-price-recurring>
+    <div class="grid-sm-2 gap-4">
+        {{ form_row(priceForm.intervalCount) }}
+        {{ form_row(priceForm.billingInterval) }}
+    </div>
+    <p class="help-text mb-4">{{ 'ecommerce.admin.price.recurring_help'|trans }}</p>
+</div>
+{{ form_rest(priceForm) }}

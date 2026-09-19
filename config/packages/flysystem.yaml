@@ -1,0 +1,6 @@
+flysystem:
+    storages:
+        ecommerce_asset.storage:
+            adapter: 'local'
+            options:
+                directory: '%kernel.project_dir%/public/storage/ecommerce'

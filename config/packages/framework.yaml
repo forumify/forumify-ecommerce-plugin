@@ -1,0 +1,5 @@
+framework:
+    assets:
+        packages:
+            ecommerce.asset:
+                base_path: '/storage/ecommerce'

@@ -20,6 +20,14 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
         $u = $this->urlGenerator->generate(...);
 
         $menu->addItem(new Menu('Ecommerce', ['icon' => 'ph ph-storefront', 'permission' => 'ecommerce.admin.view'], [
+            new MenuItem('Products', $u('ecommerce_admin_products_list'), [
+                'icon' => 'ph ph-package',
+                'permission' => 'ecommerce.admin.products.view',
+            ]),
+            new MenuItem('Categories', $u('ecommerce_admin_categories_list'), [
+                'icon' => 'ph ph-folders',
+                'permission' => 'ecommerce.admin.categories.view',
+            ]),
             new MenuItem('Configuration', $u('ecommerce_admin_configuration'), [
                 'icon' => 'ph ph-wrench',
                 'permission' => 'ecommerce.admin.configuration.manage',

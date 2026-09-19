@@ -1,0 +1,30 @@
+{
+    "name": "@forumify/forumify-ecommerce-plugin",
+    "description": "Frontend assets for the forumify ecommerce plugin",
+    "version": "0.1.0",
+    "symfony": {
+        "controllers": {
+            "price_form": {
+                "main": "dist/price_form_controller.js",
+                "fetch": "lazy",
+                "enabled": true,
+                "autoimport": {}
+            }
+        },
+        "importmap": {
+            "@hotwired/stimulus": "^3.0.0"
+        }
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.22.0",
+        "@hotwired/stimulus": "^3.0.0",
+        "@stylistic/eslint-plugin": "^4.2.0",
+        "eslint": "^9.22.0",
+        "globals": "^16.0.0"
+    },
+    "scripts": {
+        "lint": "eslint dist"
+    }
+}

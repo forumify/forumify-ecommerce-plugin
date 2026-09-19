@@ -5,3 +5,99 @@ ecommerce:
             saved: 'The ecommerce configuration was saved.'
             currency: 'Store currency'
             currency_help: 'All prices in your store use this currency. Existing prices keep the currency they were created with.'
+        product_category:
+            crud:
+                single: 'category'
+                plural: 'categories'
+        category:
+            title: 'Title'
+            slug: 'Slug'
+        product:
+            crud:
+                single: 'product'
+                plural: 'products'
+            title: 'Title'
+            key: 'Key'
+            key_help: 'A stable identifier for this product, such as "t-shirt" or "acme/my-plugin". Integrations use it together with the tier key, so it can no longer be changed once the product has been sold.'
+            state: 'State'
+            state_help: 'Only published products are shown in the store. Archive a product to stop selling it while keeping its order history.'
+            categories: 'Categories'
+            short_description: 'Short description'
+            short_description_help: 'A one-line summary shown in the product catalog.'
+            description: 'Description'
+            image: 'Image'
+        tier:
+            plural: 'Tiers'
+            help: 'Every product needs at least one tier. A tier is a variant of the product, like "Free" or "Premium", and has one or more prices.'
+            first_price: 'Price'
+            first_price_help: 'Every tier needs at least one price. You can add more prices, like a yearly one, after creating the tier.'
+            create: 'Add tier'
+            single: 'Tier'
+            edit: 'Edit tier {tier}'
+            label: 'Label'
+            key: 'Key'
+            key_help: 'A stable identifier for this tier, such as "free", "basic" or "premium". Integrations use it together with the product key, so it can no longer be changed once the tier has been sold.'
+            description: 'Description'
+            description_help: 'What the tier includes, for example a list of features.'
+            saved: 'The tier was saved.'
+            deleted: 'The tier was deleted.'
+            delete_locked: 'This tier has prices that have been ordered, so it can no longer be deleted.'
+        price:
+            single: 'Price'
+            plural: 'Prices'
+            help: 'Only active prices are offered in the store. A price of 0 makes the tier free.'
+            create: 'Add price to {tier}'
+            edit: 'Edit price of {tier}'
+            change: 'Change price of {tier}'
+            change_help: 'This price has been ordered, so it can no longer be edited. Saving creates a new price, and the current price is deactivated. Existing orders and subscriptions keep the price they were bought at.'
+            locked_help: 'This price has been ordered, so only its active state can still be changed. Use "Change price" to replace it with a new price.'
+            amount: 'Amount ({currency})'
+            amount_help: 'Use 0 for a free price.'
+            type: 'Type'
+            billing_interval: 'Billing interval'
+            interval_count: 'Bill every'
+            recurring_help: 'For example, every 3 months or every 1 year.'
+            choose_interval: 'Choose an interval'
+            active: 'Active'
+            active_help: 'Only active prices are offered in the store.'
+            status: 'Status'
+            status_active: 'Active'
+            status_inactive: 'Inactive'
+            status_locked: 'Locked'
+            status_replaced: 'Replaced'
+            saved: 'The price was saved.'
+            changed: 'The price was changed. The previous price is now inactive.'
+            change_not_allowed: 'Only prices that have been ordered and have not been replaced yet can be changed. Edit the price instead.'
+            deleted: 'The price was deleted.'
+            delete_locked: 'This price has been ordered, so it can no longer be deleted. Deactivate it instead.'
+            delete_last: 'A tier needs at least one price, so its last price can not be deleted. Deactivate it instead, or delete the tier.'
+    product_state:
+        draft: 'Draft'
+        published: 'Published'
+        archived: 'Archived'
+    price_type:
+        one_time: 'One-time'
+        recurring: 'Recurring'
+    billing_interval:
+        day: 'Day'
+        week: 'Week'
+        month: 'Month'
+        year: 'Year'
+    product:
+        key_taken: 'Another product already uses this key.'
+        key_format: 'Use only lowercase letters, numbers, dashes, underscores, dots and slashes.'
+    tier:
+        key_taken: 'This product already has a tier with this key.'
+        key_format: 'Use only lowercase letters, numbers, dashes and underscores.'
+    price:
+        amount_invalid: 'Please enter a valid amount.'
+        interval_required: 'A recurring price needs a billing interval.'
+        interval_not_allowed: 'A one-time price cannot have a billing interval.'
+        recurring: >-
+            {interval, select,
+                day {{count, plural, one {{amount} per day} other {{amount} every # days}}}
+                week {{count, plural, one {{amount} per week} other {{amount} every # weeks}}}
+                month {{count, plural, one {{amount} per month} other {{amount} every # months}}}
+                year {{count, plural, one {{amount} per year} other {{amount} every # years}}}
+                other {{amount}}
+            }

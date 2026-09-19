@@ -1,0 +1,53 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = tier is null
+    ? 'ecommerce.admin.tier.create'|trans
+    : 'ecommerce.admin.tier.edit'|trans({ tier: tier.label }) %}
+{% set cancelPath = path('ecommerce_admin_products_edit', { identifier: product.id }) ~ '#tab-tiers' %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <p class="mb-2">
+        <a href="{{ cancelPath }}">
+            <i class="ph ph-arrow-left"></i> {{ product.title }}
+        </a>
+    </p>
+    <h1 class="mb-4">{{ title }}</h1>
+    {% if tier is null %}
+        <div {{ stimulus_controller('forumify/forumify-ecommerce-plugin/price_form') }}>
+            {% embed '@Forumify/admin/components/simple_form.html.twig' with { title: null } %}
+                {% block form_widget %}
+                    {{ form_widget(form.tier) }}
+                    <h2 class="mt-6 mb-2">{{ 'ecommerce.admin.tier.first_price'|trans }}</h2>
+                    <p class="help-text mb-4">{{ 'ecommerce.admin.tier.first_price_help'|trans }}</p>
+                    {% include '@ForumifyEcommercePlugin/admin/products/_price_fields.html.twig' with { priceForm: form.price } %}
+                    {{ form_rest(form) }}
+                {% endblock %}
+            {% endembed %}
+        </div>
+    {% else %}
+        {% embed '@Forumify/components/tabs.html.twig' %}
+            {% block tabs %}
+                <button type="button" class="btn-link" data-tab-id="tier">{{ 'ecommerce.admin.tier.single'|trans }}</button>
+                <button type="button" class="btn-link" data-tab-id="prices">{{ 'ecommerce.admin.price.plural'|trans }}</button>
+            {% endblock %}
+            {% block tabpanels %}
+                <div id="tier">
+                    {% include '@Forumify/admin/components/simple_form.html.twig' with { title: null } %}
+                </div>
+                <div id="prices">
+                    <h2 class="mb-2">
+                        {{ 'ecommerce.admin.price.plural'|trans }}
+                        <a
+                            class="btn-primary btn-small btn-icon"
+                            aria-label="{{ 'ecommerce.admin.price.create'|trans({ tier: tier.label }) }}"
+                            href="{{ path('ecommerce_admin_products_price_create', { id: tier.id }) }}"
+                        >
+                            <i class="ph ph-plus"></i>
+                        </a>
+                    </h2>
+                    <p class="help-text mb-2">{{ 'ecommerce.admin.price.help'|trans }}</p>
+                    {{ component('Ecommerce\\ProductPriceTable', { tierId: tier.id }) }}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+{% endblock %}

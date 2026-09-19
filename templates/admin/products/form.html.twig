@@ -1,0 +1,44 @@
+{% extends '@Forumify/admin/crud/form.html.twig' %}
+{% block body %}
+    <div class="mb-4 flex flex-wrap items-center justify-between">
+        <h1 class="mb-0">{{ title }}</h1>
+        <div>
+            {% block form_actions %}{{ parent() }}{% endblock %}
+        </div>
+    </div>
+    {% if data is null %}
+        {% include '@Forumify/admin/components/simple_form.html.twig' with {
+            cancelPath: path(route ~ '_list'),
+            title: null,
+        } %}
+    {% else %}
+        {% embed '@Forumify/components/tabs.html.twig' %}
+            {% block tabs %}
+                <button type="button" class="btn-link" data-tab-id="product">{{ 'ecommerce.admin.product.crud.single'|trans|capitalize }}</button>
+                <button type="button" class="btn-link" data-tab-id="tiers">{{ 'ecommerce.admin.tier.plural'|trans }}</button>
+            {% endblock %}
+            {% block tabpanels %}
+                <div id="product">
+                    {% include '@Forumify/admin/components/simple_form.html.twig' with {
+                        cancelPath: path(route ~ '_list'),
+                        title: null,
+                    } %}
+                </div>
+                <div id="tiers">
+                    <h2 class="mb-2">
+                        {{ 'ecommerce.admin.tier.plural'|trans }}
+                        <a
+                            class="btn-primary btn-small btn-icon"
+                            aria-label="{{ 'ecommerce.admin.tier.create'|trans }}"
+                            href="{{ path('ecommerce_admin_products_tier_create', { id: data.id }) }}"
+                        >
+                            <i class="ph ph-plus"></i>
+                        </a>
+                    </h2>
+                    <p class="help-text mb-2">{{ 'ecommerce.admin.tier.help'|trans }}</p>
+                    {{ component('Ecommerce\\ProductTierTable', { productId: data.id }) }}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+{% endblock %}
