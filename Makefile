@@ -19,6 +19,7 @@ setup-tests:
 
 .PHONY: run-tests
 run-tests:
+	@rm -rf tests/var
 	@./vendor/bin/phpunit
 
 # Generates a migration for your own entities only, forumify's own migrations live in

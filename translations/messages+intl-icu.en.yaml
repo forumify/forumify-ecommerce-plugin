@@ -1,0 +1,7 @@
+ecommerce:
+    admin:
+        configuration:
+            title: 'Ecommerce Configuration'
+            saved: 'The ecommerce configuration was saved.'
+            currency: 'Store currency'
+            currency_help: 'All prices in your store use this currency. Existing prices keep the currency they were created with.'
