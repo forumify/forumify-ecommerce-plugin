@@ -7,7 +7,9 @@ namespace Forumify\Ecommerce\Admin\MenuBuilder;
 use Forumify\Admin\MenuBuilder\AdminMenuBuilderInterface;
 use Forumify\Core\MenuBuilder\Menu;
 use Forumify\Core\MenuBuilder\MenuItem;
+use Forumify\Ecommerce\Repository\CancellationRequestRepository;
 use Forumify\Ecommerce\Repository\OrderRepository;
+use Forumify\Ecommerce\Repository\RefundRequestRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -17,6 +19,8 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly Security $security,
         private readonly OrderRepository $orderRepository,
+        private readonly RefundRequestRepository $refundRequestRepository,
+        private readonly CancellationRequestRepository $cancellationRequestRepository,
     ) {
     }
 
@@ -37,9 +41,13 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
                 'icon' => 'ph ph-receipt',
                 'permission' => 'ecommerce.admin.orders.view',
             ]),
-            new MenuItem('Subscriptions', $u('ecommerce_admin_subscriptions_list'), [
+            new MenuItem($this->getSubscriptionsLabel(), $u('ecommerce_admin_subscriptions_list'), [
                 'icon' => 'ph ph-arrows-clockwise',
                 'permission' => 'ecommerce.admin.subscriptions.view',
+            ]),
+            new MenuItem($this->getRefundsLabel(), $u('ecommerce_admin_refunds_list'), [
+                'icon' => 'ph ph-arrow-u-up-left',
+                'permission' => 'ecommerce.admin.orders.refund',
             ]),
             new MenuItem('Payment providers', $u('ecommerce_admin_payment_providers_list'), [
                 'icon' => 'ph ph-credit-card',
@@ -54,12 +62,25 @@ class EcommerceMenuBuilder implements AdminMenuBuilderInterface
 
     private function getOrdersLabel(): string
     {
-        if (!$this->security->isGranted('ecommerce.admin.orders.fulfill')) {
-            return 'Orders';
-        }
+        return $this->security->isGranted('ecommerce.admin.orders.fulfill')
+            ? self::withCount('Orders', $this->orderRepository->countToFulfill())
+            : 'Orders';
+    }
 
-        $toFulfill = $this->orderRepository->countToFulfill();
+    private function getRefundsLabel(): string
+    {
+        return self::withCount('Refunds', $this->refundRequestRepository->countPending());
+    }
 
-        return $toFulfill > 0 ? "Orders ({$toFulfill})" : 'Orders';
+    private function getSubscriptionsLabel(): string
+    {
+        return $this->security->isGranted('ecommerce.admin.subscriptions.manage')
+            ? self::withCount('Subscriptions', $this->cancellationRequestRepository->countPending())
+            : 'Subscriptions';
+    }
+
+    private static function withCount(string $label, int $count): string
+    {
+        return $count > 0 ? "{$label} ({$count})" : $label;
     }
 }

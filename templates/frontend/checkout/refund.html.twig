@@ -1,0 +1,31 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% block title_page %}{{ 'ecommerce.refund.title'|trans }}{% endblock %}
+{% block body %}
+    <div class="ecommerce-page is-narrow">
+        <div class="breadcrumbs text-small">
+            <a href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a> &gt;
+            <a href="{{ orderPath }}">{{ order.reference }}</a> &gt;
+            <span class="text-secondary">{{ 'ecommerce.refund.title'|trans }}</span>
+        </div>
+        <h1>{{ 'ecommerce.refund.title'|trans }}</h1>
+        {% block ecommerce_refund_summary %}
+            <p class="ecommerce-plan-term mb-6">
+                {{ 'ecommerce.refund.summary'|trans({
+                    product: order.productTitle ~ ' - ' ~ order.tierLabel,
+                    price: order.amount|ecommerce_money,
+                }) }}
+            </p>
+        {% endblock %}
+        {% block ecommerce_refund_form %}
+            <div class="box">
+                {{ form_start(form) }}
+                {{ form_row(form.reason) }}
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button type="submit" class="btn-primary">{{ 'ecommerce.refund.submit'|trans }}</button>
+                    <a class="btn-outlined" href="{{ orderPath }}">{{ 'ecommerce.refund.back'|trans }}</a>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        {% endblock %}
+    </div>
+{% endblock %}

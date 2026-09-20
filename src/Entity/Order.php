@@ -45,6 +45,15 @@ class Order
     #[ORM\Column(nullable: true)]
     public private(set) ?DateTimeImmutable $completedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    public private(set) ?DateTimeImmutable $refundedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    public private(set) ?int $refundPeriodDays;
+
+    #[ORM\OneToOne(mappedBy: 'order')]
+    public private(set) ?RefundRequest $refundRequest = null;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     public private(set) ?User $completedBy = null;
@@ -126,6 +135,7 @@ class Order
         $this->priceType = $price->type;
         $this->billingInterval = $price->billingInterval;
         $this->intervalCount = $price->intervalCount;
+        $this->refundPeriodDays = $product->refundPeriodDays;
         $this->fulfillmentType = $subscription?->initialOrder->fulfillmentType ?? $product->fulfillmentType;
         $this->fulfillmentData = $subscription?->initialOrder->fulfillmentData ?? $fulfillmentData;
     }
@@ -150,6 +160,32 @@ class Order
         return $this->amountMinor === 0;
     }
 
+    public function getRefundDeadline(): ?DateTimeImmutable
+    {
+        if ($this->refundPeriodDays === null || $this->completedAt === null) {
+            return null;
+        }
+
+        return $this->completedAt->modify("+{$this->refundPeriodDays} days");
+    }
+
+    public function isRefundable(): bool
+    {
+        if ($this->refundPeriodDays === null || $this->isFree()) {
+            return false;
+        }
+
+        if ($this->status === OrderStatus::Paid) {
+            return true;
+        }
+
+        $deadline = $this->getRefundDeadline();
+
+        return $this->status === OrderStatus::Completed
+            && $deadline !== null
+            && $deadline >= new DateTimeImmutable();
+    }
+
     public function periodEndFrom(DateTimeImmutable $start): DateTimeImmutable
     {
         if ($this->billingInterval === null) {
@@ -161,7 +197,8 @@ class Order
 
     public function pay(): bool
     {
-        if ($this->status === OrderStatus::Paid || $this->status === OrderStatus::Completed) {
+        $settled = [OrderStatus::Paid, OrderStatus::Completed, OrderStatus::Refunded];
+        if (in_array($this->status, $settled, true)) {
             return false;
         }
 
@@ -181,6 +218,18 @@ class Order
         $this->completedAt = new DateTimeImmutable();
         $this->completedBy = $by;
         $this->fulfillmentNote = $note !== null && trim($note) !== '' ? trim($note) : null;
+
+        return true;
+    }
+
+    public function refund(): bool
+    {
+        if ($this->status !== OrderStatus::Paid && $this->status !== OrderStatus::Completed) {
+            return false;
+        }
+
+        $this->status = OrderStatus::Refunded;
+        $this->refundedAt = new DateTimeImmutable();
 
         return true;
     }

@@ -56,7 +56,6 @@ class StripeSettingsType extends AbstractType
             'label' => "ecommerce.stripe.{$field}",
             'help' => "ecommerce.stripe.{$field}_help",
             'help_html' => true,
-            'help_translation_parameters' => ['events' => implode(', ', StripeEventMapper::HANDLED_EVENTS)],
             'required' => $current === '',
             'attr' => [
                 'autocomplete' => 'off',

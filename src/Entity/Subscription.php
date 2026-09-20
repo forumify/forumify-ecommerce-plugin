@@ -53,6 +53,9 @@ class Subscription
     #[ORM\Column(nullable: true)]
     public private(set) ?DateTimeImmutable $pastDueSince = null;
 
+    #[ORM\OneToOne(mappedBy: 'subscription', cascade: ['persist'], orphanRemoval: true)]
+    public private(set) ?CancellationRequest $cancellationRequest = null;
+
     public function __construct(Order $initialOrder, string $providerReference, DateTimeImmutable $currentPeriodEnd)
     {
         if ($initialOrder->providerKey === null || $initialOrder->priceType !== PriceType::Recurring) {
@@ -122,8 +125,19 @@ class Subscription
         );
     }
 
+    public function requestCancellation(): ?CancellationRequest
+    {
+        if ($this->cancellationRequest !== null) {
+            return null;
+        }
+
+        return $this->cancellationRequest = new CancellationRequest($this);
+    }
+
     public function resume(): bool
     {
+        $this->cancellationRequest = null;
+
         return $this->transition(
             [SubscriptionStatus::Cancelled],
             $this->pastDueSince === null ? SubscriptionStatus::Active : SubscriptionStatus::PastDue,

@@ -7,6 +7,7 @@ namespace Forumify\Ecommerce\PaymentProvider\Fake;
 use DateTimeImmutable;
 use Exception;
 use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\PaymentProviderConfig;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\Subscription;
@@ -16,11 +17,14 @@ use Forumify\Ecommerce\PaymentProvider\CheckoutUrls;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
+use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
+use Forumify\Ecommerce\PaymentProvider\InvoiceDocument;
+use Forumify\Ecommerce\PaymentProvider\PaymentProviderCapability;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderInterface;
 use Forumify\Ecommerce\Repository\SubscriptionRepository;
 use Symfony\Component\DependencyInjection\Attribute\WhenNot;
@@ -37,6 +41,7 @@ class FakePaymentProvider implements PaymentProviderInterface
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly SubscriptionRepository $subscriptionRepository,
+        private readonly FakeInvoice $invoice,
     ) {
     }
 
@@ -68,6 +73,15 @@ class FakePaymentProvider implements PaymentProviderInterface
     public function supports(ProductPrice $price): bool
     {
         return true;
+    }
+
+    public function getCapabilities(): array
+    {
+        return [
+            PaymentProviderCapability::Refund,
+            PaymentProviderCapability::Invoice,
+            PaymentProviderCapability::HostedPayment,
+        ];
     }
 
     public function startCheckout(Order $order, CheckoutUrls $urls): CheckoutRedirect
@@ -110,6 +124,36 @@ class FakePaymentProvider implements PaymentProviderInterface
             : [new SubscriptionEnded($subscription->providerReference)];
     }
 
+    public function refund(Order $order): array
+    {
+        return [new PaymentRefunded($order->reference, amountMinor: $order->amountMinor)];
+    }
+
+    public function getHostedPaymentUrl(Order $order): ?string
+    {
+        if ($order->status !== OrderStatus::Pending) {
+            return null;
+        }
+
+        return $this->urlGenerator->generate(
+            'ecommerce_fake_payment_pay',
+            ['reference' => $order->reference],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+    }
+
+    public function getInvoice(Order $order): ?InvoiceDocument
+    {
+        if ($order->paidAt === null) {
+            return null;
+        }
+
+        return InvoiceDocument::file(
+            $this->invoice->render($order),
+            'invoice-' . strtolower($order->reference) . '.pdf',
+        );
+    }
+
     /**
      * @param array<mixed> $payload
      */
@@ -139,6 +183,7 @@ class FakePaymentProvider implements PaymentProviderInterface
                 $subscription ?? throw new InvalidWebhookException(),
                 ($payload['cancel_at_period_end'] ?? false) === true,
             ),
+            'refunded' => new PaymentRefunded($order, $payment),
             'ended' => new SubscriptionEnded($subscription ?? throw new InvalidWebhookException()),
             default => null,
         };

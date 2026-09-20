@@ -1,6 +1,6 @@
 {% set order = this.order %}
 {% set status = order.status.value %}
-{% set statusIcons = { pending: 'ph-spinner-gap ecommerce-order-spinner', paid: 'ph-package', completed: 'ph-check', failed: 'ph-x', cancelled: 'ph-prohibit' } %}
+{% set statusIcons = { pending: 'ph-spinner-gap ecommerce-order-spinner', paid: 'ph-package', completed: 'ph-check', failed: 'ph-x', cancelled: 'ph-prohibit', refunded: 'ph-arrow-u-up-left' } %}
 <div {{ attributes.defaults({ class: 'flex flex-col gap-6' }) }}{% if this.pending %} data-poll="delay(3000)|$render"{% endif %}>
     {% block ecommerce_order_status_message %}
         <section class="box flex flex-col items-center gap-4 p-8 text-center">
@@ -13,11 +13,22 @@
                 {% endif %}
             </p>
             {% block ecommerce_order_actions %}
-                {% if order.price and not order.renewal and status in ['failed', 'cancelled'] %}
-                    <a class="btn-primary" href="{{ path('ecommerce_checkout', { price: order.price.id }) }}">{{ 'ecommerce.order.try_again'|trans }}</a>
-                {% elseif status in ['paid', 'completed'] %}
-                    <a class="btn-outlined" href="{{ path('ecommerce_store') }}">{{ 'ecommerce.order.continue_shopping'|trans }}</a>
-                {% endif %}
+                <div class="flex flex-wrap justify-center gap-2">
+                    {% if this.canPay %}
+                        <a class="btn-primary" href="{{ path('ecommerce_order_pay', { reference: order.reference }) }}">
+                            {{ (order.renewal ? 'ecommerce.order.update_payment' : 'ecommerce.order.pay_now')|trans }}
+                        </a>
+                    {% elseif order.price and not order.renewal and status in ['failed', 'cancelled'] %}
+                        <a class="btn-primary" href="{{ path('ecommerce_checkout', { price: order.price.id }) }}">{{ 'ecommerce.order.try_again'|trans }}</a>
+                    {% elseif status in ['paid', 'completed'] %}
+                        <a class="btn-outlined" href="{{ path('ecommerce_store') }}">{{ 'ecommerce.order.continue_shopping'|trans }}</a>
+                    {% endif %}
+                    {% if this.hasInvoice %}
+                        <a class="btn-outlined" href="{{ path('ecommerce_order_invoice', { reference: order.reference }) }}">
+                            {{ 'ecommerce.order.invoice'|trans }}
+                        </a>
+                    {% endif %}
+                </div>
             {% endblock %}
         </section>
     {% endblock %}
@@ -56,6 +67,30 @@
                     {% endif %}
                 {% endblock %}
             </dl>
+            {% block ecommerce_order_refund %}
+                {% set refundRequest = order.refundRequest %}
+                {% if refundRequest %}
+                    <div class="card-body border-t flex flex-col gap-2">
+                        <strong>{{ ('ecommerce.refund.status.' ~ refundRequest.status.value)|trans }}</strong>
+                        {% if refundRequest.note %}
+                            <p class="text-secondary">{{ refundRequest.note|nl2br }}</p>
+                        {% endif %}
+                    </div>
+                {% elseif this.canRequestRefund %}
+                    <div class="card-body border-t flex flex-wrap items-center justify-between gap-2">
+                        <span class="text-secondary">
+                            {% if order.refundDeadline %}
+                                {{ 'ecommerce.refund.until'|trans({ date: order.refundDeadline|date('j M Y') }) }}
+                            {% else %}
+                                {{ 'ecommerce.refund.available'|trans }}
+                            {% endif %}
+                        </span>
+                        <a class="btn-link" href="{{ path('ecommerce_order_refund', { reference: order.reference }) }}">
+                            {{ 'ecommerce.refund.request'|trans }}
+                        </a>
+                    </div>
+                {% endif %}
+            {% endblock %}
             {% block ecommerce_order_fulfillment %}
                 {% if status in ['paid', 'completed'] %}
                     {% include '@ForumifyEcommercePlugin/fulfillment/_details.html.twig' with { order: order, class: 'card-body border-t' } only %}

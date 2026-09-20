@@ -6,8 +6,9 @@ namespace Forumify\Ecommerce\PaymentProvider\Fake;
 
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
-use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
+use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
+use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\Service\PaymentEventHandler;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -40,7 +41,7 @@ class FakePaymentController extends AbstractController
         $token = $request->request->getString('_token');
         if ($request->isMethod('POST') && $this->isCsrfTokenValid('ecommerce_fake_payment', $token)) {
             return match ($request->request->getString('outcome')) {
-                'pay' => $this->finish($order, FakePaymentProvider::completed($order->reference)),
+                'pay' => $this->finish($order, self::paid($order)),
                 'fail' => $this->finish($order, new CheckoutFailed($order->reference)),
                 'cancel' => $this->redirectToRoute('ecommerce_order_cancel', ['reference' => $order->reference]),
                 default => $this->redirectToRoute('ecommerce_fake_payment_pay', ['reference' => $order->reference]),
@@ -52,10 +53,27 @@ class FakePaymentController extends AbstractController
         ]);
     }
 
-    private function finish(Order $order, CheckoutCompleted|CheckoutFailed $event): Response
+    private function finish(Order $order, PaymentEvent $event): Response
     {
         $this->eventHandler->handle($event, FakePaymentProvider::KEY);
 
         return $this->redirectToRoute('ecommerce_order', ['reference' => $order->reference]);
+    }
+
+    /**
+     * Paying a renewal settles its subscription's period, the way a provider's retry would.
+     */
+    private static function paid(Order $order): PaymentEvent
+    {
+        $subscription = $order->subscription;
+        if ($subscription === null) {
+            return FakePaymentProvider::completed($order->reference);
+        }
+
+        return new SubscriptionRenewed(
+            $subscription->providerReference,
+            (string)$order->providerReference,
+            $order->periodEndFrom($subscription->currentPeriodEnd),
+        );
     }
 }

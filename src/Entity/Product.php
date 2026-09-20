@@ -60,6 +60,10 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\JoinTable('ecommerce_product_categories')]
     public Collection $categories;
 
+    #[ORM\Column(nullable: true)]
+    #[Assert\Positive]
+    public ?int $refundPeriodDays = null;
+
     #[ORM\Column(length: 64)]
     public string $fulfillmentType = InstantFulfillmentType::KEY;
 

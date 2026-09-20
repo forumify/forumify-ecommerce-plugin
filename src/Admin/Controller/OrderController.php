@@ -6,8 +6,10 @@ namespace Forumify\Ecommerce\Admin\Controller;
 
 use Forumify\Core\Entity\User;
 use Forumify\Ecommerce\Admin\Form\OrderCompleteType;
+use Forumify\Ecommerce\Admin\Form\RefundRequestHandleType;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
+use Forumify\Ecommerce\Entity\RefundRequestStatus;
 use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
 use Forumify\Ecommerce\Repository\SubscriptionRepository;
 use Forumify\Ecommerce\Service\FulfillmentService;
@@ -42,10 +44,23 @@ class OrderController extends AbstractController
             ? $this->createCompleteForm($order)->createView()
             : null;
 
+        $refundRequest = $order->refundRequest;
+        $handleRefundForm = $refundRequest?->status === RefundRequestStatus::Pending
+            && $this->isGranted('ecommerce.admin.orders.refund')
+                ? $this->createForm(RefundRequestHandleType::class, null, [
+                    'action' => $this->generateUrl(
+                        'ecommerce_admin_refunds_handle',
+                        ['id' => $refundRequest->getId()],
+                    ),
+                ])->createView()
+                : null;
+
         return $this->render('@ForumifyEcommercePlugin/admin/orders/view.html.twig', [
             'order' => $order,
             'subscription' => $order->subscription ?? $this->subscriptionRepository->findOneByInitialOrder($order),
             'completeForm' => $completeForm,
+            'refundRequest' => $refundRequest,
+            'handleRefundForm' => $handleRefundForm,
         ]);
     }
 

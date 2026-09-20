@@ -8,6 +8,7 @@ use Forumify\Core\Entity\Role;
 use Forumify\Core\Entity\User;
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\Grant;
+use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Forum\Entity\Badge;
 
@@ -35,5 +36,13 @@ class GrantRepository extends AbstractRepository
     public function findBySubscription(Subscription $subscription): array
     {
         return $this->findBy(['subscription' => $subscription]);
+    }
+
+    /**
+     * @return list<Grant>
+     */
+    public function findByOrder(Order $order): array
+    {
+        return $this->findBy(['order' => $order]);
     }
 }

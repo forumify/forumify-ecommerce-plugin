@@ -86,6 +86,34 @@
             </tbody>
         </table>
     </div>
+    {% block ecommerce_admin_subscription_cancellation %}
+        {% set cancellation = subscription.cancellationRequest %}
+        {% if cancellation %}
+            <div class="box mt-4">
+                <h2 class="mt-0">{{ 'ecommerce.admin.subscription.cancellation'|trans }}</h2>
+                {% if cancellation.pending %}
+                    <p class="mb-4">
+                        {{ 'ecommerce.admin.subscription.cancellation_pending'|trans({
+                            date: subscription.currentPeriodEnd|date('Y-m-d'),
+                        }) }}
+                    </p>
+                    {% if is_granted('ecommerce.admin.subscriptions.manage') %}
+                        <form method="post" action="{{ path('ecommerce_admin_subscriptions_handle_cancellation', { id: subscription.id }) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('ecommerce_handle_cancellation') }}">
+                            <button type="submit" class="btn-primary">{{ 'ecommerce.admin.subscription.cancellation_handle'|trans }}</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p>
+                        {{ 'ecommerce.admin.subscription.cancellation_completed'|trans({
+                            date: cancellation.completedAt|date('Y-m-d H:i'),
+                            user: cancellation.completedBy ? cancellation.completedBy.displayName : '-',
+                        }) }}
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endblock %}
     {% block ecommerce_admin_subscription_orders %}
         <h2 class="mt-6 mb-2">{{ 'ecommerce.admin.order.plural'|trans }}</h2>
         {{ component('Ecommerce\\OrderTable', { subscription: subscription.id }) }}

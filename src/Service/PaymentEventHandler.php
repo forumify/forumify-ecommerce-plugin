@@ -11,6 +11,7 @@ use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Entity\SubscriptionStatus;
 use Forumify\Ecommerce\Event\OrderFailedEvent;
 use Forumify\Ecommerce\Event\OrderPaidEvent;
+use Forumify\Ecommerce\Event\OrderRefundedEvent;
 use Forumify\Ecommerce\Event\SubscriptionCancelledEvent;
 use Forumify\Ecommerce\Event\SubscriptionEndedEvent;
 use Forumify\Ecommerce\Event\SubscriptionPastDueEvent;
@@ -21,6 +22,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
+use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
@@ -76,6 +78,7 @@ class PaymentEventHandler
                     return [];
                 },
             ),
+            $event instanceof PaymentRefunded => $this->refundOrder($event, $providerKey),
             $event instanceof SubscriptionRenewalStarted => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
@@ -113,10 +116,14 @@ class PaymentEventHandler
      * @param callable(Order): list<Event> $transition
      * @return list<Event>
      */
-    private function applyToOrder(string $reference, ?string $providerKey, callable $transition): array
-    {
-        $apply = function (Order $order) use ($providerKey, $transition): array {
-            if ($order->isRenewal()) {
+    private function applyToOrder(
+        string $reference,
+        ?string $providerKey,
+        callable $transition,
+        bool $allowRenewals = false,
+    ): array {
+        $apply = function (Order $order) use ($providerKey, $transition, $allowRenewals): array {
+            if ($order->isRenewal() && !$allowRenewals) {
                 return [];
             }
 
@@ -146,6 +153,37 @@ class PaymentEventHandler
         }
 
         return $this->subscriptionRepository->withLockedSubscription($providerKey, $externalId, $transition) ?? [];
+    }
+
+    /**
+     * @return list<Event>
+     */
+    private function refundOrder(PaymentRefunded $event, ?string $providerKey): array
+    {
+        $reference = $event->orderReference;
+        if ($reference === null && $event->externalPaymentId !== null && $providerKey !== null) {
+            $reference = $this->orderRepository
+                ->findOneByProviderReference($providerKey, $event->externalPaymentId)
+                ?->reference;
+        }
+
+        if ($reference === null) {
+            return [];
+        }
+
+        return $this->applyToOrder($reference, $providerKey, function (Order $order) use ($event): array {
+            if ($event->amountMinor !== null && $event->amountMinor < $order->amountMinor) {
+                $this->logger->warning('Ignored a partial refund, the plugin only tracks full refunds.', [
+                    'order' => $order->reference,
+                    'refunded' => $event->amountMinor,
+                    'amount' => $order->amountMinor,
+                ]);
+
+                return [];
+            }
+
+            return $order->refund() ? [new OrderRefundedEvent($order)] : [];
+        }, allowRenewals: true);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\PaymentProvider;
 
+use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\PaymentProviderConfig;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Repository\PaymentProviderConfigRepository;
@@ -57,6 +58,18 @@ class PaymentProviderRegistry
         $provider = $this->get($key);
 
         return $provider !== null && $this->isConfigured($provider) ? $provider : null;
+    }
+
+    /**
+     * The provider that settled an order, if it is configured and can do what is being asked of it.
+     */
+    public function findCapableFor(Order $order, PaymentProviderCapability $capability): ?PaymentProviderInterface
+    {
+        $provider = $order->providerKey === null ? null : $this->findConfigured($order->providerKey);
+
+        return $provider !== null && in_array($capability, $provider->getCapabilities(), true)
+            ? $provider
+            : null;
     }
 
     /**

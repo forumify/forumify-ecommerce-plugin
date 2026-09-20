@@ -10,7 +10,14 @@
         </div>
         <h1>{{ 'ecommerce.subscriptions.single'|trans }}</h1>
         {% block ecommerce_subscription_plan %}
-            {% embed '@ForumifyEcommercePlugin/frontend/checkout/_plan.html.twig' with { subscription: subscription, detailed: true } only %}
+            {% embed '@ForumifyEcommercePlugin/frontend/checkout/_plan.html.twig' with { subscription: subscription, detailed: true, cancellable: cancellable } only %}
+                {% block ecommerce_plan_actions %}
+                    {% if cancellable %}
+                        <a class="btn-outlined btn-small" href="{{ path('ecommerce_subscription_cancel', { id: subscription.id }) }}">
+                            {{ 'ecommerce.subscriptions.cancel'|trans }}
+                        </a>
+                    {% endif %}
+                {% endblock %}
             {% endembed %}
         {% endblock %}
         {% block ecommerce_subscription_payments %}

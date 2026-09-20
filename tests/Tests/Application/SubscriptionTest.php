@@ -13,6 +13,7 @@ use Forumify\Ecommerce\PaymentProvider\Fake\FakePaymentProvider;
 use Forumify\Ecommerce\Repository\OrderRepository;
 use Forumify\Ecommerce\Repository\SubscriptionRepository;
 use Forumify\Testing\Factories\Core\UserFactory;
+use PluginTests\Tests\Factories\OrderFactory;
 use PluginTests\Tests\Factories\PaymentProviderConfigFactory;
 use PluginTests\Tests\Factories\ProductFactory;
 use PluginTests\Tests\Factories\ProductPriceFactory;
@@ -126,6 +127,31 @@ class SubscriptionTest extends EcommerceWebTestCase
         self::assertSelectorTextContains('body', 'The subscription was ended');
         self::assertSame(SubscriptionStatus::Ended, $this->findSubscription()->status);
         self::assertSelectorNotExists('a[href$="/cancel"]');
+    }
+
+    public function testBuyerSettlesAPastDueRenewalWithTheProvider(): void
+    {
+        PaymentProviderConfigFactory::createOne();
+        $subscription = SubscriptionFactory::createOne([
+            'initialOrder' => OrderFactory::new(['price' => ProductPriceFactory::new()->recurring()])->completed(),
+        ]);
+        $customer = $subscription->initialOrder->user;
+        self::assertNotNull($customer);
+
+        $this->webhook([
+            'type' => 'payment_failed',
+            'subscription' => $subscription->providerReference,
+            'payment' => 'in_past_due',
+        ]);
+        self::assertSame(SubscriptionStatus::PastDue, $this->findSubscription()->status);
+
+        $this->client->loginUser($customer);
+        $this->client->request('GET', "/store/order/{$this->findRenewal('in_past_due')->reference}");
+        $this->client->clickLink('Update payment method');
+        $this->client->submitForm('Pay successfully');
+
+        self::assertSame(OrderStatus::Completed, $this->findRenewal('in_past_due')->status);
+        self::assertSame(SubscriptionStatus::Active, $this->findSubscription()->status);
     }
 
     /**

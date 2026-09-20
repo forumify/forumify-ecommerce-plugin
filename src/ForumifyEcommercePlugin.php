@@ -29,7 +29,7 @@ class ForumifyEcommercePlugin extends AbstractForumifyPlugin
                 'payment_providers' => ['manage'],
                 'categories' => ['view', 'manage'],
                 'products' => ['view', 'manage'],
-                'orders' => ['view', 'fulfill'],
+                'orders' => ['view', 'fulfill', 'refund'],
                 'subscriptions' => ['view', 'manage'],
             ],
         ];

@@ -1,0 +1,12 @@
+{% extends '@Forumify/components/table/table.html.twig' %}
+{% block table_wrapper %}
+    <div class="flex flex-wrap gap-2 mb-2">
+        <select aria-label="{{ 'ecommerce.admin.order.status'|trans }}" data-model="statusFilter">
+            <option value="">{{ 'ecommerce.admin.order.all_statuses'|trans }}</option>
+            {% for value, label in this.statusChoices %}
+                <option value="{{ value }}"{{ this.statusFilter == value ? ' selected' }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {{ parent() }}
+{% endblock %}

@@ -9,12 +9,15 @@ use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
+use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
+use Stripe\Charge;
 use Stripe\Checkout\Session;
+use Stripe\Dispute;
 use Stripe\Event;
 use Stripe\Invoice;
 use Stripe\StripeClient;
@@ -24,17 +27,7 @@ use UnexpectedValueException;
 
 class StripeEventMapper
 {
-    public const HANDLED_EVENTS = [
-        'checkout.session.completed',
-        'checkout.session.async_payment_succeeded',
-        'checkout.session.async_payment_failed',
-        'checkout.session.expired',
-        'invoice.created',
-        'invoice.paid',
-        'invoice.payment_failed',
-        'customer.subscription.updated',
-        'customer.subscription.deleted',
-    ];
+    public const ORDER_REFERENCE_KEY = 'ecommerce_order_reference';
 
     /**
      * @return list<PaymentEvent>
@@ -47,6 +40,8 @@ class StripeEventMapper
             $object instanceof Session => $this->fromSessionEvent($client, $event->type, $object),
             $object instanceof Invoice => $this->fromInvoiceEvent($client, $event->type, $object),
             $object instanceof Subscription => $this->fromSubscriptionEvent($event->type, $object),
+            $object instanceof Charge => $this->fromChargeEvent($client, $event->type, $object),
+            $object instanceof Dispute => $this->fromDisputeEvent($client, $event->type, $object),
             default => [],
         };
     }
@@ -150,6 +145,77 @@ class StripeEventMapper
         };
     }
 
+    /**
+     * @return list<PaymentEvent>
+     */
+    private function fromChargeEvent(StripeClient $client, string $type, Charge $charge): array
+    {
+        if ($type !== 'charge.refunded') {
+            return [];
+        }
+
+        return [$this->refunded($client, $charge, $charge->amount_refunded)];
+    }
+
+    /**
+     * A lost dispute takes the money back just like a refund does. A won one changes nothing.
+     *
+     * @return list<PaymentEvent>
+     */
+    private function fromDisputeEvent(StripeClient $client, string $type, Dispute $dispute): array
+    {
+        if ($type !== 'charge.dispute.closed' || $dispute->status !== Dispute::STATUS_LOST) {
+            return [];
+        }
+
+        $chargeId = self::id($dispute['charge'] ?? null);
+        if ($chargeId === null) {
+            return [];
+        }
+
+        return [$this->refunded($client, $client->charges->retrieve($chargeId), $dispute->amount)];
+    }
+
+    private function refunded(StripeClient $client, Charge $charge, ?int $amountMinor): PaymentRefunded
+    {
+        $invoiceId = self::id($charge['invoice'] ?? null);
+        if ($invoiceId !== null) {
+            return new PaymentRefunded(externalPaymentId: $invoiceId, amountMinor: $amountMinor);
+        }
+
+        return new PaymentRefunded(self::orderReference($client, $charge), amountMinor: $amountMinor);
+    }
+
+    private static function orderReference(StripeClient $client, Charge $charge): ?string
+    {
+        $reference = $charge->metadata[self::ORDER_REFERENCE_KEY] ?? null;
+        if (is_string($reference)) {
+            return $reference;
+        }
+
+        $paymentIntentId = self::id($charge['payment_intent'] ?? null);
+        if ($paymentIntentId === null) {
+            return null;
+        }
+
+        $reference = $client->paymentIntents->retrieve($paymentIntentId)->metadata[self::ORDER_REFERENCE_KEY] ?? null;
+
+        return is_string($reference) ? $reference : null;
+    }
+
+    public static function invoicePaymentIntentId(Invoice $invoice): ?string
+    {
+        $payments = $invoice['payments']['data'] ?? [];
+        foreach ($payments as $payment) {
+            $paymentIntent = self::id($payment['payment']['payment_intent'] ?? null);
+            if ($paymentIntent !== null) {
+                return $paymentIntent;
+            }
+        }
+
+        return self::id($invoice['payment_intent'] ?? null);
+    }
+
     private function invoicePeriodEnd(StripeClient $client, Invoice $invoice, string $subscriptionId): DateTimeImmutable
     {
         $ends = [];
@@ -183,7 +249,7 @@ class StripeEventMapper
         return is_int($end) ? self::date($end) : null;
     }
 
-    private static function id(mixed $value): ?string
+    public static function id(mixed $value): ?string
     {
         return match (true) {
             is_string($value) => $value,

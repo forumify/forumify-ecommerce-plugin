@@ -30,6 +30,8 @@ ecommerce:
             image: 'Cover image'
             image_help: 'Shown on the product tile in the store, and first on the product page. Add more images on the Gallery tab.'
             delete_ordered: 'This product has been ordered, so it can no longer be deleted. Archive it instead.'
+            refund_period: 'Refund period'
+            refund_period_help: 'How many days after delivery customers can ask for a refund. Leave empty when this product is not refundable. Changing it only affects new orders.'
             fulfillment_type: 'Fulfillment'
             fulfillment_type_help: 'How customers get what they bought. Changing it only affects new orders.'
             fulfillment_role: 'Fulfilled by'
@@ -53,6 +55,7 @@ ecommerce:
             completed_at: 'Completed'
             completed_by: 'by {user}'
             paid_at: 'Paid'
+            refunded_at: 'Refunded'
             fulfillment_type: 'Fulfillment'
             complete: 'Mark as completed'
             complete_help: 'Mark the order as completed once the customer has what they paid for. The customer is notified.'
@@ -68,6 +71,20 @@ ecommerce:
             no_provider: 'None (free)'
             all_statuses: 'All statuses'
             all_products: 'All products'
+        refund:
+            single: 'Refund request'
+            plural: 'Refunds'
+            help: 'Customers can ask for a refund within the period set on the product. You have the final say.'
+            requested_at: 'Requested'
+            handled_at: 'Handled'
+            note: 'Note for the customer'
+            note_help: 'Optional. It is shown to the customer on their order.'
+            approve: 'Approve and refund'
+            reject: 'Reject'
+            approved: 'The order was refunded.'
+            rejected: 'The refund request was rejected.'
+            invalid: 'The refund request could not be handled.'
+            handle_help: 'Approving sends the full amount back through the payment provider. Rejecting leaves the order as it is.'
         subscription:
             single: 'Subscription'
             plural: 'Subscriptions'
@@ -88,6 +105,15 @@ ecommerce:
             keep: 'Keep subscription'
             cancelled_at_period_end: 'The subscription will end at the end of its current period.'
             cancelled_now: 'The subscription was ended.'
+            refund_last: 'Also refund the last payment'
+            refund_last_help: 'Sends that payment back through the payment provider, on top of cancelling.'
+            refund_last_order: 'The last payment is {reference}, for {price}.'
+            refunded_last: 'The last payment was refunded.'
+            cancellation: 'Cancellation'
+            cancellation_pending: 'This subscription was cancelled and runs until {date}. Close it out, then mark it as handled.'
+            cancellation_handle: 'Mark as handled'
+            cancellation_handled: 'The cancellation was marked as handled.'
+            cancellation_completed: 'Handled on {date} by {user}.'
             error:
                 already_ended: 'This subscription has already ended.'
                 provider_unavailable: 'The payment provider of this subscription is not available, so it can not be cancelled right now.'
@@ -174,7 +200,7 @@ ecommerce:
         secretKey_help: 'Find it under <i>Developers → API keys</i> in the Stripe dashboard. A restricted key (<code>rk_…</code>) needs write access to Checkout Sessions, Customers, Products, Prices and Subscriptions. Test mode keys keep their own products, prices and customers, so you can switch to live keys later. Leave empty to keep the saved key.'
         secretKey_invalid: 'This is not a Stripe secret key. It starts with sk_test_, sk_live_, rk_test_ or rk_live_.'
         webhookSecret: 'Webhook signing secret'
-        webhookSecret_help: 'In the Stripe dashboard, add a webhook endpoint with the URL above and select these events: <code>{events}</code>. Then paste its signing secret here. Leave empty to keep the saved secret.'
+        webhookSecret_help: 'In the Stripe dashboard, add a webhook endpoint with the URL above and select all <code>checkout</code>, <code>invoice</code>, <code>customer</code> and <code>charge</code> events. Then paste its signing secret here. Leave empty to keep the saved secret.'
         webhookSecret_invalid: 'This is not a Stripe webhook signing secret. It starts with whsec_.'
         required: 'This value is required.'
     order_status:
@@ -183,6 +209,7 @@ ecommerce:
         completed: 'Completed'
         failed: 'Failed'
         cancelled: 'Cancelled'
+        refunded: 'Refunded'
     checkout:
         title: 'Checkout'
         get_free: 'Get it for free'
@@ -207,12 +234,16 @@ ecommerce:
         completed_at: 'Completed'
         try_again: 'Try again'
         continue_shopping: 'Continue shopping'
+        pay_now: 'Pay now'
+        update_payment: 'Update payment method'
+        invoice: 'Download invoice'
         status:
             pending: 'We are waiting for your payment to be confirmed. This page updates automatically.'
             paid: 'Payment received. Your order is being processed.'
             completed: 'Thank you! Your order is complete.'
             failed: 'Your payment did not go through. You have not been charged.'
             cancelled: 'You cancelled this order. You have not been charged.'
+            refunded: 'This order was refunded. The money is on its way back to you.'
         renewal_status:
             pending: 'This renewal is waiting for payment. Your payment provider charges your saved payment method, and retries if that fails.'
             failed: 'This renewal was never paid, and the subscription has ended.'
@@ -234,6 +265,38 @@ ecommerce:
             ended: 'Ended on {date}'
         past_due: 'Your last payment failed. Update your payment method to keep this subscription.'
         past_due_grace: 'Your last payment failed. Access ends on {date} unless the payment goes through.'
+        cancel: 'Cancel subscription'
+        cancel_summary: 'Your {product} subscription keeps running until {date}. After that it stops, and you are not charged again. This period is not refunded.'
+        cancel_manual: 'An admin finishes the cancellation for this product.'
+        cancel_confirm: 'Cancel subscription'
+        cancel_keep: 'Keep subscription'
+        cancelled: 'Your subscription was cancelled.'
+        cancellation_requested: 'Cancellation requested. An admin is finishing it.'
+    refund:
+        title: 'Request a refund'
+        request: 'Request a refund'
+        summary: 'You are asking for a refund of {price} for {product}.'
+        reason: 'Why do you want a refund?'
+        reason_help: 'Tell us what went wrong. An admin looks at every request.'
+        reason_required: 'Tell us why you want a refund.'
+        submit: 'Send request'
+        back: 'Back to the order'
+        requested: 'Your refund request was sent. We will let you know.'
+        until: 'You can ask for a refund until {date}'
+        available: 'You can ask for a refund of this order'
+        status:
+            pending: 'Refund requested. An admin is looking at it.'
+            approved: 'Your refund was approved.'
+            rejected: 'Your refund request was declined.'
+        error:
+            not_refundable: 'This order can not be refunded.'
+            provider_unavailable: 'The payment provider of this order is not available right now.'
+            provider_failed: 'The payment provider could not refund this order. Please try again later.'
+            already_requested: 'You already asked for a refund of this order.'
+    refund_status:
+        pending: 'Pending'
+        approved: 'Approved'
+        rejected: 'Rejected'
     subscription_status:
         active: 'Active'
         past_due: 'Past due'
@@ -359,6 +422,16 @@ ecommerce:
         subscription_ended:
             title: 'Your {product} subscription has ended'
             description: 'Your {product} - {tier} subscription has ended.'
+        order_refunded:
+            title: 'Your order of {product} was refunded'
+            description: 'Order {reference}, {product} - {tier}, was refunded. The money is on its way back to you.'
+        refund_rejected:
+            title: 'Your refund request for {product} was declined'
+            description: 'We looked at your refund request for order {reference}, {product} - {tier}, and could not approve it.'
+        cancellation_to_handle:
+            title: 'Cancellation to handle: {product}'
+            description: 'A {product} - {tier} subscription was cancelled and runs until {date, date, long}. Close it out and mark it as handled.'
+        handle_cancellation: 'View subscription'
 
 admin:
     cms:

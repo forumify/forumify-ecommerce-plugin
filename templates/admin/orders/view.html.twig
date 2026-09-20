@@ -52,6 +52,10 @@
                         <td>{{ order.paidAt ? order.paidAt|date('Y-m-d H:i') : '-' }}</td>
                     </tr>
                     <tr>
+                        <th>{{ 'ecommerce.admin.order.refunded_at'|trans }}</th>
+                        <td>{{ order.refundedAt ? order.refundedAt|date('Y-m-d H:i') : '-' }}</td>
+                    </tr>
+                    <tr>
                         <th>{{ 'ecommerce.admin.order.fulfillment_type'|trans }}</th>
                         <td>{{ ecommerce_fulfillment_label(order.fulfillmentType)|trans }}</td>
                     </tr>
@@ -84,6 +88,56 @@
             </tbody>
         </table>
     </div>
+    {% block ecommerce_admin_order_refund %}
+        {% if refundRequest %}
+            <div class="box mt-4">
+                <h2 class="mt-0">{{ 'ecommerce.admin.refund.single'|trans }}</h2>
+                <table class="mb-4">
+                    <tbody class="text-left">
+                        <tr>
+                            <th>{{ 'ecommerce.admin.order.status'|trans }}</th>
+                            <td>{{ ('ecommerce.refund_status.' ~ refundRequest.status.value)|trans }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'ecommerce.admin.refund.requested_at'|trans }}</th>
+                            <td>{{ refundRequest.createdAt|date('Y-m-d H:i') }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'ecommerce.refund.reason'|trans }}</th>
+                            <td>{{ refundRequest.reason|nl2br }}</td>
+                        </tr>
+                        {% if refundRequest.handledAt %}
+                            <tr>
+                                <th>{{ 'ecommerce.admin.refund.handled_at'|trans }}</th>
+                                <td>
+                                    {{ refundRequest.handledAt|date('Y-m-d H:i') }}
+                                    {% if refundRequest.handledBy %}
+                                        <span class="text-secondary">{{ 'ecommerce.admin.order.completed_by'|trans({ user: refundRequest.handledBy.displayName }) }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if refundRequest.note %}
+                            <tr>
+                                <th>{{ 'ecommerce.admin.refund.note'|trans }}</th>
+                                <td>{{ refundRequest.note|nl2br }}</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+                {% if handleRefundForm %}
+                    <p class="help-text mb-4">{{ 'ecommerce.admin.refund.handle_help'|trans }}</p>
+                    {{ form_start(handleRefundForm) }}
+                    {{ form_row(handleRefundForm.note) }}
+                    <div class="flex flex-wrap gap-2">
+                        {{ form_widget(handleRefundForm.approve) }}
+                        {{ form_widget(handleRefundForm.reject) }}
+                    </div>
+                    {{ form_end(handleRefundForm) }}
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endblock %}
     {% block ecommerce_admin_order_fulfillment %}
         <div class="mt-4">
             {% include '@ForumifyEcommercePlugin/fulfillment/_details.html.twig' with { order: order } only %}

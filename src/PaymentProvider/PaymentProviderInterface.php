@@ -32,6 +32,14 @@ interface PaymentProviderInterface
 
     public function supports(ProductPrice $price): bool;
 
+    /**
+     * Everything beyond taking a payment is optional. Only the capabilities listed here are offered in the
+     * admin and to buyers.
+     *
+     * @return list<PaymentProviderCapability>
+     */
+    public function getCapabilities(): array;
+
     public function startCheckout(Order $order, CheckoutUrls $urls): CheckoutRedirect;
 
     /**
@@ -49,4 +57,19 @@ interface PaymentProviderInterface
      * @return list<PaymentEvent>
      */
     public function cancelSubscription(Subscription $subscription, bool $atPeriodEnd): array;
+
+    /**
+     * Send the full amount of a paid order back to the buyer.
+     *
+     * @return list<PaymentEvent>
+     */
+    public function refund(Order $order): array;
+
+    /**
+     * A page where the buyer can pay an unpaid order and update their payment method, or null when there
+     * is nothing to settle.
+     */
+    public function getHostedPaymentUrl(Order $order): ?string;
+
+    public function getInvoice(Order $order): ?InvoiceDocument;
 }

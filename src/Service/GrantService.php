@@ -68,7 +68,19 @@ class GrantService
 
     public function revoke(Subscription $subscription): void
     {
-        $grants = $this->grantRepository->findBySubscription($subscription);
+        $this->revokeGrants($this->grantRepository->findBySubscription($subscription));
+    }
+
+    public function revokeForOrder(Order $order): void
+    {
+        $this->revokeGrants($this->grantRepository->findByOrder($order));
+    }
+
+    /**
+     * @param list<Grant> $grants
+     */
+    private function revokeGrants(array $grants): void
+    {
         if ($grants === []) {
             return;
         }

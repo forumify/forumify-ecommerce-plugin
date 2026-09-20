@@ -1,0 +1,8 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = 'ecommerce.admin.refund.plural'|trans %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block body %}
+    <h2>{{ title }}</h2>
+    <p class="help-text mb-4">{{ 'ecommerce.admin.refund.help'|trans }}</p>
+    {{ component('Ecommerce\\RefundRequestTable') }}
+{% endblock %}

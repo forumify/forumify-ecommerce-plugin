@@ -24,6 +24,14 @@
                 </div>
             {% endfor %}
             <div class="mb-4">{{ form_help(form.atPeriodEnd) }}</div>
+            {% if lastOrder %}
+                <p class="help-text mb-2">
+                    {{ 'ecommerce.admin.subscription.refund_last_order'|trans({
+                        reference: lastOrder.reference,
+                        price: lastOrder.amount|ecommerce_money,
+                    }) }}
+                </p>
+            {% endif %}
             {{ form_rest(form) }}
         {% endblock %}
         {% block form_actions %}

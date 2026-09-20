@@ -616,7 +616,7 @@
     background-color: var(--c-error);
 }
 
-.ecommerce-order-icon.is-cancelled {
+.ecommerce-order-icon:is(.is-cancelled, .is-refunded) {
     color: var(--c-warning-text);
     background-color: var(--c-warning);
 }
@@ -688,7 +688,7 @@
     background-color: var(--c-success);
 }
 
-.ecommerce-state.is-cancelled {
+.ecommerce-state:is(.is-cancelled, .is-refunded) {
     color: var(--c-warning-text);
     background-color: var(--c-warning);
 }

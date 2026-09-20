@@ -15,6 +15,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCancelled;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutCompleted;
 use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\PaymentEvent;
+use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
@@ -90,6 +91,8 @@ class StripePaymentProviderTest extends TestCase
             'cancel_url' => 'https://shop.test/cancel',
             'metadata' => $metadata($order),
             $metadataKey => ['metadata' => $metadata($order)],
+            // one-time payments only get an invoice when the session asks for one
+            ...($mode === 'payment' ? ['invoice_creation' => ['enabled' => true]] : []),
         ];
 
         $this->sessions->expects(self::exactly(2))->method('create')->willReturnCallback(
@@ -157,7 +160,22 @@ class StripePaymentProviderTest extends TestCase
         yield 'cancelled at a date' => ['customer.subscription.updated', $subscription(['cancel_at' => self::PERIOD_END]), [new SubscriptionUpdated('sub_1', true)]];
         yield 'resumed' => ['customer.subscription.updated', $subscription([]), [new SubscriptionUpdated('sub_1', false)]];
         yield 'subscription ended' => ['customer.subscription.deleted', $subscription(['status' => 'canceled']), [new SubscriptionEnded('sub_1')]];
-        yield 'unhandled event' => ['charge.refunded', ['object' => 'charge', 'id' => 'ch_1'], []];
+        yield 'renewal refunded' => [
+            'charge.refunded',
+            ['object' => 'charge', 'id' => 'ch_1', 'invoice' => 'in_1', 'amount_refunded' => 999],
+            [new PaymentRefunded(externalPaymentId: 'in_1', amountMinor: 999)],
+        ];
+        yield 'one-time payment refunded' => [
+            'charge.refunded',
+            ['object' => 'charge', 'id' => 'ch_1', 'invoice' => null, 'amount_refunded' => 999, 'metadata' => ['ecommerce_order_reference' => 'ORDER1']],
+            [new PaymentRefunded('ORDER1', amountMinor: 999)],
+        ];
+        yield 'dispute won' => [
+            'charge.dispute.closed',
+            ['object' => 'dispute', 'id' => 'dp_1', 'status' => 'won', 'charge' => 'ch_1', 'amount' => 999],
+            [],
+        ];
+        yield 'unhandled event' => ['payment_intent.created', ['object' => 'payment_intent', 'id' => 'pi_1'], []];
     }
 
     public function testWebhookWithBadSignatureIsRejected(): void

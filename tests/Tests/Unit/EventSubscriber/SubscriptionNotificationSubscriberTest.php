@@ -19,6 +19,8 @@ use Forumify\Ecommerce\EventSubscriber\SubscriptionNotificationSubscriber;
 use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
 use Forumify\Ecommerce\Notification\SubscriptionCancelledNotificationType;
 use Forumify\Ecommerce\Notification\SubscriptionEndedNotificationType;
+use Forumify\Ecommerce\Money\MoneyFormatter;
+use Forumify\Ecommerce\PaymentProvider\Fake\FakeInvoice;
 use Forumify\Ecommerce\PaymentProvider\Fake\FakePaymentProvider;
 use Forumify\Ecommerce\Repository\OrderRepository;
 use Forumify\Ecommerce\Repository\SubscriptionRepository;
@@ -54,7 +56,11 @@ class SubscriptionNotificationSubscriberTest extends TestCase
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber(new SubscriptionNotificationSubscriber($notificationService));
         $handler = new PaymentEventHandler($orderRepository, $subscriptionRepository, $dispatcher, new FulfillmentTypeRegistry([]), new NullLogger());
-        $provider = new FakePaymentProvider($this->createMock(UrlGeneratorInterface::class), $subscriptionRepository);
+        $provider = new FakePaymentProvider(
+            $this->createMock(UrlGeneratorInterface::class),
+            $subscriptionRepository,
+            new FakeInvoice(new MoneyFormatter()),
+        );
 
         $handler->handleAll($provider->cancelSubscription($subscription, $atPeriodEnd), FakePaymentProvider::KEY);
 

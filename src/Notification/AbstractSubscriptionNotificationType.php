@@ -43,11 +43,14 @@ abstract class AbstractSubscriptionNotificationType extends AbstractEcommerceNot
     protected function getTranslationParameters(Notification $notification): array
     {
         $subscription = $this->getSubscription($notification);
+        $date = ($subscription === null ? null : $this->getDate($subscription)) ?? new DateTimeImmutable();
 
         return [
             'product' => $subscription->initialOrder->productTitle ?? '',
             'tier' => $subscription->initialOrder->tierLabel ?? '',
-            'date' => ($subscription === null ? null : $this->getDate($subscription)) ?? new DateTimeImmutable(),
+            // a timestamp, not a DateTime: ICU stringifies every argument it is given, including the ones
+            // a message does not use, and a DateTime can not be stringified
+            'date' => $date->getTimestamp(),
         ];
     }
 

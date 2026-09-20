@@ -62,6 +62,26 @@ class OrderRepository extends AbstractRepository
         return $order instanceof Order && $order->fulfillmentData !== [] ? $order->fulfillmentData : null;
     }
 
+    /**
+     * The most recent payment of a subscription: a renewal, or the initial order.
+     */
+    public function findLatestPaidForSubscription(Subscription $subscription): ?Order
+    {
+        $order = $this->createQueryBuilder('o')
+            ->where('o.subscription = :subscription OR o = :initialOrder')
+            ->andWhere('o.status IN (:statuses)')
+            ->setParameter('subscription', $subscription)
+            ->setParameter('initialOrder', $subscription->initialOrder)
+            ->setParameter('statuses', [OrderStatus::Paid, OrderStatus::Completed])
+            ->orderBy('o.paidAt', 'DESC')
+            ->addOrderBy('o.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $order instanceof Order ? $order : null;
+    }
+
     public function countToFulfill(): int
     {
         return $this->count(['status' => OrderStatus::Paid]);

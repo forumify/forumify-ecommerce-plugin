@@ -11,11 +11,13 @@ use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Event\OrderCompletedEvent;
 use Forumify\Ecommerce\Event\OrderFailedEvent;
 use Forumify\Ecommerce\Event\OrderPaidEvent;
+use Forumify\Ecommerce\Event\OrderRefundedEvent;
 use Forumify\Ecommerce\Event\SubscriptionRenewedEvent;
 use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
 use Forumify\Ecommerce\Notification\OrderCompletedNotificationType;
 use Forumify\Ecommerce\Notification\OrderFailedNotificationType;
 use Forumify\Ecommerce\Notification\OrderPaidNotificationType;
+use Forumify\Ecommerce\Notification\OrderRefundedNotificationType;
 use Forumify\Ecommerce\Notification\OrderToFulfillNotificationType;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -36,6 +38,7 @@ class OrderNotificationSubscriber implements EventSubscriberInterface
             SubscriptionRenewedEvent::class => ['onSubscriptionRenewed', -100],
             OrderCompletedEvent::class => 'onOrderCompleted',
             OrderFailedEvent::class => 'onOrderFailed',
+            OrderRefundedEvent::class => 'onOrderRefunded',
         ];
     }
 
@@ -65,6 +68,11 @@ class OrderNotificationSubscriber implements EventSubscriberInterface
     public function onOrderFailed(OrderFailedEvent $event): void
     {
         $this->notifyBuyer($event->order, OrderFailedNotificationType::TYPE);
+    }
+
+    public function onOrderRefunded(OrderRefundedEvent $event): void
+    {
+        $this->notifyBuyer($event->order, OrderRefundedNotificationType::TYPE);
     }
 
     private function notifyBuyer(Order $order, string $type): void

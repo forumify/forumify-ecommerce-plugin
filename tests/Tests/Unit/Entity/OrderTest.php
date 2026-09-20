@@ -66,11 +66,53 @@ class OrderTest extends TestCase
         self::assertFalse($order->pay());
     }
 
-    private function createOrder(): Order
+    public function testOnlyPaidOrCompletedOrdersRefund(): void
+    {
+        $order = $this->createOrder();
+        self::assertFalse($order->refund());
+
+        $order->pay();
+        self::assertTrue($order->refund());
+        self::assertFalse($order->refund());
+        self::assertSame(OrderStatus::Refunded, $order->status);
+        self::assertNotNull($order->refundedAt);
+        self::assertFalse($order->complete());
+        self::assertFalse($order->pay());
+    }
+
+    public function testTheRefundWindowStartsWhenTheBuyerHasTheirOrder(): void
+    {
+        self::assertFalse($this->createOrder()->isRefundable(), 'a pending order has nothing to refund');
+        self::assertNull($this->createOrder()->getRefundDeadline());
+
+        $order = $this->createOrder(refundPeriodDays: 14);
+        $order->pay();
+        self::assertTrue($order->isRefundable(), 'paid but never delivered stays refundable');
+        self::assertNull($order->getRefundDeadline(), 'the window has not started yet');
+
+        $order->complete();
+        self::assertTrue($order->isRefundable());
+        self::assertEquals(
+            $order->completedAt?->modify('+14 days'),
+            $order->getRefundDeadline(),
+        );
+
+        $withoutWindow = $this->createOrder();
+        $withoutWindow->pay();
+        $withoutWindow->complete();
+        self::assertFalse($withoutWindow->isRefundable(), 'no refund period means no refunds');
+
+        $free = $this->createOrder(amountMinor: 0, refundPeriodDays: 14);
+        $free->pay();
+        self::assertFalse($free->isRefundable(), 'there is no money to send back');
+    }
+
+    private function createOrder(int $amountMinor = 999, ?int $refundPeriodDays = null): Order
     {
         $product = new Product();
         $product->title = 'Milsim';
         $product->key = 'forumify/milsim';
+        $product->refundPeriodDays = $refundPeriodDays;
         $tier = new ProductTier($product);
         $tier->key = 'premium';
         $tier->label = 'Premium';
@@ -78,7 +120,7 @@ class OrderTest extends TestCase
         $price->type = PriceType::Recurring;
         $price->billingInterval = BillingInterval::Month;
         $price->intervalCount = 1;
-        $price->amountMinor = 999;
+        $price->amountMinor = $amountMinor;
 
         return new Order(new User(), $price, 'fake');
     }

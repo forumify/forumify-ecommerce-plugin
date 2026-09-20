@@ -110,6 +110,7 @@ The tests need MySQL 8.4 at `root:root@127.0.0.1:3306/plugin_test` (from `../../
 | `stripe.md` | The Stripe implementation |
 | `subscriptions.md` | Lifecycle, renewal orders, cancellation, past-due grace |
 | `fulfillment.md` | Fulfillment types, `FulfillmentService` |
+| `self-service.md` | Buyer self-service: hosted payment, invoices, cancellation requests, refunds |
 | `notifications.md` | Buyer and admin notifications |
 | `grants.md` | Role and badge grants |
 | `roadmap.md` | Out of scope, designed-not-built, known gaps |

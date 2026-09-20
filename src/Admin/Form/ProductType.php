@@ -19,6 +19,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
@@ -119,6 +120,11 @@ class ProductType extends AbstractType
         }
 
         $builder
+            ->add('refundPeriodDays', IntegerType::class, [
+                'help' => 'ecommerce.admin.product.refund_period_help',
+                'label' => 'ecommerce.admin.product.refund_period',
+                'required' => false,
+            ])
             ->add('fulfillmentType', ChoiceType::class, [
                 'attr' => [
                     'data-fulfillment-type-select' => '',

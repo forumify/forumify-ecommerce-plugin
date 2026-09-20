@@ -46,6 +46,11 @@
             </p>
         {% endif %}
     {% endblock %}
+    {% block ecommerce_plan_cancellation %}
+        {% if subscription.cancellationRequest and subscription.cancellationRequest.pending %}
+            <p class="ecommerce-plan-term">{{ 'ecommerce.subscriptions.cancellation_requested'|trans }}</p>
+        {% endif %}
+    {% endblock %}
     {% if actions|trim is not empty %}
         <div class="ecommerce-plan-actions">{{ actions }}</div>
     {% endif %}
