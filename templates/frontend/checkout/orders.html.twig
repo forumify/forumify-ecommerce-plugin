@@ -1,39 +1,48 @@
 {% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
 {% block title_page %}{{ 'ecommerce.orders.title'|trans }}{% endblock %}
 {% block body %}
-    <div class="breadcrumbs text-small">
-        <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
-        <span class="text-secondary">{{ 'ecommerce.orders.title'|trans }}</span>
-    </div>
-    <h1>{{ 'ecommerce.orders.title'|trans }}</h1>
-    {% block ecommerce_orders_subscriptions %}
-        {% if subscriptions is not empty %}
-            <section class="mb-6" aria-labelledby="ecommerce-subscriptions-title">
-                <h2 id="ecommerce-subscriptions-title">{{ 'ecommerce.subscriptions.title'|trans }}</h2>
-                <ul class="ecommerce-order-list flex flex-col gap-3">
-                    {% for subscription in subscriptions %}
-                        {% set order = subscription.initialOrder %}
-                        {% set status = subscription.status.value %}
-                        <li>
-                            {% block ecommerce_subscription_row %}
-                                <div class="ecommerce-order-row ecommerce-subscription-row">
-                                    <span class="flex flex-col">
-                                        <strong>{{ order.productTitle }}</strong>
-                                        <span class="text-secondary">{{ order.tierLabel }}</span>
-                                    </span>
-                                    <span class="ecommerce-order-row-price">{{ order|ecommerce_price }}</span>
-                                    <span class="text-secondary">{{ ('ecommerce.subscriptions.period_end.' ~ status)|trans({ date: subscription.currentPeriodEnd|date('Y-m-d') }) }}</span>
-                                    <span class="tag{{ status == 'past_due' ? ' tag-error' }}">{{ ('ecommerce.subscription_status.' ~ status)|trans }}</span>
-                                </div>
-                            {% endblock %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </section>
-            <h2>{{ 'ecommerce.orders.history'|trans }}</h2>
+    <div class="ecommerce-page">
+        <div class="breadcrumbs text-small">
+            <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+            <span class="text-secondary">{{ 'ecommerce.orders.title'|trans }}</span>
+        </div>
+        <h1>{{ 'ecommerce.orders.title'|trans }}</h1>
+        {% if subscriptions is empty and not hasOrders %}
+            {% block ecommerce_orders_empty %}
+                <div class="ecommerce-store-empty box">
+                    <p>{{ 'ecommerce.orders.empty'|trans }}</p>
+                    <a class="btn-primary mt-4" href="{{ path('ecommerce_store') }}">{{ 'ecommerce.orders.browse'|trans }}</a>
+                </div>
+            {% endblock %}
+        {% else %}
+            {% block ecommerce_orders_subscriptions %}
+                {% if subscriptions is not empty %}
+                    <section class="ecommerce-account-section" aria-labelledby="ecommerce-subscriptions-title">
+                        <h2 id="ecommerce-subscriptions-title">{{ 'ecommerce.subscriptions.title'|trans }}</h2>
+                        <ul class="ecommerce-plan-grid">
+                            {% for subscription in subscriptions %}
+                                <li>
+                                    {% block ecommerce_subscription_card %}
+                                        {% embed '@ForumifyEcommercePlugin/frontend/checkout/_plan.html.twig' with { subscription: subscription } only %}
+                                            {% block ecommerce_plan_actions %}
+                                                <a class="btn-outlined btn-small" href="{{ path('ecommerce_subscription', { id: subscription.id }) }}">
+                                                    {{ 'ecommerce.subscriptions.view'|trans }}
+                                                </a>
+                                            {% endblock %}
+                                        {% endembed %}
+                                    {% endblock %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_orders_list %}
+                <section class="ecommerce-account-section" aria-labelledby="ecommerce-order-history-title">
+                    <h2 id="ecommerce-order-history-title">{{ 'ecommerce.orders.history'|trans }}</h2>
+                    {{ component('Ecommerce\\MyOrderList', { limit: 10 }) }}
+                </section>
+            {% endblock %}
         {% endif %}
-    {% endblock %}
-    {% block ecommerce_orders_list %}
-        {{ component('Ecommerce\\MyOrderList', { limit: 10 }) }}
-    {% endblock %}
+    </div>
 {% endblock %}

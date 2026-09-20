@@ -64,14 +64,15 @@ class CheckoutTest extends EcommerceWebTestCase
         self::assertSelectorTextContains('.ecommerce-order-status', 'Your order is complete');
 
         $this->client->request('GET', '/store/orders');
-        self::assertSelectorTextContains('.ecommerce-order-row', 'Milsim');
-        self::assertSelectorTextContains('.ecommerce-order-row', 'Completed');
+        self::assertSelectorTextContains('.ecommerce-ledger-row', 'Milsim');
+        self::assertSelectorTextContains('.ecommerce-ledger-row', $order->reference);
+        self::assertSelectorTextContains('.ecommerce-ledger-row', 'Completed');
 
         $this->client->loginUser(UserFactory::createOne());
         $this->client->request('GET', "/store/order/{$order->reference}");
         self::assertResponseStatusCodeSame(404);
         $this->client->request('GET', '/store/orders');
-        self::assertSelectorNotExists('.ecommerce-order-row');
+        self::assertSelectorNotExists('.ecommerce-ledger-row');
 
         $this->client->loginUser($this->admin);
         $this->client->request('GET', '/admin/ecommerce/orders');

@@ -7,9 +7,11 @@ namespace Forumify\Ecommerce\Component;
 use Doctrine\ORM\QueryBuilder;
 use Forumify\Core\Component\List\AbstractDoctrineList;
 use Forumify\Ecommerce\Entity\Order;
+use Forumify\Ecommerce\Entity\Subscription;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
 
 /**
  * @extends AbstractDoctrineList<Order>
@@ -18,6 +20,9 @@ use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 #[IsGranted('ROLE_USER')]
 class MyOrderList extends AbstractDoctrineList
 {
+    #[LiveProp]
+    public ?Subscription $subscription = null;
+
     public function __construct(private readonly Security $security)
     {
     }
@@ -29,10 +34,19 @@ class MyOrderList extends AbstractDoctrineList
 
     protected function getQuery(): QueryBuilder
     {
-        return parent::getQuery()
+        $query = parent::getQuery()
             ->andWhere('e.user = :user')
             ->setParameter('user', $this->security->getUser())
             ->orderBy('e.createdAt', 'DESC')
             ->addOrderBy('e.id', 'DESC');
+
+        if ($this->subscription !== null) {
+            $query
+                ->andWhere('e.subscription = :subscription OR e = :initialOrder')
+                ->setParameter('subscription', $this->subscription)
+                ->setParameter('initialOrder', $this->subscription->initialOrder);
+        }
+
+        return $query;
     }
 }

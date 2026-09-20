@@ -1,0 +1,23 @@
+{% extends '@ForumifyEcommercePlugin/frontend/store/base.html.twig' %}
+{% set order = subscription.initialOrder %}
+{% block title_page %}{{ order.productTitle }}{% endblock %}
+{% block body %}
+    <div class="ecommerce-page is-narrow">
+        <div class="breadcrumbs text-small">
+            <a href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.title'|trans }}</a> &gt;
+            <a href="{{ path('ecommerce_orders') }}">{{ 'ecommerce.orders.title'|trans }}</a> &gt;
+            <span class="text-secondary">{{ order.productTitle }}</span>
+        </div>
+        <h1>{{ 'ecommerce.subscriptions.single'|trans }}</h1>
+        {% block ecommerce_subscription_plan %}
+            {% embed '@ForumifyEcommercePlugin/frontend/checkout/_plan.html.twig' with { subscription: subscription, detailed: true } only %}
+            {% endembed %}
+        {% endblock %}
+        {% block ecommerce_subscription_payments %}
+            <section class="ecommerce-account-section" aria-labelledby="ecommerce-payments-title">
+                <h2 id="ecommerce-payments-title">{{ 'ecommerce.subscriptions.payments'|trans }}</h2>
+                {{ component('Ecommerce\\MyOrderList', { subscription: subscription, limit: 10 }) }}
+            </section>
+        {% endblock %}
+    </div>
+{% endblock %}

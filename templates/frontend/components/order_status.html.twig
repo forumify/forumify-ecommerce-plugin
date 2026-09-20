@@ -25,7 +25,7 @@
         <section class="ecommerce-order-summary card" aria-labelledby="ecommerce-order-summary-title">
             <div class="card-title items-center">
                 <h2 id="ecommerce-order-summary-title" class="text-large m-0">{{ 'ecommerce.order.summary'|trans }}</h2>
-                <span class="tag{{ status in ['failed', 'cancelled'] ? ' tag-error' }}">{{ ('ecommerce.order_status.' ~ status)|trans }}</span>
+                <span class="ecommerce-state is-{{ status }}">{{ ('ecommerce.order_status.' ~ status)|trans }}</span>
             </div>
             <div class="card-body flex items-center gap-4">
                 {% set product = order.product %}

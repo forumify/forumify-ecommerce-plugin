@@ -128,10 +128,16 @@ after the lock's transaction commits.
 
 A `SubscriptionTable` filtered by status, and a detail page with the details, the Actions menu, and the
 subscription's orders below (the `Ecommerce\OrderTable` with a `subscription` prop). Renewal orders carry a
-"Renewal" tag in the admin and in "My orders"; a pending renewal explains that the provider charges the
-saved payment method. There is no "Try again" for renewals.
+"Renewal" tag in the admin and in the buyer's ledger; a pending renewal explains that the provider charges
+the saved payment method. There is no "Try again" for renewals.
 
-"My orders" also lists the buyer's active subscriptions.
+## Buyer pages
+
+"My purchases" (`/store/orders`) lists the buyer's subscriptions as cards, past due first. Each card links
+to `/store/subscription/{id}`, which shows the plan and **every payment it produced**, and is where the
+self-service actions will live (the card's `ecommerce_plan_actions` block). A past-due card spells out
+`getGraceEndsAt()`, so the buyer sees the date access is lost. See
+[checkout-and-orders.md](checkout-and-orders.md#buyer-pages).
 
 ## Code
 

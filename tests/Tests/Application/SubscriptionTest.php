@@ -43,16 +43,16 @@ class SubscriptionTest extends EcommerceWebTestCase
         self::assertEqualsWithDelta(new DateTimeImmutable('+1 month'), $firstPeriodEnd, 60);
 
         $this->client->request('GET', '/store/orders');
-        self::assertSelectorTextContains('.ecommerce-subscription-row', 'Milsim');
-        self::assertSelectorTextContains('.ecommerce-subscription-row', 'Renews on ' . $firstPeriodEnd->format('Y-m-d'));
+        self::assertSelectorTextContains('.ecommerce-plan', 'Milsim');
+        self::assertSelectorTextContains('.ecommerce-plan', 'Renews on ' . $firstPeriodEnd->format('j M Y'));
 
         $subscriptionReference = $subscription->providerReference;
         $this->webhook(['type' => 'renewal_started', 'subscription' => $subscriptionReference, 'payment' => 'in_1']);
         self::assertSame(OrderStatus::Pending, $this->findRenewal('in_1')->status);
         self::assertEquals($firstPeriodEnd, $this->findSubscription()->currentPeriodEnd);
         $this->client->request('GET', '/store/orders');
-        self::assertSelectorTextContains('a.ecommerce-order-row', 'Premium · Renewal');
-        self::assertSelectorTextContains('a.ecommerce-order-row', 'Pending');
+        self::assertSelectorTextContains('a.ecommerce-ledger-row', 'Renewal');
+        self::assertSelectorTextContains('a.ecommerce-ledger-row', 'Pending');
         $this->client->request('GET', "/store/order/{$this->findRenewal('in_1')->reference}");
         self::assertSelectorTextContains('.ecommerce-order-status', 'This renewal is waiting for payment');
 
@@ -65,7 +65,8 @@ class SubscriptionTest extends EcommerceWebTestCase
         self::assertSame(SubscriptionStatus::PastDue, $this->findSubscription()->status);
         self::assertSame(OrderStatus::Pending, $this->findRenewal('in_2')->status);
         $this->client->request('GET', '/store/orders');
-        self::assertSelectorTextContains('.ecommerce-subscription-row', 'Past due');
+        self::assertSelectorTextContains('.ecommerce-plan.is-past_due', 'Past due');
+        self::assertSelectorTextContains('.ecommerce-plan-alert', 'Access ends on');
 
         $this->webhook(['type' => 'renewed', 'subscription' => $subscriptionReference, 'payment' => 'in_2', 'period_end' => '+3 months']);
         self::assertSame(SubscriptionStatus::Active, $this->findSubscription()->status);
@@ -73,6 +74,14 @@ class SubscriptionTest extends EcommerceWebTestCase
         self::assertGreaterThan($secondPeriodEnd, $this->findSubscription()->currentPeriodEnd);
 
         $this->webhook(['type' => 'renewal_started', 'subscription' => $subscriptionReference, 'payment' => 'in_3']);
+
+        $this->client->request('GET', "/store/subscription/{$subscription->getId()}");
+        self::assertSelectorTextContains('.ecommerce-plan', 'Milsim');
+        self::assertCount(4, $this->client->getCrawler()->filter('.ecommerce-ledger-row'));
+
+        $this->client->loginUser(UserFactory::createOne());
+        $this->client->request('GET', "/store/subscription/{$subscription->getId()}");
+        self::assertResponseStatusCodeSame(404);
 
         $this->client->loginUser($this->admin);
         $this->client->request('GET', '/admin/ecommerce/subscriptions');
@@ -102,8 +111,8 @@ class SubscriptionTest extends EcommerceWebTestCase
 
         $this->client->loginUser($customer);
         $this->client->request('GET', '/store/orders');
-        self::assertSelectorNotExists('.ecommerce-subscription-row');
-        self::assertSelectorTextContains('.ecommerce-order-row', 'Milsim');
+        self::assertSelectorNotExists('.ecommerce-plan');
+        self::assertSelectorTextContains('.ecommerce-ledger-row', 'Milsim');
     }
 
     public function testAdminEndsSubscriptionImmediately(): void

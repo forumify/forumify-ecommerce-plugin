@@ -39,11 +39,17 @@ class SubscriptionRepository extends AbstractRepository
     public function findCurrentForUser(User $user): array
     {
         return $this->createQueryBuilder('s')
+            ->addSelect(
+                'CASE WHEN s.status = :pastDue THEN 0 WHEN s.status = :active THEN 1 ELSE 2 END AS HIDDEN urgency',
+            )
             ->where('s.user = :user')
             ->andWhere('s.status != :ended')
             ->setParameter('user', $user)
             ->setParameter('ended', SubscriptionStatus::Ended)
-            ->orderBy('s.currentPeriodEnd', 'ASC')
+            ->setParameter('pastDue', SubscriptionStatus::PastDue)
+            ->setParameter('active', SubscriptionStatus::Active)
+            ->orderBy('urgency', 'ASC')
+            ->addOrderBy('s.currentPeriodEnd', 'ASC')
             ->getQuery()
             ->getResult();
     }

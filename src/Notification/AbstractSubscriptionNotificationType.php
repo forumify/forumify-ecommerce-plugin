@@ -22,7 +22,12 @@ abstract class AbstractSubscriptionNotificationType extends AbstractEcommerceNot
 
     public function getUrl(Notification $notification): string
     {
-        return $this->urlGenerator->generate('ecommerce_orders');
+        $subscription = $this->getSubscription($notification);
+        if ($subscription === null) {
+            return $this->urlGenerator->generate('ecommerce_orders');
+        }
+
+        return $this->urlGenerator->generate('ecommerce_subscription', ['id' => $subscription->getId()]);
     }
 
     public function getEmailTemplate(Notification $notification): string
@@ -32,7 +37,7 @@ abstract class AbstractSubscriptionNotificationType extends AbstractEcommerceNot
 
     public function getEmailActionLabel(): string
     {
-        return 'ecommerce.notification.view_orders';
+        return 'ecommerce.subscriptions.view';
     }
 
     protected function getTranslationParameters(Notification $notification): array

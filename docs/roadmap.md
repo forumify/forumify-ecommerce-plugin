@@ -12,8 +12,6 @@ Also out:
 
 - Taxes (Stripe Tax could become a provider setting later)
 - Coupons, refunds, invoices and PDFs
-- Customer self-service cancellation and billing portals — cancelling stays an admin action, or an
-  integration calling `SubscriptionCancellationService`
 - Multiple currencies per store
 - Guest checkout
 - Stock, shipping costs, shipping rates, and variants
@@ -26,6 +24,14 @@ Everything that belongs only to a marketplace stays in forumify.net: vendors, pa
 payouts. They build on the plugin's events.
 
 ## Designed, not built
+
+### Customer self-service on a subscription
+
+Cancelling is still an admin action (or an integration calling `SubscriptionCancellationService`). The
+buyer's zone is now the place for it: `/store/subscription/{id}` exists, and the plan card's
+`ecommerce_plan_actions` block is the slot the actions go in — cancel, resume, and whatever a provider can
+offer for a failed payment. A past-due plan already tells the buyer the date access ends, but nothing on
+the page lets them fix it yet; the provider's own billing portal is the other candidate.
 
 ### Moving active subscriptions to a new price
 

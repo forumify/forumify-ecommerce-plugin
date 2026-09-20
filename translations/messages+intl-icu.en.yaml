@@ -217,17 +217,23 @@ ecommerce:
             pending: 'This renewal is waiting for payment. Your payment provider charges your saved payment method, and retries if that fails.'
             failed: 'This renewal was never paid, and the subscription has ended.'
     orders:
-        title: 'My orders'
+        title: 'My purchases'
         history: 'Order history'
         renewal: 'Renewal'
-        empty: 'You have not ordered anything yet.'
+        empty: 'You have not bought anything yet.'
         browse: 'Browse the store'
     subscriptions:
         title: 'Subscriptions'
+        single: 'Subscription'
+        view: 'View subscription'
+        payments: 'Payments'
+        started: 'Started on {date}'
         period_end:
             active: 'Renews on {date}'
-            past_due: 'Your last payment failed'
             cancelled: 'Ends on {date}'
+            ended: 'Ended on {date}'
+        past_due: 'Your last payment failed. Update your payment method to keep this subscription.'
+        past_due_grace: 'Your last payment failed. Access ends on {date} unless the payment goes through.'
     subscription_status:
         active: 'Active'
         past_due: 'Past due'
@@ -330,8 +336,7 @@ ecommerce:
             country: 'Country'
             choose_country: 'Choose a country'
     notification:
-        view_order: 'View order'
-        view_orders: 'View my orders'
+        view_orders: 'View my purchases'
         fulfill_order: 'View order'
         order_paid:
             title: 'Payment received for {product}'

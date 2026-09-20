@@ -72,8 +72,12 @@ A `?category=` link gets that category's title, description and canonical.
 - Images go through the `ecommerce_tile`, `ecommerce_product`, `ecommerce_thumb` and `ecommerce_social`
   LiipImagine filters.
 - Templates expose named blocks — `ecommerce_store_*`, `ecommerce_product_*`, `ecommerce_tier_*`,
-  `ecommerce_category_*` — so themes and other plugins have somewhere to hook in. `ecommerce_tier_checkout`
-  is the block that owns the buy button.
+  `ecommerce_category_*`, `ecommerce_plan_*` — so themes and other plugins have somewhere to hook in.
+  `ecommerce_tier_checkout` is the block that owns the buy button, `ecommerce_plan_actions` the one that
+  owns a subscription's actions.
+- The buyer's pages reuse the store's own vocabulary: the plan card shows its price with the same
+  `.ecommerce-amount` treatment as a tier card, and `.ecommerce-product-tile-image` supplies the thumbnail
+  placeholder. See [checkout-and-orders.md](checkout-and-orders.md#buyer-pages).
 
 ## Code
 
