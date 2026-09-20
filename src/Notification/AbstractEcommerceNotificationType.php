@@ -19,8 +19,11 @@ abstract class AbstractEcommerceNotificationType extends AbstractEmailNotificati
     protected Packages $packages;
 
     #[Required]
-    public function setEcommerceServices(TranslatorInterface $translator, UrlGeneratorInterface $urlGenerator, Packages $packages): void
-    {
+    public function setEcommerceServices(
+        TranslatorInterface $translator,
+        UrlGeneratorInterface $urlGenerator,
+        Packages $packages,
+    ): void {
         $this->translator = $translator;
         $this->urlGenerator = $urlGenerator;
         $this->packages = $packages;
@@ -35,12 +38,18 @@ abstract class AbstractEcommerceNotificationType extends AbstractEmailNotificati
 
     public function getTitle(Notification $notification): string
     {
-        return $this->translator->trans($this->getTranslationKey() . '.title', $this->getTranslationParameters($notification));
+        return $this->translator->trans(
+            $this->getTranslationKey() . '.title',
+            $this->getTranslationParameters($notification),
+        );
     }
 
     public function getDescription(Notification $notification): string
     {
-        return $this->translator->trans($this->getTranslationKey() . '.description', $this->getTranslationParameters($notification));
+        return $this->translator->trans(
+            $this->getTranslationKey() . '.description',
+            $this->getTranslationParameters($notification),
+        );
     }
 
     protected function getProductImage(?Product $product): string

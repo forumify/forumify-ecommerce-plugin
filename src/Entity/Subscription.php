@@ -18,10 +18,10 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\UniqueConstraint(fields: ['providerKey', 'providerReference'])]
 class Subscription
 {
-    public const GRACE_DAYS = 30;
-
     use IdentifiableEntityTrait;
     use TimestampableEntityTrait;
+
+    public const GRACE_DAYS = 30;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
@@ -53,17 +53,12 @@ class Subscription
     #[ORM\Column(nullable: true)]
     public private(set) ?DateTimeImmutable $pastDueSince = null;
 
-    public ?DateTimeImmutable $graceEndsAt {
-        get => $this->pastDueSince === null ? null : min(
-            $this->pastDueSince->modify('+' . self::GRACE_DAYS . ' days'),
-            $this->initialOrder->periodEndFrom($this->currentPeriodEnd),
-        );
-    }
-
     public function __construct(Order $initialOrder, string $providerReference, DateTimeImmutable $currentPeriodEnd)
     {
         if ($initialOrder->providerKey === null || $initialOrder->priceType !== PriceType::Recurring) {
-            throw new InvalidArgumentException('Only a recurring order paid through a payment provider can start a subscription.');
+            throw new InvalidArgumentException(
+                'Only a recurring order paid through a payment provider can start a subscription.',
+            );
         }
 
         $this->user = $initialOrder->user;
@@ -72,6 +67,18 @@ class Subscription
         $this->providerKey = $initialOrder->providerKey;
         $this->providerReference = $providerReference;
         $this->currentPeriodEnd = $currentPeriodEnd;
+    }
+
+    public function getGraceEndsAt(): ?DateTimeImmutable
+    {
+        if ($this->pastDueSince === null) {
+            return null;
+        }
+
+        return min(
+            $this->pastDueSince->modify('+' . self::GRACE_DAYS . ' days'),
+            $this->initialOrder->periodEndFrom($this->currentPeriodEnd),
+        );
     }
 
     public function isOwnedBy(?UserInterface $user): bool
@@ -109,7 +116,10 @@ class Subscription
 
     public function cancel(): bool
     {
-        return $this->transition([SubscriptionStatus::Active, SubscriptionStatus::PastDue], SubscriptionStatus::Cancelled);
+        return $this->transition(
+            [SubscriptionStatus::Active, SubscriptionStatus::PastDue],
+            SubscriptionStatus::Cancelled,
+        );
     }
 
     public function resume(): bool

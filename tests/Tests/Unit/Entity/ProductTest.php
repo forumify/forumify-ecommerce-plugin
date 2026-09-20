@@ -60,9 +60,9 @@ class ProductTest extends TestCase
     {
         $product = new Product();
         $product->images->add(new ProductImage($product, 'screenshot.png'));
-        self::assertSame(['screenshot.png'], $product->gallery);
+        self::assertSame(['screenshot.png'], $product->getGallery());
 
         $product->image = 'cover.png';
-        self::assertSame(['cover.png', 'screenshot.png'], $product->gallery);
+        self::assertSame(['cover.png', 'screenshot.png'], $product->getGallery());
     }
 }

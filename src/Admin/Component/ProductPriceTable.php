@@ -43,7 +43,8 @@ class ProductPriceTable extends AbstractDoctrineTable
             ->addColumn('price', [
                 'field' => null,
                 'label' => $this->translator->trans('ecommerce.admin.price.single'),
-                'renderer' => fn (mixed $_, ProductPrice $price) => htmlspecialchars($this->priceFormatter->format($price)),
+                'renderer' => fn(mixed $_, ProductPrice $price) =>
+                    htmlspecialchars($this->priceFormatter->format($price)),
                 'searchable' => false,
                 'sortable' => false,
             ])
@@ -68,7 +69,7 @@ class ProductPriceTable extends AbstractDoctrineTable
 
     protected function reorderItem(SortableEntityInterface $entity, string $direction): void
     {
-        $this->repository->reorder($entity, $direction, fn (QueryBuilder $qb) => $qb
+        $this->repository->reorder($entity, $direction, fn(QueryBuilder $qb) => $qb
             ->andWhere('e.tier = :tier')
             ->setParameter('tier', $this->tierId));
     }
@@ -84,7 +85,7 @@ class ProductPriceTable extends AbstractDoctrineTable
         }
 
         return implode(', ', array_map(
-            fn (string $status) => $this->translator->trans('ecommerce.admin.price.status_' . $status),
+            fn(string $status) => $this->translator->trans('ecommerce.admin.price.status_' . $status),
             $statuses,
         ));
     }

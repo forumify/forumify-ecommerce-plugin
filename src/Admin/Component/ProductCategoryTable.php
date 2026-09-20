@@ -32,7 +32,7 @@ class ProductCategoryTable extends AbstractDoctrineTable
             ->addColumn('title', [
                 'field' => 'title',
                 'label' => $this->translator->trans('ecommerce.admin.category.title'),
-                'renderer' => static fn (string $title) => htmlspecialchars($title),
+                'renderer' => static fn(string $title) => htmlspecialchars($title),
             ])
             ->addColumn('slug', [
                 'field' => 'slug',

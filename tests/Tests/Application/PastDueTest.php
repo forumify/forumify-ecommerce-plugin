@@ -39,7 +39,7 @@ class PastDueTest extends EcommerceWebTestCase
         $notifications = self::getContainer()->get(NotificationRepository::class)->findBy(['recipient' => $expired->user]);
         self::assertSame(
             [SubscriptionEndedNotificationType::TYPE],
-            array_map(static fn (Notification $notification) => $notification->getType(), $notifications),
+            array_map(static fn(Notification $notification) => $notification->getType(), $notifications),
         );
     }
 

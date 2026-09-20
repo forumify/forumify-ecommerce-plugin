@@ -77,10 +77,10 @@ class StripeCatalogTest extends TestCase
         $price->tier->providerReferences = ['stripe' => 'prod_live'];
         $price->tier->label = 'Milsim';
         $this->products->expects(self::once())->method('create')
-            ->with(self::callback(static fn (array $params) => $params['name'] === 'Milsim'))
+            ->with(self::callback(static fn(array $params) => $params['name'] === 'Milsim'))
             ->willReturn(Product::constructFrom(['id' => 'prod_test']));
         $this->prices->expects(self::once())->method('create')
-            ->with(self::callback(static fn (array $params) => $params['product'] === 'prod_test' && !isset($params['recurring'])))
+            ->with(self::callback(static fn(array $params) => $params['product'] === 'prod_test' && !isset($params['recurring'])))
             ->willReturn(Price::constructFrom(['id' => 'price_test']));
 
         self::assertSame('price_test', $this->sync(new StripeSettings('sk_test_abc', 'whsec_abc'), $price));
@@ -117,7 +117,7 @@ class StripeCatalogTest extends TestCase
         ])->willReturn(Customer::constructFrom(['id' => 'cus_1']));
         $this->customerRepository->method('findOneFor')->willReturnOnConsecutiveCalls(null, new ProviderCustomer($user, 'stripe', 'cus_1'));
         $this->customerRepository->expects(self::once())->method('save')->with(self::callback(
-            static fn (ProviderCustomer $customer) => $customer->externalId === 'cus_1' && $customer->providerKey === 'stripe',
+            static fn(ProviderCustomer $customer) => $customer->externalId === 'cus_1' && $customer->providerKey === 'stripe',
         ));
 
         self::assertSame('cus_1', $this->catalog->syncCustomer($client, $settings, $user));

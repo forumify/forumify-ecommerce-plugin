@@ -24,8 +24,10 @@ class MoneyAmountType extends AbstractType
         $resolver->setDefaults([
             'currency' => false,
             'input' => 'string',
-            'label_translation_parameters' => static fn (Options $options) => ['currency' => $options['money_currency']],
-            'scale' => static fn (Options $options) => Currency::of($options['money_currency'])->getDefaultFractionDigits(),
+            'label_translation_parameters' => static fn(Options $options) =>
+                ['currency' => $options['money_currency']],
+            'scale' => static fn(Options $options) =>
+                Currency::of($options['money_currency'])->getDefaultFractionDigits(),
             'invalid_message' => 'ecommerce.price.amount_invalid',
         ]);
     }

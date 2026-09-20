@@ -69,7 +69,10 @@ class OrderController extends AbstractController
             $form->get('note')->getData(),
         );
 
-        $this->addFlash($completed ? 'success' : 'error', $completed ? 'ecommerce.admin.order.completed' : 'ecommerce.admin.order.not_completable');
+        $this->addFlash(
+            $completed ? 'success' : 'error',
+            $completed ? 'ecommerce.admin.order.completed' : 'ecommerce.admin.order.not_completable',
+        );
         return $this->redirectToRoute('ecommerce_admin_orders_view', ['id' => $order->getId()]);
     }
 

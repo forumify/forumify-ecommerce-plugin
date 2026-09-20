@@ -40,6 +40,8 @@ class SubscriptionNotificationSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->notificationService->sendNotification(new Notification($type, $subscription->user, ['subscription' => $subscription]));
+        $this->notificationService->sendNotification(
+            new Notification($type, $subscription->user, ['subscription' => $subscription]),
+        );
     }
 }

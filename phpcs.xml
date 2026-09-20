@@ -5,13 +5,12 @@
     <arg name="extensions" value="php"/>
 
     <!-- PSR 12 baseline -->
-    <rule ref="PSR2">
-        <exclude name="Generic.Files.LineLength.MaxExceeded"/>
-        <exclude name="Generic.Files.LineLength.TooLong"/>
-        <exclude name="PSR2.Methods.FunctionCallSignature.SpaceBeforeCloseBracket"/>
-        <!-- PHP_CodeSniffer 3 misreads property hook bodies as extra property declarations -->
-        <exclude name="PSR2.Classes.PropertyDeclaration.Multiple"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
+    <rule ref="PSR12"/>
+    <rule ref="PSR2.Classes.PropertyDeclaration.Multiple">
+        <severity>0</severity> 
+    </rule>
+    <rule ref="PSR2.Classes.PropertyDeclaration.ScopeMissing">
+        <severity>0</severity> 
     </rule>
 
     <!-- Individual rules to increase consistency -->

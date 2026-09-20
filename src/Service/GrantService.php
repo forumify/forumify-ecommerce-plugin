@@ -60,7 +60,9 @@ class GrantService
         $this->userRepository->save($user);
 
         foreach ($newBadges as $badge) {
-            $this->notificationService->sendNotification(new Notification(NewBadgeNotificationType::TYPE, $user, ['badge' => $badge]));
+            $this->notificationService->sendNotification(
+                new Notification(NewBadgeNotificationType::TYPE, $user, ['badge' => $badge]),
+            );
         }
     }
 
@@ -76,7 +78,11 @@ class GrantService
         $users = [];
         foreach ($grants as $grant) {
             $granted = $grant->role ?? $grant->badge;
-            if ($granted === null || $grant->preExisting || $this->grantRepository->findFirst($grant->user, $granted) !== null) {
+            if ($granted === null || $grant->preExisting) {
+                continue;
+            }
+
+            if ($this->grantRepository->findFirst($grant->user, $granted) !== null) {
                 continue;
             }
 

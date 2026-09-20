@@ -34,7 +34,7 @@ class MoneyFormatterTest extends TestCase
     public function testFormatPartsSplitsOffTheFraction(Money $money, string $locale, string $whole, string $fraction, string $rest): void
     {
         $parts = array_map(
-            static fn (string $part) => str_replace(["\u{a0}", "\u{202f}"], ' ', $part),
+            static fn(string $part) => str_replace(["\u{a0}", "\u{202f}"], ' ', $part),
             (new MoneyFormatter())->formatParts($money, $locale),
         );
 

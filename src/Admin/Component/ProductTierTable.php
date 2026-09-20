@@ -42,13 +42,13 @@ class ProductTierTable extends AbstractDoctrineTable
             ->addColumn('label', [
                 'field' => 'label',
                 'label' => $this->translator->trans('ecommerce.admin.tier.label'),
-                'renderer' => static fn (string $label) => htmlspecialchars($label),
+                'renderer' => static fn(string $label) => htmlspecialchars($label),
                 'searchable' => false,
             ])
             ->addColumn('key', [
                 'field' => 'key',
                 'label' => $this->translator->trans('ecommerce.admin.tier.key'),
-                'renderer' => static fn (string $key) => '<code>' . htmlspecialchars($key) . '</code>',
+                'renderer' => static fn(string $key) => '<code>' . htmlspecialchars($key) . '</code>',
                 'searchable' => false,
             ])
             ->addColumn('prices', [
@@ -72,7 +72,7 @@ class ProductTierTable extends AbstractDoctrineTable
 
     protected function reorderItem(SortableEntityInterface $entity, string $direction): void
     {
-        $this->repository->reorder($entity, $direction, fn (QueryBuilder $qb) => $qb
+        $this->repository->reorder($entity, $direction, fn(QueryBuilder $qb) => $qb
             ->andWhere('e.product = :product')
             ->setParameter('product', $this->productId));
     }
@@ -80,7 +80,7 @@ class ProductTierTable extends AbstractDoctrineTable
     private function renderPrices(mixed $_, ProductTier $tier): string
     {
         $prices = $tier->prices
-            ->filter(static fn (ProductPrice $price) => $price->active)
+            ->filter(static fn(ProductPrice $price) => $price->active)
             ->map($this->priceFormatter->format(...))
             ->toArray();
 

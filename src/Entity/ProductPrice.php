@@ -43,10 +43,6 @@ class ProductPrice implements SortableEntityInterface, AuditableEntityInterface
         }
     }
 
-    public Money $amount {
-        get => Money::ofMinor($this->amountMinor, $this->currency);
-    }
-
     #[ORM\Column(length: 16, enumType: PriceType::class)]
     public PriceType $type = PriceType::OneTime {
         set {
@@ -92,6 +88,11 @@ class ProductPrice implements SortableEntityInterface, AuditableEntityInterface
         $this->currency = $currency;
     }
 
+    public function getAmount(): Money
+    {
+        return Money::ofMinor($this->amountMinor, $this->currency);
+    }
+
     /**
      * @param iterable<ProductPrice> $prices
      */
@@ -99,7 +100,8 @@ class ProductPrice implements SortableEntityInterface, AuditableEntityInterface
     {
         $cheapest = null;
         foreach ($prices as $price) {
-            if ($cheapest === null || $price->amount->getAmount()->isLessThan($cheapest->amount->getAmount())) {
+            $amount = $price->getAmount()->getAmount();
+            if ($cheapest === null || $amount->isLessThan($cheapest->getAmount()->getAmount())) {
                 $cheapest = $price;
             }
         }
@@ -132,7 +134,9 @@ class ProductPrice implements SortableEntityInterface, AuditableEntityInterface
     {
         if ($this->type === PriceType::Recurring) {
             if ($this->billingInterval === null) {
-                $context->buildViolation('ecommerce.price.interval_required')->atPath('billingInterval')->addViolation();
+                $context->buildViolation('ecommerce.price.interval_required')
+                    ->atPath('billingInterval')
+                    ->addViolation();
             }
             if ($this->intervalCount === null) {
                 $context->buildViolation('ecommerce.price.interval_required')->atPath('intervalCount')->addViolation();
@@ -152,7 +156,7 @@ class ProductPrice implements SortableEntityInterface, AuditableEntityInterface
 
     public function getNameForAudit(): string
     {
-        $name = "{$this->tier->getNameForAudit()}: {$this->amount}";
+        $name = "{$this->tier->getNameForAudit()}: {$this->getAmount()}";
         if ($this->billingInterval !== null) {
             $name .= " / {$this->intervalCount} {$this->billingInterval->value}";
         }

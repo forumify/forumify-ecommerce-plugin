@@ -39,7 +39,8 @@ interface FulfillmentTypeInterface
     public function getCheckoutFormType(): ?string;
 
     /**
-     * Turns the checkout form's data into Order::$fulfillmentData: scalars only (ids and display labels, never entities).
+     * Turns the checkout form's data into Order::$fulfillmentData: scalars only
+     * (ids and display labels, never entities).
      *
      * @return array<string, mixed>
      */

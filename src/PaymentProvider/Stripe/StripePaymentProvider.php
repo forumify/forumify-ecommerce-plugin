@@ -51,7 +51,7 @@ class StripePaymentProvider implements PaymentProviderInterface
 
     public function isConfigured(PaymentProviderConfig $config): bool
     {
-        return StripeSettings::fromConfig($config)->configured;
+        return StripeSettings::fromConfig($config)->isConfigured();
     }
 
     public function supports(ProductPrice $price): bool
@@ -93,7 +93,9 @@ class StripePaymentProvider implements PaymentProviderInterface
 
         $client = $this->createClient();
 
-        return $this->eventMapper->fromSession($client, $client->checkout->sessions->retrieve($order->providerReference));
+        $session = $client->checkout->sessions->retrieve($order->providerReference);
+
+        return $this->eventMapper->fromSession($client, $session);
     }
 
     public function handleWebhook(Request $request): array
@@ -125,7 +127,9 @@ class StripePaymentProvider implements PaymentProviderInterface
 
     private function getSettings(): StripeSettings
     {
-        return StripeSettings::fromConfig($this->configRepository->findOneByKey(self::KEY) ?? new PaymentProviderConfig(self::KEY));
+        $config = $this->configRepository->findOneByKey(self::KEY) ?? new PaymentProviderConfig(self::KEY);
+
+        return StripeSettings::fromConfig($config);
     }
 
     private function createClient(): StripeClient

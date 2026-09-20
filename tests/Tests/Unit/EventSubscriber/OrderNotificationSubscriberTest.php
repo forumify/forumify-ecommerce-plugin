@@ -35,7 +35,7 @@ class OrderNotificationSubscriberTest extends TestCase
         $order = $this->createPaidOrder(InstantFulfillmentType::KEY);
         $fulfillmentService = $this->createMock(FulfillmentService::class);
         $fulfillmentService->expects(self::once())->method('complete')->with($order)->willReturnCallback(
-            static fn (Order $order) => $order->complete(),
+            static fn(Order $order) => $order->complete(),
         );
 
         $this->createDispatcher($fulfillmentService)->dispatch(new OrderPaidEvent($order));

@@ -62,10 +62,16 @@ class PaymentProviderController extends AbstractController
             return $this->redirectToRoute('ecommerce_admin_payment_providers_list');
         }
 
+        $webhookUrl = $this->generateUrl(
+            'ecommerce_webhook',
+            ['providerKey' => $key],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+
         return $this->render('@ForumifyEcommercePlugin/admin/payment_providers/edit.html.twig', [
             'provider' => $provider,
             'form' => $form->createView(),
-            'webhookUrl' => $this->generateUrl('ecommerce_webhook', ['providerKey' => $key], UrlGeneratorInterface::ABSOLUTE_URL),
+            'webhookUrl' => $webhookUrl,
         ]);
     }
 }

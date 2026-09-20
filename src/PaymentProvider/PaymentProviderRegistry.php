@@ -42,7 +42,9 @@ class PaymentProviderRegistry
 
     public function getConfig(PaymentProviderInterface $provider): PaymentProviderConfig
     {
-        return $this->configRepository->findAllByKey()[$provider->getKey()] ?? new PaymentProviderConfig($provider->getKey());
+        $key = $provider->getKey();
+
+        return $this->configRepository->findAllByKey()[$key] ?? new PaymentProviderConfig($key);
     }
 
     public function isConfigured(PaymentProviderInterface $provider): bool
@@ -67,7 +69,11 @@ class PaymentProviderRegistry
         $available = [];
         foreach ($this->providers as $key => $provider) {
             $config = $configs[$key] ?? null;
-            if ($config !== null && $config->enabled && $provider->isConfigured($config) && $provider->supports($price)) {
+            if ($config === null || !$config->enabled) {
+                continue;
+            }
+
+            if ($provider->isConfigured($config) && $provider->supports($price)) {
                 $available[] = $provider;
             }
         }

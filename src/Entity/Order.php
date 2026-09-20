@@ -98,10 +98,6 @@ class Order
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     public private(set) ?string $fulfillmentNote = null;
 
-    public Money $amount {
-        get => Money::ofMinor($this->amountMinor, $this->currency);
-    }
-
     /**
      * @param array<string, mixed> $fulfillmentData
      */
@@ -132,6 +128,11 @@ class Order
         $this->intervalCount = $price->intervalCount;
         $this->fulfillmentType = $subscription?->initialOrder->fulfillmentType ?? $product->fulfillmentType;
         $this->fulfillmentData = $subscription?->initialOrder->fulfillmentData ?? $fulfillmentData;
+    }
+
+    public function getAmount(): Money
+    {
+        return Money::ofMinor($this->amountMinor, $this->currency);
     }
 
     public function isOwnedBy(?UserInterface $user): bool

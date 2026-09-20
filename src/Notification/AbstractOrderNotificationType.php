@@ -22,8 +22,11 @@ abstract class AbstractOrderNotificationType extends AbstractEcommerceNotificati
     public function getUrl(Notification $notification): string
     {
         $order = $this->getOrder($notification);
+        if ($order === null) {
+            return '';
+        }
 
-        return $order === null ? '' : $this->urlGenerator->generate('ecommerce_order', ['reference' => $order->reference]);
+        return $this->urlGenerator->generate('ecommerce_order', ['reference' => $order->reference]);
     }
 
     public function getEmailTemplate(Notification $notification): string

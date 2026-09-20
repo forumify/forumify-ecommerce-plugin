@@ -23,7 +23,7 @@ class PriceFormatter implements RuntimeExtensionInterface
             return $this->translator->trans('ecommerce.price.free');
         }
 
-        $amount = $this->moneyFormatter->format($price->amount);
+        $amount = $this->moneyFormatter->format($price->getAmount());
         $interval = $price->billingInterval;
         if ($interval === null) {
             return $amount;

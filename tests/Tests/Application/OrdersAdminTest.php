@@ -45,7 +45,7 @@ class OrdersAdminTest extends EcommerceWebTestCase
         OrderFactory::new()->completed()->create(['price' => $milsimPrice]);
         OrderFactory::new()->completed()->create(['price' => $themePrice]);
 
-        $titles = static fn ($component) => $component->render()->crawler()->filter('tbody tr td:nth-child(2)')->each(fn ($td) => $td->text());
+        $titles = static fn($component) => $component->render()->crawler()->filter('tbody tr td:nth-child(2)')->each(fn($td) => $td->text());
 
         $table = $this->createLiveComponent('Ecommerce\\OrderTable', [], $this->client);
         self::assertCount(3, $titles($table));

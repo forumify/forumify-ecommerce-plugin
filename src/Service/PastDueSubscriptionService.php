@@ -24,7 +24,7 @@ class PastDueSubscriptionService
         $ended = 0;
 
         foreach ($this->subscriptionRepository->findPastDue() as $subscription) {
-            if ($subscription->graceEndsAt === null || $subscription->graceEndsAt > $now) {
+            if ($subscription->getGraceEndsAt() === null || $subscription->getGraceEndsAt() > $now) {
                 continue;
             }
 

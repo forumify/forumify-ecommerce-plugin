@@ -21,12 +21,12 @@ class ProductTierTest extends TestCase
         $premium->prices[2]->active = false;
         $retired->prices[0]->active = false;
 
-        self::assertSame([1500, 999], array_map(fn (ProductPrice $p) => $p->amountMinor, $premium->activePrices));
-        self::assertSame(999, $premium->cheapestPrice?->amountMinor);
-        self::assertNull($retired->cheapestPrice);
+        self::assertSame([1500, 999], array_map(fn(ProductPrice $p) => $p->amountMinor, $premium->getActivePrices()));
+        self::assertSame(999, $premium->getCheapestPrice()?->amountMinor);
+        self::assertNull($retired->getCheapestPrice());
 
-        self::assertSame([$free, $premium], $product->purchasableTiers);
-        self::assertSame($free->prices[0], $product->cheapestPrice);
+        self::assertSame([$free, $premium], $product->getPurchasableTiers());
+        self::assertSame($free->prices[0], $product->getCheapestPrice());
     }
 
     /**

@@ -72,10 +72,13 @@ class FakePaymentProvider implements PaymentProviderInterface
 
     public function startCheckout(Order $order, CheckoutUrls $urls): CheckoutRedirect
     {
-        return new CheckoutRedirect(
-            $this->urlGenerator->generate('ecommerce_fake_payment_pay', ['reference' => $order->reference], UrlGeneratorInterface::ABSOLUTE_URL),
-            'fake_' . $order->reference,
+        $payUrl = $this->urlGenerator->generate(
+            'ecommerce_fake_payment_pay',
+            ['reference' => $order->reference],
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
+
+        return new CheckoutRedirect($payUrl, 'fake_' . $order->reference);
     }
 
     public function syncOrder(Order $order): array
@@ -128,7 +131,10 @@ class FakePaymentProvider implements PaymentProviderInterface
                 $payment ?? 'fake_inv_' . bin2hex(random_bytes(6)),
                 self::date($payload, 'period_end'),
             ),
-            'payment_failed' => new SubscriptionPaymentFailed($subscription ?? throw new InvalidWebhookException(), $payment),
+            'payment_failed' => new SubscriptionPaymentFailed(
+                $subscription ?? throw new InvalidWebhookException(),
+                $payment,
+            ),
             'updated' => new SubscriptionUpdated(
                 $subscription ?? throw new InvalidWebhookException(),
                 ($payload['cancel_at_period_end'] ?? false) === true,

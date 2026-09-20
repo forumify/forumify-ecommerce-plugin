@@ -6,6 +6,7 @@ namespace Forumify\Ecommerce\Admin\Component;
 
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\ORM\QueryBuilder;
 use Forumify\Core\Component\Table\AbstractDoctrineTable;
 use Forumify\Core\Service\TimezoneResolver;
@@ -17,7 +18,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 
-#[AsLiveComponent('Ecommerce\\SubscriptionTable', '@ForumifyEcommercePlugin/admin/components/subscription_table.html.twig')]
+#[AsLiveComponent(
+    'Ecommerce\\SubscriptionTable',
+    '@ForumifyEcommercePlugin/admin/components/subscription_table.html.twig',
+)]
 #[IsGranted('ecommerce.admin.subscriptions.view')]
 class SubscriptionTable extends AbstractDoctrineTable
 {
@@ -61,40 +65,52 @@ class SubscriptionTable extends AbstractDoctrineTable
             ->addColumn('product', [
                 'field' => 'initialOrder.productTitle',
                 'label' => $this->translator->trans('ecommerce.admin.order.product'),
-                'renderer' => static fn (string $title, Subscription $subscription) => htmlspecialchars("$title - {$subscription->initialOrder->tierLabel}"),
+                'renderer' => static fn(string $title, Subscription $subscription) =>
+                    htmlspecialchars("$title - {$subscription->initialOrder->tierLabel}"),
             ])
             ->addColumn('customer', [
                 'field' => 'user?.username',
                 'label' => $this->translator->trans('ecommerce.admin.order.customer'),
-                'renderer' => static fn (?string $username) => htmlspecialchars($username ?? '-'),
+                'renderer' => static fn(?string $username) => htmlspecialchars($username ?? '-'),
             ])
             ->addColumn('price', [
                 'field' => null,
                 'label' => $this->translator->trans('ecommerce.admin.order.price'),
-                'renderer' => fn (mixed $_, Subscription $subscription) => htmlspecialchars($this->priceFormatter->format($subscription->initialOrder)),
+                'renderer' => fn(mixed $_, Subscription $subscription) =>
+                    htmlspecialchars($this->priceFormatter->format($subscription->initialOrder)),
                 'searchable' => false,
                 'sortable' => false,
             ])
             ->addColumn('status', [
                 'field' => 'status',
                 'label' => $this->translator->trans('ecommerce.admin.order.status'),
-                'renderer' => fn (SubscriptionStatus $status) => $this->translator->trans('ecommerce.subscription_status.' . $status->value),
+                'renderer' => fn(SubscriptionStatus $status) =>
+                    $this->translator->trans('ecommerce.subscription_status.' . $status->value),
                 'searchable' => false,
             ])
             ->addColumn('createdAt', [
                 'field' => 'createdAt',
                 'label' => $this->translator->trans('ecommerce.admin.subscription.started'),
-                'renderer' => fn (DateTime $date) => DateTimeImmutable::createFromInterface($date)->setTimezone($this->timezoneResolver->getTimezone())->format('Y-m-d'),
+                'renderer' => fn(DateTime $date) => $this->formatDate($date, 'Y-m-d'),
                 'searchable' => false,
             ])
             ->addColumn('currentPeriodEnd', [
                 'field' => 'currentPeriodEnd',
                 'label' => $this->translator->trans('ecommerce.admin.subscription.period_end'),
-                'renderer' => fn (DateTimeImmutable $date) => $date->setTimezone($this->timezoneResolver->getTimezone())->format('Y-m-d'),
+                'renderer' => fn(DateTimeImmutable $date) => $this->formatDate($date, 'Y-m-d'),
                 'searchable' => false,
             ])
-            ->addActionColumn(fn (int $id) => $this->renderAction('ecommerce_admin_subscriptions_view', ['id' => $id], 'eye'))
+            ->addActionColumn(
+                fn(int $id) => $this->renderAction('ecommerce_admin_subscriptions_view', ['id' => $id], 'eye'),
+            )
         ;
+    }
+
+    private function formatDate(DateTimeInterface $date, string $format): string
+    {
+        return DateTimeImmutable::createFromInterface($date)
+            ->setTimezone($this->timezoneResolver->getTimezone())
+            ->format($format);
     }
 
     protected function getQuery(array $search): QueryBuilder

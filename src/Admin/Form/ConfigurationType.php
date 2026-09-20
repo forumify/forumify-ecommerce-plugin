@@ -19,7 +19,8 @@ class ConfigurationType extends AbstractType
     {
         $builder->add('ecommerce__currency', CurrencyType::class, [
             'autocomplete' => true,
-            'choice_filter' => static fn (?string $currency) => in_array($currency, StoreSettings::SUPPORTED_CURRENCIES, true),
+            'choice_filter' => static fn(?string $currency) =>
+                in_array($currency, StoreSettings::SUPPORTED_CURRENCIES, true),
             'constraints' => [new Assert\NotBlank()],
             'help' => 'ecommerce.admin.configuration.currency_help',
             'label' => 'ecommerce.admin.configuration.currency',

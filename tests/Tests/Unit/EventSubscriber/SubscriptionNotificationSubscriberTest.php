@@ -46,7 +46,7 @@ class SubscriptionNotificationSubscriberTest extends TestCase
 
         $subscriptionRepository = $this->createMock(SubscriptionRepository::class);
         $subscriptionRepository->method('withLockedSubscription')->willReturnCallback(
-            static fn (string $_, string $__, callable $callback) => $callback($subscription),
+            static fn(string $_, string $__, callable $callback) => $callback($subscription),
         );
         $orderRepository = $this->createMock(OrderRepository::class);
         $orderRepository->method('findPendingRenewals')->willReturn([]);

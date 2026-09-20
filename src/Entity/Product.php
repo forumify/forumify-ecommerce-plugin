@@ -95,29 +95,6 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\OrderBy(['position' => 'ASC'])]
     public private(set) Collection $images;
 
-    /** @var list<string> */
-    public array $gallery {
-        get {
-            $images = $this->images->map(static fn (ProductImage $image) => $image->image)->getValues();
-
-            return $this->image === null ? $images : [$this->image, ...$images];
-        }
-    }
-
-    /** @var list<ProductTier> */
-    public array $purchasableTiers {
-        get => array_values($this->tiers->filter(static fn (ProductTier $tier) => $tier->activePrices !== [])->toArray());
-    }
-
-    /** @var list<ProductPrice> */
-    public array $activePrices {
-        get => array_merge(...array_map(static fn (ProductTier $tier) => $tier->activePrices, $this->tiers->toArray()));
-    }
-
-    public ?ProductPrice $cheapestPrice {
-        get => ProductPrice::cheapest($this->activePrices);
-    }
-
     public function __construct()
     {
         $this->categories = new ArrayCollection();
@@ -127,9 +104,45 @@ class Product implements SortableEntityInterface, AuditableEntityInterface
         $this->images = new ArrayCollection();
     }
 
+    /**
+     * @return list<string>
+     */
+    public function getGallery(): array
+    {
+        $images = $this->images->map(static fn(ProductImage $image) => $image->image)->getValues();
+
+        return $this->image === null ? $images : [$this->image, ...$images];
+    }
+
+    /**
+     * @return list<ProductTier>
+     */
+    public function getPurchasableTiers(): array
+    {
+        return $this->tiers
+            ->filter(static fn(ProductTier $tier) => $tier->getActivePrices() !== [])
+            ->getValues();
+    }
+
+    /**
+     * @return list<ProductPrice>
+     */
+    public function getActivePrices(): array
+    {
+        return array_merge(...array_map(
+            static fn(ProductTier $tier) => $tier->getActivePrices(),
+            $this->tiers->toArray(),
+        ));
+    }
+
+    public function getCheapestPrice(): ?ProductPrice
+    {
+        return ProductPrice::cheapest($this->getActivePrices());
+    }
+
     public function hasLockedPrices(): bool
     {
-        return $this->tiers->exists(static fn (int $_, ProductTier $tier) => $tier->hasLockedPrices());
+        return $this->tiers->exists(static fn(int $_, ProductTier $tier) => $tier->hasLockedPrices());
     }
 
     public function getIdentifierForAudit(): string

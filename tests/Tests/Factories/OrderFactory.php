@@ -21,12 +21,12 @@ class OrderFactory extends PersistentObjectFactory
 
     public function paid(): static
     {
-        return $this->afterInstantiate(static fn (Order $order) => $order->pay());
+        return $this->afterInstantiate(static fn(Order $order) => $order->pay());
     }
 
     public function completed(): static
     {
-        return $this->afterInstantiate(static fn (Order $order) => $order->pay() && $order->complete());
+        return $this->afterInstantiate(static fn(Order $order) => $order->pay() && $order->complete());
     }
 
     protected function defaults(): array|callable

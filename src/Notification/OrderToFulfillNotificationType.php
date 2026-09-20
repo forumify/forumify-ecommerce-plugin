@@ -23,8 +23,11 @@ class OrderToFulfillNotificationType extends AbstractOrderNotificationType
     public function getUrl(Notification $notification): string
     {
         $order = $this->getOrder($notification);
+        if ($order === null) {
+            return '';
+        }
 
-        return $order === null ? '' : $this->urlGenerator->generate('ecommerce_admin_orders_view', ['id' => $order->getId()]);
+        return $this->urlGenerator->generate('ecommerce_admin_orders_view', ['id' => $order->getId()]);
     }
 
     public function getEmailActionLabel(): string

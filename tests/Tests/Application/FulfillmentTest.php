@@ -164,7 +164,7 @@ class FulfillmentTest extends EcommerceWebTestCase
     private function notificationTypes(User $user): array
     {
         return array_map(
-            static fn (Notification $notification) => $notification->getType(),
+            static fn(Notification $notification) => $notification->getType(),
             self::getContainer()->get(NotificationRepository::class)->findBy(['recipient' => $user], ['id' => 'ASC']),
         );
     }

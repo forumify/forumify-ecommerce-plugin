@@ -30,7 +30,7 @@ class ProductPriceFactory extends PersistentObjectFactory
 
     public function locked(): static
     {
-        return $this->afterInstantiate(static fn (ProductPrice $price) => $price->lock());
+        return $this->afterInstantiate(static fn(ProductPrice $price) => $price->lock());
     }
 
     protected function defaults(): array|callable

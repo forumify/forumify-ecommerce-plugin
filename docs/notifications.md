@@ -1,0 +1,67 @@
+# Notifications
+
+The plugin owns the order and subscription notifications, so an integration never has to write its own
+confirmation mail. (forumify.net's `HostingOrderConfirmationNotificationType` and
+`ProductConfirmationNotification` go away when it moves onto the plugin.)
+
+All types extend the platform's `AbstractEmailNotificationType` — in-app **and** email — and are sent from
+listeners on the plugin's events, which already dispatch after the lock's transaction commits.
+`NotificationService` sends mail through messenger, so a mail failure can never fail a webhook.
+
+## To the buyer
+
+| Notification | Trigger | Notes |
+| --- | --- | --- |
+| **Order completed** | `OrderCompletedEvent` | The main confirmation. For instant types it arrives right after payment and doubles as the receipt. Includes the fulfillment details and the admin's note. |
+| **Payment received** | `OrderPaidEvent`, if the order is **still `Paid`** after its listeners ran | Only for types that don't complete right away, so an instant order never gets two mails. Initial orders only. |
+| **Order failed** | `OrderFailedEvent` | A real payment failure only — an abandoned checkout maps to `CheckoutCancelled`, not `CheckoutFailed`. |
+| **Subscription payment failed** | `SubscriptionPastDueEvent` | States the grace end date. |
+| **Subscription cancelled** | `SubscriptionCancelledEvent` | "Runs until {period end}". An **immediate** cancellation sends only "ended". |
+| **Subscription ended** | `SubscriptionEndedEvent` | |
+
+> **Decision: "payment received" is decided after the listeners ran.** Checking the status at the end of
+> `OrderPaidEvent` is what keeps an instant purchase down to one mail, without the notification layer having
+> to know which types complete synchronously.
+
+**Renewals send nothing** — the provider's own receipts cover them. The one exception is a manual type's
+renewal, which gets "Order completed" once an admin fulfills it.
+
+## To admins
+
+| Notification | Trigger | Recipients |
+| --- | --- | --- |
+| **New order to fulfill** | `OrderPaidEvent`, or a paid renewal order, of a manual type | every user with the product's `fulfillmentRole` |
+
+A failed integration (provisioning, say) is the integration's own business to report. The order stays `Paid`
+and shows up under "Paid" in the admin.
+
+## Fulfillment details in emails
+
+The order notifications' email templates include the fulfillment type's details template
+(`getDetailsTemplate()`), so a type adds its shipping address or instance link to the plugin's mails and
+pages without owning a notification of its own.
+
+## Structure
+
+```
+AbstractEcommerceNotificationType
+  ├ AbstractOrderNotificationType        → templates/emails/notifications/order.html.twig
+  │   ├ OrderCompletedNotificationType
+  │   ├ OrderPaidNotificationType
+  │   ├ OrderFailedNotificationType
+  │   └ OrderToFulfillNotificationType
+  └ AbstractSubscriptionNotificationType → templates/emails/notifications/subscription.html.twig
+      ├ SubscriptionPastDueNotificationType
+      ├ SubscriptionCancelledNotificationType
+      └ SubscriptionEndedNotificationType
+```
+
+Dispatched by `OrderNotificationSubscriber` and `SubscriptionNotificationSubscriber`.
+
+## Code
+
+- `src/Notification/`, `src/EventSubscriber/*NotificationSubscriber.php`
+- `templates/emails/notifications/`
+- Tests: `OrderNotificationSubscriberTest`, `SubscriptionNotificationSubscriberTest` ("payment received" is
+  not sent for instant orders; an immediate cancellation sends only "ended"), `FulfillmentTest` (a manual
+  order notifies the fulfillment role, completing it notifies the buyer)

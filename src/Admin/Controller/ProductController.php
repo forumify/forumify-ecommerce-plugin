@@ -162,7 +162,7 @@ class ProductController extends AbstractCrudController
         if (!$form->isSubmitted() || !$form->isValid()) {
             return $this->render('@Forumify/form/simple_form_page.html.twig', [
                 'admin' => true,
-                'cancelPath' => $this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . '#tab-gallery',
+                'cancelPath' => $this->productPath($product, 'gallery'),
                 'form' => $form->createView(),
                 'title' => 'ecommerce.admin.gallery.create',
                 'titleArgs' => ['product' => $product->title],
@@ -170,7 +170,7 @@ class ProductController extends AbstractCrudController
         }
 
         $images = array_map(
-            static fn (string $path) => new ProductImage($product, $path),
+            static fn(string $path) => new ProductImage($product, $path),
             UploadType::toPaths($form->get('images')->getData()),
         );
         $this->imageRepository->saveAll($images);
@@ -219,7 +219,12 @@ class ProductController extends AbstractCrudController
         $form = $this->createForm(ProductPriceType::class, $replacement, ['show_active' => false]);
         $form->handleRequest($request);
         if (!$form->isSubmitted() || !$form->isValid()) {
-            return $this->renderPriceForm($form, $price->tier, 'ecommerce.admin.price.change', 'ecommerce.admin.price.change_help');
+            return $this->renderPriceForm(
+                $form,
+                $price->tier,
+                'ecommerce.admin.price.change',
+                'ecommerce.admin.price.change_help',
+            );
         }
 
         $this->priceChangeService->changePrice($price, $replacement);
@@ -276,18 +281,25 @@ class ProductController extends AbstractCrudController
         ]);
     }
 
+    private function productPath(Product $product, string $tab): string
+    {
+        return $this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . "#tab-$tab";
+    }
+
     private function redirectToProduct(Product $product): Response
     {
-        return $this->redirect($this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . '#tab-tiers');
+        return $this->redirect($this->productPath($product, 'tiers'));
     }
 
     private function redirectToGallery(Product $product): Response
     {
-        return $this->redirect($this->generateUrl('ecommerce_admin_products_edit', ['identifier' => $product->getId()]) . '#tab-gallery');
+        return $this->redirect($this->productPath($product, 'gallery'));
     }
 
     private function redirectToTier(ProductTier $tier): Response
     {
-        return $this->redirect($this->generateUrl('ecommerce_admin_products_tier_edit', ['id' => $tier->getId()]) . '#tab-prices');
+        $path = $this->generateUrl('ecommerce_admin_products_tier_edit', ['id' => $tier->getId()]);
+
+        return $this->redirect($path . '#tab-prices');
     }
 }

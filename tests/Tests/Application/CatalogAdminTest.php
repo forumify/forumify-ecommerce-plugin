@@ -64,7 +64,7 @@ class CatalogAdminTest extends EcommerceWebTestCase
         $product = self::getContainer()->get(ProductRepository::class)->find($product->getId());
         self::assertSame(ProductStatus::Published, $product->status);
         self::assertSame('forumify/forumify-milhq-plugin', $product->key);
-        self::assertSame(['Plugins'], $product->categories->map(fn ($c) => $c->title)->toArray());
+        self::assertSame(['Plugins'], $product->categories->map(fn($c) => $c->title)->toArray());
 
         [$free, $premium] = $product->tiers->toArray();
         self::assertSame('free', $free->key);
@@ -119,7 +119,7 @@ class CatalogAdminTest extends EcommerceWebTestCase
         self::assertSelectorTextContains('body', 'The image was removed from the gallery.');
 
         $product = self::getContainer()->get(ProductRepository::class)->find($product->getId());
-        self::assertSame(['cover.png', $images[1]->image], $product->gallery);
+        self::assertSame(['cover.png', $images[1]->image], $product->getGallery());
     }
 
     /**

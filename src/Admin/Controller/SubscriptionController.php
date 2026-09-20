@@ -61,7 +61,10 @@ class SubscriptionController extends AbstractController
                 return $this->redirect($viewPath);
             }
 
-            $this->addFlash('success', $atPeriodEnd ? 'ecommerce.admin.subscription.cancelled_at_period_end' : 'ecommerce.admin.subscription.cancelled_now');
+            $message = $atPeriodEnd
+                ? 'ecommerce.admin.subscription.cancelled_at_period_end'
+                : 'ecommerce.admin.subscription.cancelled_now';
+            $this->addFlash('success', $message);
             return $this->redirect($viewPath);
         }
 

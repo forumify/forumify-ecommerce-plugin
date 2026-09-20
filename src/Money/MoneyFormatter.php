@@ -24,7 +24,8 @@ class MoneyFormatter implements RuntimeExtensionInterface
         $locale ??= Locale::getDefault();
         $formatted = $this->format($money, $locale);
         $scale = $money->getAmount()->getScale();
-        $separator = (new NumberFormatter($locale, NumberFormatter::CURRENCY))->getSymbol(NumberFormatter::MONETARY_SEPARATOR_SYMBOL);
+        $separator = (new NumberFormatter($locale, NumberFormatter::CURRENCY))
+            ->getSymbol(NumberFormatter::MONETARY_SEPARATOR_SYMBOL);
         $position = $scale > 0 && $separator !== false ? mb_strrpos($formatted, $separator) : false;
         if ($position === false) {
             return ['whole' => $formatted, 'fraction' => '', 'rest' => ''];

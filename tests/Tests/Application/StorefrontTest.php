@@ -42,17 +42,17 @@ class StorefrontTest extends EcommerceWebTestCase
 
         $crawler = $this->client->request('GET', '/store');
         self::assertResponseIsSuccessful();
-        self::assertSame(['All', 'Plugins', 'Themes'], $crawler->filter('.ecommerce-category-filter button')->each(fn ($b) => $b->text()));
-        self::assertSame(['Milsim', 'Dark Theme'], $crawler->filter('.ecommerce-product-tile-title')->each(fn ($t) => $t->text()));
+        self::assertSame(['All', 'Plugins', 'Themes'], $crawler->filter('.ecommerce-category-filter button')->each(fn($b) => $b->text()));
+        self::assertSame(['Milsim', 'Dark Theme'], $crawler->filter('.ecommerce-product-tile-title')->each(fn($t) => $t->text()));
         self::assertSelectorTextContains('.ecommerce-product-tile-price', 'Free');
 
         $crawler = $this->client->request('GET', '/store?category=themes');
-        self::assertSame(['Dark Theme'], $crawler->filter('.ecommerce-product-tile-title')->each(fn ($t) => $t->text()));
+        self::assertSame(['Dark Theme'], $crawler->filter('.ecommerce-product-tile-title')->each(fn($t) => $t->text()));
         self::assertSelectorTextContains('.ecommerce-category-description', 'Give your forum a new look.');
         self::assertSame('Give your forum a new look.', $crawler->filter('meta[name="description"]')->attr('content'));
 
         $crawler = $this->client->request('GET', '/store?q=your+unit');
-        self::assertSame(['Milsim'], $crawler->filter('.ecommerce-product-tile-title')->each(fn ($t) => $t->text()));
+        self::assertSame(['Milsim'], $crawler->filter('.ecommerce-product-tile-title')->each(fn($t) => $t->text()));
 
         $this->client->request('GET', '/store?q=secret');
         self::assertSelectorTextContains('.ecommerce-store-empty', 'No products match "secret".');
@@ -69,11 +69,11 @@ class StorefrontTest extends EcommerceWebTestCase
         self::assertSame('Product', $structuredData['@type']);
         self::assertSame(['0.00', '9.99', '99.00'], array_column($structuredData['offers'], 'price'));
         self::assertSame('ANN', $structuredData['offers'][2]['priceSpecification']['unitCode']);
-        self::assertSame(['Free', 'Premium'], $crawler->filter('.ecommerce-tier h3')->each(fn ($h) => $h->text()));
+        self::assertSame(['Free', 'Premium'], $crawler->filter('.ecommerce-tier h3')->each(fn($h) => $h->text()));
         self::assertSelectorTextContains('.ecommerce-tier.is-highlighted', 'Recommended');
         self::assertSame(
             ['$9.99 per month', '$99.00 per year'],
-            $crawler->filter('.ecommerce-price-option')->each(fn ($o) => $o->text()),
+            $crawler->filter('.ecommerce-price-option')->each(fn($o) => $o->text()),
         );
 
         $this->client->request('GET', "/store/{$draft->getSlug()}");

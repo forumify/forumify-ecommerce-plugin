@@ -57,24 +57,30 @@ class ProductTier implements SortableEntityInterface, AuditableEntityInterface
     #[ORM\OrderBy(['position' => 'ASC'])]
     public private(set) Collection $prices;
 
-    /** @var list<ProductPrice> */
-    public array $activePrices {
-        get => array_values($this->prices->filter(static fn (ProductPrice $price) => $price->active)->toArray());
-    }
-
-    public ?ProductPrice $cheapestPrice {
-        get => ProductPrice::cheapest($this->activePrices);
-    }
-
     public function __construct(Product $product)
     {
         $this->product = $product;
         $this->prices = new ArrayCollection();
     }
 
+    /**
+     * @return list<ProductPrice>
+     */
+    public function getActivePrices(): array
+    {
+        return $this->prices
+            ->filter(static fn(ProductPrice $price) => $price->active)
+            ->getValues();
+    }
+
+    public function getCheapestPrice(): ?ProductPrice
+    {
+        return ProductPrice::cheapest($this->getActivePrices());
+    }
+
     public function hasLockedPrices(): bool
     {
-        return $this->prices->exists(static fn (int $_, ProductPrice $price) => $price->locked);
+        return $this->prices->exists(static fn(int $_, ProductPrice $price) => $price->locked);
     }
 
     public function getIdentifierForAudit(): string

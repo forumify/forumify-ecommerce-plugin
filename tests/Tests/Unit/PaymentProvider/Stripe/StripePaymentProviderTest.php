@@ -80,8 +80,8 @@ class StripePaymentProviderTest extends TestCase
     {
         $oneTime = new Order($this->createUser(), $this->createPrice(), StripePaymentProvider::KEY);
         $recurring = new Order($this->createUser(), $this->createPrice(interval: BillingInterval::Year), StripePaymentProvider::KEY);
-        $metadata = static fn (Order $order) => ['ecommerce_order_reference' => $order->reference];
-        $expected = static fn (Order $order, string $mode, string $metadataKey) => [
+        $metadata = static fn(Order $order) => ['ecommerce_order_reference' => $order->reference];
+        $expected = static fn(Order $order, string $mode, string $metadataKey) => [
             'mode' => $mode,
             'line_items' => [['price' => 'price_1', 'quantity' => 1]],
             'customer' => 'cus_1',
@@ -93,8 +93,8 @@ class StripePaymentProviderTest extends TestCase
         ];
 
         $this->sessions->expects(self::exactly(2))->method('create')->willReturnCallback(
-            static fn (array $params) => Session::constructFrom(['id' => 'cs_' . $params['mode'], 'url' => 'https://checkout.stripe.com/pay']),
-        )->with(self::callback(static fn (array $params) => $params === $expected($oneTime, 'payment', 'payment_intent_data')
+            static fn(array $params) => Session::constructFrom(['id' => 'cs_' . $params['mode'], 'url' => 'https://checkout.stripe.com/pay']),
+        )->with(self::callback(static fn(array $params) => $params === $expected($oneTime, 'payment', 'payment_intent_data')
             || $params === $expected($recurring, 'subscription', 'subscription_data')));
 
         $urls = new CheckoutUrls('https://shop.test/order', 'https://shop.test/cancel');
@@ -119,8 +119,8 @@ class StripePaymentProviderTest extends TestCase
     public static function webhookEvents(): iterable
     {
         $periodEnd = new DateTimeImmutable('@' . self::PERIOD_END);
-        $session = static fn (array $fields) => ['object' => 'checkout.session', 'id' => 'cs_1', 'client_reference_id' => 'ORDER1', 'customer' => 'cus_1', 'subscription' => null, ...$fields];
-        $invoice = static fn (string $reason, array $fields = []) => [
+        $session = static fn(array $fields) => ['object' => 'checkout.session', 'id' => 'cs_1', 'client_reference_id' => 'ORDER1', 'customer' => 'cus_1', 'subscription' => null, ...$fields];
+        $invoice = static fn(string $reason, array $fields = []) => [
             'object' => 'invoice',
             'id' => 'in_1',
             'billing_reason' => $reason,
@@ -128,7 +128,7 @@ class StripePaymentProviderTest extends TestCase
             'lines' => ['object' => 'list', 'data' => [['period' => ['start' => self::PERIOD_END - 100, 'end' => self::PERIOD_END]]]],
             ...$fields,
         ];
-        $subscription = static fn (array $fields) => ['object' => 'subscription', 'id' => 'sub_1', 'status' => 'active', 'cancel_at' => null, 'cancel_at_period_end' => false, ...$fields];
+        $subscription = static fn(array $fields) => ['object' => 'subscription', 'id' => 'sub_1', 'status' => 'active', 'cancel_at' => null, 'cancel_at_period_end' => false, ...$fields];
 
         yield 'one-time checkout paid' => ['checkout.session.completed', $session(['status' => 'complete', 'payment_status' => 'paid']), [new CheckoutCompleted('ORDER1', 'cus_1')]];
         yield 'subscription checkout paid' => [

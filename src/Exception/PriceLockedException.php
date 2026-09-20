@@ -11,6 +11,9 @@ class PriceLockedException extends LogicException
 {
     public function __construct(public readonly ProductPrice $price)
     {
-        parent::__construct('This price has been used in an order and can no longer be changed. Use "Change price" to replace it instead.');
+        parent::__construct(
+            'This price has been used in an order and can no longer be changed.'
+            . ' Use "Change price" to replace it instead.',
+        );
     }
 }

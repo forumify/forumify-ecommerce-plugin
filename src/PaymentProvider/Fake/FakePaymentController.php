@@ -37,7 +37,8 @@ class FakePaymentController extends AbstractController
             return $this->redirectToRoute('ecommerce_order', ['reference' => $order->reference]);
         }
 
-        if ($request->isMethod('POST') && $this->isCsrfTokenValid('ecommerce_fake_payment', $request->request->getString('_token'))) {
+        $token = $request->request->getString('_token');
+        if ($request->isMethod('POST') && $this->isCsrfTokenValid('ecommerce_fake_payment', $token)) {
             return match ($request->request->getString('outcome')) {
                 'pay' => $this->finish($order, FakePaymentProvider::completed($order->reference)),
                 'fail' => $this->finish($order, new CheckoutFailed($order->reference)),

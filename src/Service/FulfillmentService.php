@@ -22,7 +22,7 @@ class FulfillmentService
     {
         $completed = $this->orderRepository->withLockedOrder(
             $order->reference,
-            static fn (Order $locked) => $locked->complete($by, $note),
+            static fn(Order $locked) => $locked->complete($by, $note),
         ) ?? false;
 
         if ($completed) {

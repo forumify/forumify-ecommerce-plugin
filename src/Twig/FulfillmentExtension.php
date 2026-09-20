@@ -29,7 +29,8 @@ class FulfillmentExtension extends AbstractExtension
     public function getFilters(): array
     {
         return [
-            new TwigFilter('ecommerce_country_name', static fn (string $code) => Countries::exists($code) ? Countries::getName($code) : $code),
+            new TwigFilter('ecommerce_country_name', static fn(string $code) =>
+                Countries::exists($code) ? Countries::getName($code) : $code),
         ];
     }
 

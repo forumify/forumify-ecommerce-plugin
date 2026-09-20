@@ -23,6 +23,6 @@ class SubscriptionPastDueNotificationType extends AbstractSubscriptionNotificati
 
     protected function getDate(Subscription $subscription): ?DateTimeImmutable
     {
-        return $subscription->graceEndsAt;
+        return $subscription->getGraceEndsAt();
     }
 }

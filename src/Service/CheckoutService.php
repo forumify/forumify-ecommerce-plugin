@@ -52,8 +52,12 @@ class CheckoutService
      * @param array<string, mixed> $fulfillmentData
      * @throws CheckoutException
      */
-    public function checkout(User $user, ProductPrice $price, ?string $providerKey = null, array $fulfillmentData = []): CheckoutRedirect
-    {
+    public function checkout(
+        User $user,
+        ProductPrice $price,
+        ?string $providerKey = null,
+        array $fulfillmentData = [],
+    ): CheckoutRedirect {
         if (!$this->isPurchasable($price)) {
             throw CheckoutException::notPurchasable();
         }
@@ -67,7 +71,9 @@ class CheckoutService
 
         $provider = $this->chooseProvider($price, $providerKey);
 
-        return $this->startProviderCheckout($provider, $this->placeOrder($user, $price, $provider->getKey(), $fulfillmentData));
+        $order = $this->placeOrder($user, $price, $provider->getKey(), $fulfillmentData);
+
+        return $this->startProviderCheckout($provider, $order);
     }
 
     public function sync(Order $order): void
@@ -141,7 +147,7 @@ class CheckoutService
     {
         $urls = new CheckoutUrls(
             $this->getOrderUrl($order),
-            $this->urlGenerator->generate('ecommerce_order_cancel', ['reference' => $order->reference], UrlGeneratorInterface::ABSOLUTE_URL),
+            $this->absoluteUrl('ecommerce_order_cancel', $order),
         );
 
         try {
@@ -165,6 +171,15 @@ class CheckoutService
 
     private function getOrderUrl(Order $order): string
     {
-        return $this->urlGenerator->generate('ecommerce_order', ['reference' => $order->reference], UrlGeneratorInterface::ABSOLUTE_URL);
+        return $this->absoluteUrl('ecommerce_order', $order);
+    }
+
+    private function absoluteUrl(string $route, Order $order): string
+    {
+        return $this->urlGenerator->generate(
+            $route,
+            ['reference' => $order->reference],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
     }
 }

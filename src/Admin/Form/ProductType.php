@@ -60,7 +60,7 @@ class ProductType extends AbstractType
             ])
             ->add('status', EnumType::class, [
                 'class' => ProductStatus::class,
-                'choice_label' => static fn (ProductStatus $status) => 'ecommerce.product_status.' . $status->value,
+                'choice_label' => static fn(ProductStatus $status) => 'ecommerce.product_status.' . $status->value,
                 'help' => 'ecommerce.admin.product.status_help',
                 'label' => 'ecommerce.admin.product.status',
             ])
@@ -180,7 +180,10 @@ class ProductType extends AbstractType
 
         $settings = $form->get('fulfillmentSettings');
         $product->fulfillmentSettings = $settings->has($product->fulfillmentType)
-            ? array_filter((array)$settings->get($product->fulfillmentType)->getData(), static fn (mixed $value) => $value !== null)
+            ? array_filter(
+                (array)$settings->get($product->fulfillmentType)->getData(),
+                static fn(mixed $value) => $value !== null,
+            )
             : [];
 
         if (!$this->fulfillmentTypes->requiresManualFulfillment($product->fulfillmentType)) {
@@ -209,7 +212,7 @@ class ProductType extends AbstractType
                 'help' => 'ecommerce.admin.product.granted_roles_help',
                 'label' => 'ecommerce.admin.product.granted_roles',
                 'multiple' => true,
-                'query_builder' => static fn (EntityRepository $repository): QueryBuilder => $repository
+                'query_builder' => static fn(EntityRepository $repository): QueryBuilder => $repository
                     ->createQueryBuilder('r')
                     ->where('r.system = false'),
                 'required' => false,

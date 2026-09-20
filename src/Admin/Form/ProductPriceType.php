@@ -48,7 +48,7 @@ class ProductPriceType extends AbstractType
             ->add('type', EnumType::class, [
                 'attr' => ['data-price-type' => ''],
                 'class' => PriceType::class,
-                'choice_label' => static fn (PriceType $type) => 'ecommerce.price_type.' . $type->value,
+                'choice_label' => static fn(PriceType $type) => 'ecommerce.price_type.' . $type->value,
                 'disabled' => $locked,
                 'label' => 'ecommerce.admin.price.type',
             ])
@@ -59,7 +59,8 @@ class ProductPriceType extends AbstractType
             ])
             ->add('billingInterval', EnumType::class, [
                 'class' => BillingInterval::class,
-                'choice_label' => static fn (BillingInterval $interval) => 'ecommerce.billing_interval.' . $interval->value,
+                'choice_label' => static fn(BillingInterval $interval) =>
+                    'ecommerce.billing_interval.' . $interval->value,
                 'disabled' => $locked,
                 'label' => 'ecommerce.admin.price.billing_interval',
                 'placeholder' => 'ecommerce.admin.price.choose_interval',

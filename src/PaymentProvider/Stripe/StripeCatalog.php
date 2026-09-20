@@ -29,7 +29,7 @@ class StripeCatalog
 
     public function syncPrice(StripeClient $client, StripeSettings $settings, ProductPrice $price): string
     {
-        $key = $settings->referenceKey;
+        $key = $settings->getReferenceKey();
         if (isset($price->providerReferences[$key])) {
             return $price->providerReferences[$key];
         }
@@ -46,7 +46,8 @@ class StripeCatalog
             ],
         ];
         if ($price->type === PriceType::Recurring) {
-            $interval = $price->billingInterval ?? throw new LogicException('A recurring price needs a billing interval.');
+            $interval = $price->billingInterval
+                ?? throw new LogicException('A recurring price needs a billing interval.');
             $params['recurring'] = ['interval' => $interval->value, 'interval_count' => $price->intervalCount ?? 1];
         }
 
@@ -61,7 +62,7 @@ class StripeCatalog
 
     public function syncCustomer(StripeClient $client, StripeSettings $settings, User $user): string
     {
-        $key = $settings->referenceKey;
+        $key = $settings->getReferenceKey();
         $existing = $this->customerRepository->findOneFor($user, $key);
         if ($existing !== null) {
             return $existing->externalId;

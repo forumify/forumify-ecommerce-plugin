@@ -60,12 +60,12 @@ class PaymentEventHandler
             $event instanceof CheckoutCompleted => $this->applyToOrder(
                 $event->orderReference,
                 $providerKey,
-                fn (Order $order) => $this->payOrder($order, $event),
+                fn(Order $order) => $this->payOrder($order, $event),
             ),
             $event instanceof CheckoutFailed => $this->applyToOrder(
                 $event->orderReference,
                 $providerKey,
-                static fn (Order $order) => $order->fail() ? [new OrderFailedEvent($order)] : [],
+                static fn(Order $order) => $order->fail() ? [new OrderFailedEvent($order)] : [],
             ),
             $event instanceof CheckoutCancelled => $this->applyToOrder(
                 $event->orderReference,
@@ -79,27 +79,27 @@ class PaymentEventHandler
             $event instanceof SubscriptionRenewalStarted => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
-                fn (Subscription $subscription) => $this->startRenewal($subscription, $event),
+                fn(Subscription $subscription) => $this->startRenewal($subscription, $event),
             ),
             $event instanceof SubscriptionRenewed => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
-                fn (Subscription $subscription) => $this->renewSubscription($subscription, $event),
+                fn(Subscription $subscription) => $this->renewSubscription($subscription, $event),
             ),
             $event instanceof SubscriptionPaymentFailed => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
-                fn (Subscription $subscription) => $this->failRenewal($subscription, $event),
+                fn(Subscription $subscription) => $this->failRenewal($subscription, $event),
             ),
             $event instanceof SubscriptionUpdated => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
-                static fn (Subscription $subscription) => self::updateSubscription($subscription, $event),
+                static fn(Subscription $subscription) => self::updateSubscription($subscription, $event),
             ),
             $event instanceof SubscriptionEnded => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
-                fn (Subscription $subscription) => $this->endSubscription($subscription),
+                fn(Subscription $subscription) => $this->endSubscription($subscription),
             ),
             default => [],
         };
@@ -115,13 +115,13 @@ class PaymentEventHandler
      */
     private function applyToOrder(string $reference, ?string $providerKey, callable $transition): array
     {
-        return $this->orderRepository->withLockedOrder($reference, function (Order $order) use ($providerKey, $transition): array {
+        $apply = function (Order $order) use ($providerKey, $transition): array {
             if ($order->isRenewal()) {
                 return [];
             }
 
             if ($order->providerKey !== $providerKey) {
-                $this->logger->warning('Ignored a payment event for an order that belongs to another payment provider.', [
+                $this->logger->warning('Ignored a payment event for an order of another payment provider.', [
                     'order' => $order->reference,
                     'orderProvider' => $order->providerKey,
                     'eventProvider' => $providerKey,
@@ -130,7 +130,9 @@ class PaymentEventHandler
             }
 
             return $transition($order);
-        }) ?? [];
+        };
+
+        return $this->orderRepository->withLockedOrder($reference, $apply) ?? [];
     }
 
     /**

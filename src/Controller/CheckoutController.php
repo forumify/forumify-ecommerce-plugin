@@ -93,8 +93,11 @@ class CheckoutController extends AbstractController
     /**
      * @return FormInterface<mixed>|null
      */
-    private function createFulfillmentForm(?FulfillmentTypeInterface $type, ProductPrice $price, User $user): ?FormInterface
-    {
+    private function createFulfillmentForm(
+        ?FulfillmentTypeInterface $type,
+        ProductPrice $price,
+        User $user,
+    ): ?FormInterface {
         $formType = $type?->getCheckoutFormType();
         if ($formType === null) {
             return null;
@@ -134,7 +137,12 @@ class CheckoutController extends AbstractController
         $providerKey = $request->request->getString('provider');
 
         try {
-            $redirect = $this->checkoutService->checkout($user, $price, $providerKey !== '' ? $providerKey : null, $fulfillmentData);
+            $redirect = $this->checkoutService->checkout(
+                $user,
+                $price,
+                $providerKey !== '' ? $providerKey : null,
+                $fulfillmentData,
+            );
         } catch (CheckoutException $e) {
             $this->addFlash('error', $e->getMessage());
             return null;

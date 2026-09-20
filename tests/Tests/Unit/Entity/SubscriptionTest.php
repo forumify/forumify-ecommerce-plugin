@@ -57,22 +57,22 @@ class SubscriptionTest extends TestCase
     public function testGraceEndsAtTheEndOfTheUnpaidPeriodOrAfterThirtyDays(): void
     {
         $monthly = self::createSubscription(new DateTimeImmutable('2026-10-01'));
-        self::assertNull($monthly->graceEndsAt);
+        self::assertNull($monthly->getGraceEndsAt());
         self::assertTrue($monthly->markPastDue());
         self::setPastDueSince($monthly, new DateTimeImmutable('2026-10-15'));
-        self::assertEquals(new DateTimeImmutable('2026-11-01'), $monthly->graceEndsAt);
+        self::assertEquals(new DateTimeImmutable('2026-11-01'), $monthly->getGraceEndsAt());
 
         $yearly = self::createSubscription(new DateTimeImmutable('2026-10-01'), BillingInterval::Year);
         $yearly->markPastDue();
         self::setPastDueSince($yearly, new DateTimeImmutable('2026-10-01'));
-        self::assertEquals(new DateTimeImmutable('2026-10-31'), $yearly->graceEndsAt);
+        self::assertEquals(new DateTimeImmutable('2026-10-31'), $yearly->getGraceEndsAt());
 
         self::assertTrue($yearly->cancel());
         self::assertTrue($yearly->resume());
         self::assertSame(SubscriptionStatus::PastDue, $yearly->status);
         self::assertTrue($yearly->renew(new DateTimeImmutable('2027-10-01')));
         self::assertNull($yearly->pastDueSince);
-        self::assertNull($yearly->graceEndsAt);
+        self::assertNull($yearly->getGraceEndsAt());
     }
 
     public function testOnlyRecurringProviderOrdersStartSubscriptions(): void

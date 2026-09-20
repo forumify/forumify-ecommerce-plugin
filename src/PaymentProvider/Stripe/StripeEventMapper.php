@@ -65,7 +65,8 @@ class StripeEventMapper
             return [new CheckoutCancelled($reference)];
         }
 
-        if ($session->status !== Session::STATUS_COMPLETE || $session->payment_status === Session::PAYMENT_STATUS_UNPAID) {
+        $unpaid = $session->payment_status === Session::PAYMENT_STATUS_UNPAID;
+        if ($session->status !== Session::STATUS_COMPLETE || $unpaid) {
             return [];
         }
 
@@ -86,7 +87,9 @@ class StripeEventMapper
             return [new SubscriptionEnded($subscription->id)];
         }
 
-        return [new SubscriptionUpdated($subscription->id, $subscription->cancel_at_period_end || ($subscription['cancel_at'] ?? null) !== null)];
+        $cancelling = $subscription->cancel_at_period_end || ($subscription['cancel_at'] ?? null) !== null;
+
+        return [new SubscriptionUpdated($subscription->id, $cancelling)];
     }
 
     /**
@@ -110,7 +113,9 @@ class StripeEventMapper
      */
     private function fromInvoiceEvent(StripeClient $client, string $type, Invoice $invoice): array
     {
-        $subscriptionId = self::id($invoice['parent']['subscription_details']['subscription'] ?? $invoice['subscription'] ?? null);
+        $subscriptionId = self::id(
+            $invoice['parent']['subscription_details']['subscription'] ?? $invoice['subscription'] ?? null,
+        );
         if ($subscriptionId === null) {
             return [];
         }
@@ -120,9 +125,15 @@ class StripeEventMapper
         return match ($type) {
             'invoice.created' => $renewal ? [new SubscriptionRenewalStarted($subscriptionId, $invoice->id)] : [],
             'invoice.paid' => $renewal
-                ? [new SubscriptionRenewed($subscriptionId, $invoice->id, $this->invoicePeriodEnd($client, $invoice, $subscriptionId))]
+                ? [new SubscriptionRenewed(
+                    $subscriptionId,
+                    $invoice->id,
+                    $this->invoicePeriodEnd($client, $invoice, $subscriptionId),
+                )]
                 : [],
-            'invoice.payment_failed' => [new SubscriptionPaymentFailed($subscriptionId, $renewal ? $invoice->id : null)],
+            'invoice.payment_failed' => [
+                new SubscriptionPaymentFailed($subscriptionId, $renewal ? $invoice->id : null),
+            ],
             default => [],
         };
     }

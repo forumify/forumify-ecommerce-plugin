@@ -174,10 +174,10 @@ class PaymentEventHandlerTest extends TestCase
         self::assertSame(SubscriptionStatus::Ended, $subscription->status);
         self::assertEquals(new DateTimeImmutable('2026-12-01'), $subscription->currentPeriodEnd);
 
-        self::assertSame(['in_1', 'in_2', 'in_3'], array_map(static fn (Order $order) => $order->providerReference, $this->renewals));
+        self::assertSame(['in_1', 'in_2', 'in_3'], array_map(static fn(Order $order) => $order->providerReference, $this->renewals));
         self::assertSame(
             [OrderStatus::Completed, OrderStatus::Completed, OrderStatus::Failed],
-            array_map(static fn (Order $order) => $order->status, $this->renewals),
+            array_map(static fn(Order $order) => $order->status, $this->renewals),
         );
         foreach ($this->renewals as $renewal) {
             self::assertSame($subscription, $renewal->subscription);
@@ -239,14 +239,14 @@ class PaymentEventHandlerTest extends TestCase
             return null;
         });
         $repository->method('findOneByProviderReference')->willReturnCallback(
-            fn (string $providerKey, string $reference) => array_find(
+            fn(string $providerKey, string $reference) => array_find(
                 $this->renewals,
-                static fn (Order $renewal) => $renewal->providerKey === $providerKey && $renewal->providerReference === $reference,
+                static fn(Order $renewal) => $renewal->providerKey === $providerKey && $renewal->providerReference === $reference,
             ),
         );
-        $repository->method('findPendingRenewals')->willReturnCallback(fn (Subscription $subscription) => array_values(array_filter(
+        $repository->method('findPendingRenewals')->willReturnCallback(fn(Subscription $subscription) => array_values(array_filter(
             $this->renewals,
-            static fn (Order $renewal) => $renewal->subscription === $subscription && $renewal->status === OrderStatus::Pending,
+            static fn(Order $renewal) => $renewal->subscription === $subscription && $renewal->status === OrderStatus::Pending,
         )));
         $repository->method('save')->willReturnCallback(function (Order $renewal): void {
             $this->renewals[] = $renewal;
@@ -261,7 +261,7 @@ class PaymentEventHandlerTest extends TestCase
 
         $subscriptionRepository = $this->createMock(SubscriptionRepository::class);
         $subscriptionRepository->method('withLockedSubscription')->willReturnCallback(
-            static fn (string $providerKey, string $reference, callable $callback) => $subscription !== null
+            static fn(string $providerKey, string $reference, callable $callback) => $subscription !== null
                 && $providerKey === $subscription->providerKey
                 && $reference === $subscription->providerReference ? $callback($subscription) : null,
         );

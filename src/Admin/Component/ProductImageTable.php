@@ -59,7 +59,7 @@ class ProductImageTable extends AbstractDoctrineTable
 
     protected function reorderItem(SortableEntityInterface $entity, string $direction): void
     {
-        $this->repository->reorder($entity, $direction, fn (QueryBuilder $qb) => $qb
+        $this->repository->reorder($entity, $direction, fn(QueryBuilder $qb) => $qb
             ->andWhere('e.product = :product')
             ->setParameter('product', $this->productId));
     }

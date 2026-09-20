@@ -25,7 +25,7 @@ class OrderTest extends TestCase
         self::assertSame(OrderStatus::Pending, $order->status);
         self::assertMatchesRegularExpression('/^[0-9A-F]{12}$/', $order->reference);
         self::assertSame(['Milsim', 'forumify/milsim', 'Premium', 'premium'], [$order->productTitle, $order->productKey, $order->tierLabel, $order->tierKey]);
-        self::assertSame('EUR 9.99', (string)$order->amount);
+        self::assertSame('EUR 9.99', (string)$order->getAmount());
         self::assertSame([PriceType::Recurring, BillingInterval::Month, 1], [$order->priceType, $order->billingInterval, $order->intervalCount]);
         self::assertFalse($order->isFree());
         self::assertNotSame($order->reference, $this->createOrder()->reference);

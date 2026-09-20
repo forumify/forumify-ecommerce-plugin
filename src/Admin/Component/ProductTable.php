@@ -33,17 +33,18 @@ class ProductTable extends AbstractDoctrineTable
             ->addColumn('title', [
                 'field' => 'title',
                 'label' => $this->translator->trans('ecommerce.admin.product.title'),
-                'renderer' => static fn (string $title) => htmlspecialchars($title),
+                'renderer' => static fn(string $title) => htmlspecialchars($title),
             ])
             ->addColumn('key', [
                 'field' => 'key',
                 'label' => $this->translator->trans('ecommerce.admin.product.key'),
-                'renderer' => static fn (string $key) => '<code>' . htmlspecialchars($key) . '</code>',
+                'renderer' => static fn(string $key) => '<code>' . htmlspecialchars($key) . '</code>',
             ])
             ->addColumn('status', [
                 'field' => 'status',
                 'label' => $this->translator->trans('ecommerce.admin.product.status'),
-                'renderer' => fn (ProductStatus $status) => $this->translator->trans('ecommerce.product_status.' . $status->value),
+                'renderer' => fn(ProductStatus $status) =>
+                    $this->translator->trans('ecommerce.product_status.' . $status->value),
                 'searchable' => false,
             ])
             ->addActionColumn($this->renderActions(...))

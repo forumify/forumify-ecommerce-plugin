@@ -44,7 +44,7 @@ class CheckoutServiceTest extends TestCase
 
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator->method('generate')->willReturnCallback(
-            static fn (string $route, array $parameters) => "https://shop.test/$route/{$parameters['reference']}",
+            static fn(string $route, array $parameters) => "https://shop.test/$route/{$parameters['reference']}",
         );
 
         $this->dispatcher = new EventDispatcher();
@@ -56,10 +56,10 @@ class CheckoutServiceTest extends TestCase
         $price = $this->createPrice(0);
         $this->registry->expects(self::never())->method('findAvailableFor');
         $this->orderRepository->expects(self::once())->method('save')->with(self::callback(
-            static fn (Order $order) => $order->fulfillmentType === 'instant' && $order->fulfillmentData === ['note' => 'hi'],
+            static fn(Order $order) => $order->fulfillmentType === 'instant' && $order->fulfillmentData === ['note' => 'hi'],
         ));
         $this->eventHandler->expects(self::once())->method('handle')->with(self::callback(
-            static fn (CheckoutCompleted $event) => strlen($event->orderReference) === 12,
+            static fn(CheckoutCompleted $event) => strlen($event->orderReference) === 12,
         ), null);
 
         $redirect = $this->service->checkout(new User(), $price, fulfillmentData: ['note' => 'hi']);
@@ -167,7 +167,7 @@ class CheckoutServiceTest extends TestCase
         $provider = $this->createProvider('stripe');
         $provider->expects(self::never())->method('startCheckout');
         $this->registry->method('findAvailableFor')->willReturn([$provider]);
-        $this->dispatcher->addListener(OrderPlacedEvent::class, static fn () => throw CheckoutException::notPurchasable());
+        $this->dispatcher->addListener(OrderPlacedEvent::class, static fn() => throw CheckoutException::notPurchasable());
         $savedOrders = [];
         $this->orderRepository->method('save')->willReturnCallback(function (Order $order) use (&$savedOrders) {
             $savedOrders[] = $order;

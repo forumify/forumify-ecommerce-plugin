@@ -56,7 +56,7 @@ class GrantTest extends EcommerceWebTestCase
      */
     private function roleTitles(User $user): array
     {
-        return $this->reload($user)->getRoleEntities()->map(static fn ($role) => $role->getTitle())->getValues();
+        return $this->reload($user)->getRoleEntities()->map(static fn($role) => $role->getTitle())->getValues();
     }
 
     /**
@@ -64,7 +64,7 @@ class GrantTest extends EcommerceWebTestCase
      */
     private function badgeNames(User $user): array
     {
-        return $this->reload($user)->getBadges()->map(static fn ($badge) => $badge->getName())->getValues();
+        return $this->reload($user)->getBadges()->map(static fn($badge) => $badge->getName())->getValues();
     }
 
     private function reload(User $user): User

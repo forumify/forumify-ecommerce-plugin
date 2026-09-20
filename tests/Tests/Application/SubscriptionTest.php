@@ -80,7 +80,7 @@ class SubscriptionTest extends EcommerceWebTestCase
         self::assertSelectorTextContains('.table-wrapper', 'Active');
 
         $this->client->request('GET', "/admin/ecommerce/subscriptions/{$subscription->getId()}");
-        $orderReferences = $this->client->getCrawler()->filter('.table-wrapper tbody tr td:first-child')->each(static fn ($td) => $td->text());
+        $orderReferences = $this->client->getCrawler()->filter('.table-wrapper tbody tr td:first-child')->each(static fn($td) => $td->text());
         self::assertEqualsCanonicalizing(
             [$subscription->initialOrder->reference, $this->findRenewal('in_1')->reference, $this->findRenewal('in_2')->reference, $this->findRenewal('in_3')->reference],
             $orderReferences,

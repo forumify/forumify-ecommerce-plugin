@@ -17,7 +17,7 @@ class ConfigurationTest extends EcommerceWebTestCase
         self::assertSame('USD', $currencySelect->filter('option[selected]')->attr('value'));
         self::assertEqualsCanonicalizing(
             StoreSettings::SUPPORTED_CURRENCIES,
-            $currencySelect->filter('option')->each(static fn ($option) => $option->attr('value')),
+            $currencySelect->filter('option')->each(static fn($option) => $option->attr('value')),
         );
 
         $this->client->submitForm('Save', [

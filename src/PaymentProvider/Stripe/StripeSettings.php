@@ -11,22 +11,25 @@ class StripeSettings
     public const SECRET_KEY = 'secretKey';
     public const WEBHOOK_SECRET = 'webhookSecret';
 
-    public bool $configured {
-        get => $this->secretKey !== '' && $this->webhookSecret !== '';
-    }
-
-    public bool $testMode {
-        get => str_contains($this->secretKey, '_test_');
-    }
-
-    public string $referenceKey {
-        get => $this->testMode ? StripePaymentProvider::KEY . '_test' : StripePaymentProvider::KEY;
-    }
-
     public function __construct(
         public readonly string $secretKey,
         public readonly string $webhookSecret,
     ) {
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->secretKey !== '' && $this->webhookSecret !== '';
+    }
+
+    public function isTestMode(): bool
+    {
+        return str_contains($this->secretKey, '_test_');
+    }
+
+    public function getReferenceKey(): string
+    {
+        return $this->isTestMode() ? StripePaymentProvider::KEY . '_test' : StripePaymentProvider::KEY;
     }
 
     public static function fromConfig(PaymentProviderConfig $config): self

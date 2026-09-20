@@ -42,8 +42,14 @@ class Grant
     #[ORM\Column]
     public private(set) bool $preExisting;
 
-    private function __construct(User $user, ?Role $role, ?Badge $badge, Order $order, ?Subscription $subscription, bool $preExisting)
-    {
+    private function __construct(
+        User $user,
+        ?Role $role,
+        ?Badge $badge,
+        Order $order,
+        ?Subscription $subscription,
+        bool $preExisting,
+    ) {
         $this->user = $user;
         $this->role = $role;
         $this->badge = $badge;
@@ -52,13 +58,23 @@ class Grant
         $this->preExisting = $preExisting;
     }
 
-    public static function role(User $user, Role $role, Order $order, ?Subscription $subscription, bool $preExisting): self
-    {
+    public static function role(
+        User $user,
+        Role $role,
+        Order $order,
+        ?Subscription $subscription,
+        bool $preExisting,
+    ): self {
         return new self($user, $role, null, $order, $subscription, $preExisting);
     }
 
-    public static function badge(User $user, Badge $badge, Order $order, ?Subscription $subscription, bool $preExisting): self
-    {
+    public static function badge(
+        User $user,
+        Badge $badge,
+        Order $order,
+        ?Subscription $subscription,
+        bool $preExisting,
+    ): self {
         return new self($user, null, $badge, $order, $subscription, $preExisting);
     }
 }

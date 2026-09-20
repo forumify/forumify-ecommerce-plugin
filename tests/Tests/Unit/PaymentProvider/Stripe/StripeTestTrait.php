@@ -23,7 +23,7 @@ trait StripeTestTrait
     {
         $client = $this->createMock(StripeClient::class);
         $client->method('__get')->willReturnCallback(
-            static fn (string $name) => $services[$name] ?? throw new LogicException("Unexpected Stripe service {$name}."),
+            static fn(string $name) => $services[$name] ?? throw new LogicException("Unexpected Stripe service {$name}."),
         );
 
         return $client;
