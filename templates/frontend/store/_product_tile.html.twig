@@ -1,0 +1,30 @@
+{% set showImage = showImage ?? true %}
+{% set showDescription = showDescription ?? true %}
+{% set showPrice = showPrice ?? true %}
+<a class="ecommerce-product-tile flex flex-col" href="{{ path('ecommerce_product', { slug: product.slug }) }}">
+    {% block ecommerce_product_tile_image %}
+        {% if showImage %}
+            <div class="ecommerce-product-tile-image">
+                {% if product.image %}
+                    <img src="{{ asset(product.image, 'ecommerce.asset')|imagine_filter('ecommerce_tile') }}" alt="" loading="lazy">
+                {% else %}
+                    <span aria-hidden="true">{{ product.title|first|upper }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endblock %}
+    {% block ecommerce_product_tile_body %}
+        <div class="ecommerce-product-tile-body flex flex-col flex-grow gap-2">
+            <h2 class="ecommerce-product-tile-title">{{ product.title }}</h2>
+            {% if showDescription and product.shortDescription %}
+                <p class="ecommerce-product-tile-summary">{{ product.shortDescription }}</p>
+            {% endif %}
+            {% if showPrice %}
+                {% set startingPrice = product.activePrices|ecommerce_starting_price %}
+                {% if startingPrice %}
+                    <p class="ecommerce-product-tile-price">{{ startingPrice }}</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endblock %}
+</a>

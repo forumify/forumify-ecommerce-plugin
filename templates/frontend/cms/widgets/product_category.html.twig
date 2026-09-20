@@ -1,0 +1,28 @@
+{% block ecommerce_widget_product_category %}
+    {% if widget.category is not null and widget.products is not empty %}
+        <div class="ecommerce-product-category-widget">
+            {% block ecommerce_widget_product_category_header %}
+                {% if not (widget.settings.hideTitle ?? false) %}
+                    <h2>{{ widget.category.title }}</h2>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_widget_product_category_products %}
+                <ul class="ecommerce-product-grid">
+                    {% for product in widget.products %}
+                        <li>
+                            {% include '@ForumifyEcommercePlugin/frontend/store/_product_tile.html.twig' with { product: product } only %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endblock %}
+            {% block ecommerce_widget_product_category_more %}
+                {% if widget.hasMore %}
+                    <a class="btn-link mt-2" href="{{ path('ecommerce_store', { category: widget.category.slug }) }}">
+                        <i class="ph ph-arrow-right"></i>
+                        {{ 'ecommerce.store.show_more'|trans }}
+                    </a>
+                {% endif %}
+            {% endblock %}
+        </div>
+    {% endif %}
+{% endblock %}

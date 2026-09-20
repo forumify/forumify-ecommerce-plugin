@@ -18,6 +18,7 @@ production and which shortcuts hurt. It is not a codebase to extract from.
 | [configuration.md](configuration.md) | Plugin wiring, permissions, routing, store settings, money handling |
 | [catalog.md](catalog.md) | Categories, products, tiers, prices, images, and the admin CRUD |
 | [storefront.md](storefront.md) | `/store` catalog and product pages, SEO and link embeds |
+| [cms-widgets.md](cms-widgets.md) | Page builder widgets: product, category, pricing table, buy button, search |
 | [checkout-and-orders.md](checkout-and-orders.md) | The checkout flow, the `Order` entity, buyer and admin order pages |
 | [payment-providers.md](payment-providers.md) | `PaymentProviderInterface`, `PaymentEvent`, the registry, `PaymentEventHandler`, the fake provider |
 | [stripe.md](stripe.md) | The Stripe provider: catalog sync, checkout sessions, webhooks |

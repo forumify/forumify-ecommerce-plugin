@@ -1,0 +1,31 @@
+{% set title = (widget.settings.title ?? '')|trim %}
+{% set placeholder = (widget.settings.placeholder ?? '')|trim %}
+{% set placeholder = placeholder is not empty ? placeholder : 'ecommerce.store.search'|trans %}
+{% block ecommerce_widget_catalog_search %}
+    <div class="ecommerce-catalog-search flex flex-col gap-2">
+        {% block ecommerce_widget_catalog_search_header %}
+            {% if title is not empty %}
+                <h2 class="mb-0">{{ title }}</h2>
+            {% endif %}
+        {% endblock %}
+        <form
+            class="ecommerce-catalog-search-form flex flex-wrap items-center gap-2"
+            method="get"
+            action="{{ path('ecommerce_store') }}"
+            role="search"
+        >
+            {% block ecommerce_widget_catalog_search_input %}
+                <div class="ecommerce-store-search">
+                    <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                    <input type="search" name="q" placeholder="{{ placeholder }}" aria-label="{{ placeholder }}">
+                </div>
+            {% endblock %}
+            {% block ecommerce_widget_catalog_search_actions %}
+                <button type="submit" class="btn-primary">{{ 'ecommerce.store.search_action'|trans }}</button>
+                {% if not (widget.settings.hideBrowseAll ?? false) %}
+                    <a class="btn-outlined" href="{{ path('ecommerce_store') }}">{{ 'ecommerce.store.show_all'|trans }}</a>
+                {% endif %}
+            {% endblock %}
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% block ecommerce_widget_product %}
+    {% if widget.product is not null %}
+        <div class="ecommerce-product-widget ecommerce-product-grid">
+            {% include '@ForumifyEcommercePlugin/frontend/store/_product_tile.html.twig' with {
+                product: widget.product,
+                showImage: not (widget.settings.hideImage ?? false),
+                showDescription: not (widget.settings.hideDescription ?? false),
+                showPrice: not (widget.settings.hidePrice ?? false),
+            } only %}
+        </div>
+    {% endif %}
+{% endblock %}

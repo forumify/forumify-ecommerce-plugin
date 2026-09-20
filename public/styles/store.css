@@ -1,6 +1,9 @@
 .ecommerce-store-search {
     position: relative;
     flex: 0 1 320px;
+}
+
+.ecommerce-store-toolbar .ecommerce-store-search {
     margin-left: auto;
 }
 
@@ -24,6 +27,10 @@
         flex-basis: 100%;
         order: -1;
     }
+}
+
+.ecommerce-catalog-search-form .ecommerce-store-search {
+    flex: 1 1 240px;
 }
 
 .ecommerce-category-description {
@@ -401,11 +408,15 @@
     margin-left: 0.05em;
     font-size: 0.5em;
     letter-spacing: 0;
-    vertical-align: text-top;
 }
 
 .ecommerce-amount-cadence {
     letter-spacing: 0.08em;
+}
+
+.ecommerce-amount.is-compact .ecommerce-amount-value {
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .ecommerce-amount.is-large .ecommerce-amount-value {

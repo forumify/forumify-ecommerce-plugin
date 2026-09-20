@@ -251,6 +251,18 @@ ecommerce:
     tier:
         key_taken: 'This product already has a tier with this key.'
         key_format: 'Use only lowercase letters, numbers, dashes and underscores.'
+    cms:
+        widget:
+            product_placeholder: 'Select a product'
+            product_help: 'Draft products are not shown on the page.'
+            category_placeholder: 'Select a category'
+            limit_help: 'How many products to show. A "Show more" button appears when the category holds more.'
+            title_help: 'Optional heading shown above the search bar.'
+            placeholder_help: 'Optional placeholder for the search field. Defaults to "Search products".'
+            pricing_table_title_help: 'Optional heading shown above the tiers.'
+            tier_placeholder: 'Select a tier'
+            tier_help: 'The button sends buyers straight to checkout for this tier''s cheapest active price.'
+            buy_button_label_help: 'Optional button text. Defaults to "Get <tier>".'
     store:
         title: 'Store'
         all_products: 'All'
@@ -260,6 +272,8 @@ ecommerce:
         empty_category: 'There are no products in this category yet.'
         empty_search: 'No products match "{query}".'
         show_all: 'Show all products'
+        show_more: 'Show more'
+        search_action: 'Search'
         compare_tiers: 'Compare options'
         choose_tier: 'Choose an option'
         choose_price: 'Billing'
@@ -340,3 +354,13 @@ ecommerce:
         subscription_ended:
             title: 'Your {product} subscription has ended'
             description: 'Your {product} - {tier} subscription has ended.'
+
+admin:
+    cms:
+        widget:
+            ecommerce:
+                product: 'Product'
+                product_category: 'Product Category'
+                catalog_search: 'Catalog Search'
+                pricing_table: 'Pricing Table'
+                buy_button: 'Buy Button'

@@ -104,6 +104,7 @@ The tests need MySQL 8.4 at `root:root@127.0.0.1:3306/plugin_test` (from `../../
 | `configuration.md` | Plugin wiring, permissions, routing, store settings, money |
 | `catalog.md` | Categories, products, tiers, prices, images, admin CRUD |
 | `storefront.md` | `/store` pages, SEO |
+| `cms-widgets.md` | CMS page builder widgets, the shared product tile and tier card, global store CSS |
 | `checkout-and-orders.md` | Checkout flow, `Order`, buyer and admin pages |
 | `payment-providers.md` | The abstraction, `PaymentEvent`, `PaymentEventHandler`, the fake provider |
 | `stripe.md` | The Stripe implementation |

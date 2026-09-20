@@ -10,6 +10,7 @@ use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductCategory;
 use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Repository\ProductCategoryRepository;
+use Forumify\Ecommerce\Repository\ProductRepository;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
@@ -31,8 +32,10 @@ class ProductList extends AbstractDoctrineList
     /** @var list<ProductCategory>|null */
     private ?array $categories = null;
 
-    public function __construct(private readonly ProductCategoryRepository $categoryRepository)
-    {
+    public function __construct(
+        private readonly ProductCategoryRepository $categoryRepository,
+        private readonly ProductRepository $productRepository,
+    ) {
     }
 
     #[LiveAction]
@@ -107,16 +110,7 @@ class ProductList extends AbstractDoctrineList
     protected function getData(): array
     {
         $products = parent::getData();
-        if ($products !== []) {
-            $this->repository->createQueryBuilder('p')
-                ->select('p', 't', 'pr')
-                ->leftJoin('p.tiers', 't')
-                ->leftJoin('t.prices', 'pr')
-                ->where('p IN (:products)')
-                ->setParameter('products', $products)
-                ->getQuery()
-                ->getResult();
-        }
+        $this->productRepository->hydratePrices($products);
 
         return $products;
     }

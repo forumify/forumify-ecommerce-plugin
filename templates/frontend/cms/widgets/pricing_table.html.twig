@@ -1,0 +1,22 @@
+{% set title = (widget.settings.title ?? '')|trim %}
+{% block ecommerce_widget_pricing_table %}
+    {% if widget.tiers is not empty %}
+        <section
+            class="ecommerce-pricing-table-widget"
+            {{ stimulus_controller('forumify/forumify-ecommerce-plugin/product') }}
+        >
+            {% block ecommerce_widget_pricing_table_header %}
+                {% if title is not empty %}
+                    <h2 class="text-center mb-8">{{ title }}</h2>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_widget_pricing_table_tiers %}
+                <div class="ecommerce-tier-grid" style="--ecommerce-tier-count: {{ widget.tiers|length }}">
+                    {% for tier in widget.tiers %}
+                        {% include '@ForumifyEcommercePlugin/frontend/store/_tier.html.twig' with { tier: tier, standalone: false } only %}
+                    {% endfor %}
+                </div>
+            {% endblock %}
+        </section>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% block ecommerce_widget_buy_button %}
+    {% if widget.tier is not null %}
+        {% set label = (widget.settings.label ?? '')|trim %}
+        {% set label = label is not empty ? label : 'ecommerce.store.get_tier'|trans({ tier: widget.tier.label }) %}
+        {% set class = widget.settings.type|default('btn-cta') %}
+        <div class="ecommerce-buy-button-widget flex flex-col items-start gap-2">
+            {% block ecommerce_widget_buy_button_link %}
+                {% if widget.price is not null %}
+                    <a class="{{ class }}" href="{{ path('ecommerce_checkout_select', { price: widget.price.id }) }}">
+                        {{ label }}
+                    </a>
+                {% else %}
+                    <button
+                        type="button"
+                        class="{{ class }}"
+                        disabled
+                        title="{{ 'ecommerce.store.unavailable'|trans }}"
+                    >{{ label }}</button>
+                {% endif %}
+            {% endblock %}
+            {% block ecommerce_widget_buy_button_price %}
+                {% if widget.price is not null and (widget.settings.showPrice ?? false) %}
+                    <p class="ecommerce-amount is-compact">
+                        {% include '@ForumifyEcommercePlugin/frontend/store/_amount.html.twig' with { price: widget.price } only %}
+                    </p>
+                {% endif %}
+            {% endblock %}
+        </div>
+    {% endif %}
+{% endblock %}

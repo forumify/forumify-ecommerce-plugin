@@ -67,6 +67,8 @@ A `?category=` link gets that category's title, description and canonical.
 ## Styling and theming
 
 - Styles are in `public/styles/store.css` and use **only theme variables**, so a community's theme carries through.
+  It is linked site-wide from `templates/bundles/Forumify/frontend/base.html.twig`, because the CMS widgets
+  reuse these classes on pages that are not store pages — see [cms-widgets.md](cms-widgets.md).
 - Images go through the `ecommerce_tile`, `ecommerce_product`, `ecommerce_thumb` and `ecommerce_social`
   LiipImagine filters.
 - Templates expose named blocks — `ecommerce_store_*`, `ecommerce_product_*`, `ecommerce_tier_*`,
@@ -77,6 +79,7 @@ A `?category=` link gets that category's title, description and canonical.
 
 - `src/Controller/StoreController.php`, `src/Component/ProductList.php`
 - `templates/frontend/store/`, `templates/frontend/components/product_list.html.twig`
+- The catalog tile lives in `templates/frontend/store/_product_tile.html.twig`, shared with the CMS widgets
 - `public/styles/store.css`, `assets/dist/product_controller.js`
 - Tests: `StorefrontTest` (catalog, category filter + description, search, gallery/tiers/prices, draft 404),
   `PriceFormatterTest`, `ProductTierTest`, `ProductTest`
