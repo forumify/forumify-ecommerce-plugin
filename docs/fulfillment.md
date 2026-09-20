@@ -72,6 +72,10 @@ types on a product also stay selectable in the product form, under their raw key
 
 A renewal order copies `fulfillmentType` and `fulfillmentData` from its subscription's initial order.
 
+**A manual type has a counterpart at the end.** When a subscription of a manually fulfilled product is
+cancelled or ends, a `CancellationRequest` asks the same `fulfillmentRole` to close it out — delivery by
+hand implies teardown by hand. See [self-service.md](self-service.md).
+
 ## Types shipped by the plugin
 
 | Type | Manual | Checkout form | Completes |

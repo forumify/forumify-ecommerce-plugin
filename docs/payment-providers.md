@@ -20,7 +20,14 @@ PaymentProviderInterface                    (tag: ecommerce.payment_provider)
   syncOrder(Order): list<PaymentEvent>      used by the return page
   handleWebhook(Request): list<PaymentEvent>  verifies the signature, then normalizes
   cancelSubscription(Subscription, bool $atPeriodEnd): list<PaymentEvent>
+  getCapabilities(): list<PaymentProviderCapability>   Refund | Invoice | HostedPayment
+  refund(Order): list<PaymentEvent>
+  getHostedPaymentUrl(Order): ?string       a page to settle an unpaid order and fix the card
+  getInvoice(Order): ?InvoiceDocument       ::url(...) to redirect to, or ::file(...) to stream
 ```
+
+The last four exist for the buyer's self-service pages; a provider that can't do one of them leaves it out
+of `getCapabilities()` and nothing offers it. See [self-service.md](self-service.md).
 
 > **Decision: `cancelSubscription()` returns events instead of `void`.**
 > `SubscriptionCancellationService` applies them right away, so the admin sees the result immediately. The
@@ -41,6 +48,7 @@ plugin understands:
 | `SubscriptionPaymentFailed` | externalSubscriptionId, ?externalPaymentId |
 | `SubscriptionUpdated` | externalSubscriptionId, cancelAtPeriodEnd |
 | `SubscriptionEnded` | externalSubscriptionId |
+| `PaymentRefunded` | ?orderReference, ?externalPaymentId, ?amountMinor — a refund, a dashboard refund or a lost dispute |
 
 > **Decision: an expired checkout is cancelled, not failed.** An expired session is an abandoned checkout.
 > Mapping it to `CheckoutFailed` would email "your payment failed" to everyone who browsed away, a day later.
@@ -68,6 +76,8 @@ It:
 - takes the key of the provider that reported the event, and **ignores (and logs) events for orders
   belonging to another provider** (`null` for free orders) — one provider's webhook can never settle
   another's order
+- resolves `PaymentRefunded` by order reference *or* by the provider's payment id, and is the **only**
+  event applied to renewal orders
 - applies each event inside a transaction with the order or subscription row **locked and reloaded**
   (`OrderRepository::withLockedOrder()`, `LockingRepositoryTrait`)
 - is idempotent: transitions that already happened are no-ops

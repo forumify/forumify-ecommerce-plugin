@@ -94,7 +94,12 @@ webhook repeating the same change later is a no-op.
 In the admin this is an item in an **Actions** menu on the subscription page (like milhq's quick actions),
 opening a page that chooses between the end of the period and right away.
 
-There is no customer self-service cancellation — see [roadmap.md](roadmap.md).
+Buyers cancel their own subscriptions from the customer zone, always at period end, through the same
+service. A manual fulfillment type's cancellation also opens a `CancellationRequest` for an admin to close
+out — see [self-service.md](self-service.md).
+
+The admin's cancel page can **also refund the last payment** in the same action, for the "subscribed to the
+wrong price" case.
 
 ## Past due
 
@@ -135,9 +140,10 @@ the saved payment method. There is no "Try again" for renewals.
 
 "My purchases" (`/store/orders`) lists the buyer's subscriptions as cards, past due first. Each card links
 to `/store/subscription/{id}`, which shows the plan and **every payment it produced**, and is where the
-self-service actions will live (the card's `ecommerce_plan_actions` block). A past-due card spells out
-`getGraceEndsAt()`, so the buyer sees the date access is lost. See
-[checkout-and-orders.md](checkout-and-orders.md#buyer-pages).
+self-service actions live (the card's `ecommerce_plan_actions` block): cancelling, and on a past-due
+renewal a link to the provider's own payment page. A past-due card spells out `getGraceEndsAt()`, so the
+buyer sees the date access is lost. See [checkout-and-orders.md](checkout-and-orders.md#buyer-pages) and
+[self-service.md](self-service.md).
 
 ## Code
 

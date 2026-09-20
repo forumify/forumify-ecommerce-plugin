@@ -16,8 +16,8 @@ The concrete implementation of [payment-providers.md](payment-providers.md), in
 
 Secret key and webhook secret. Password fields that are **never rendered back**: leaving a field empty keeps
 the saved value, and the placeholder shows a masked hint of it. Keys are validated by prefix
-(`sk_`/`rk_` + `test_`/`live_`, and `whsec_`). The webhook secret's help text lists the events to select in
-Stripe, and the edit page shows the webhook URL to paste there.
+(`sk_`/`rk_` + `test_`/`live_`, and `whsec_`). The webhook secret's help text names the four event groups to
+select in Stripe, and the edit page shows the webhook URL to paste there.
 
 > **Decision: no publishable key.** Hosted Checkout never uses it. It can come back if embedded Checkout does.
 
@@ -65,11 +65,41 @@ reused through `ProviderCustomer`. That makes `CheckoutCompleted.externalCustome
 `supports()` accepts every price: all store currencies use the same minor units at Stripe, and Stripe rejects
 anything else when the session is created — which already fails the order cleanly.
 
+A `payment` session also sets `invoice_creation.enabled`, because Stripe issues no invoice for a one-time
+payment otherwise and the buyer's "Download invoice" would have nothing to fetch. Subscriptions always
+invoice.
+
+## Self-service capabilities
+
+Stripe declares all three of [self-service.md](self-service.md)'s capabilities:
+
+- **Refund** — the payment intent is resolved from the order's provider reference (a session for a first
+  payment, an invoice for a renewal) and refunded in full.
+- **Invoice** — the invoice's `invoice_pdf`, returned as a URL the buyer is redirected to.
+- **HostedPayment** — a renewal's `hosted_invoice_url`, which is where the buyer pays a failed renewal and
+  replaces their card. (The Billing Portal is the alternative, but it has to be configured in the Stripe
+  dashboard first; the hosted invoice page does not.)
+
 ## Webhook events
 
-Handled: `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
-`checkout.session.async_payment_failed`, `checkout.session.expired`, `invoice.created`, `invoice.paid`,
-`invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+The admin is told to subscribe the endpoint to **all `checkout`, `invoice`, `customer` and `charge`
+events**. Those four resources cover everything the mapper acts on:
+
+| Acted on | Ignored, but delivered |
+| --- | --- |
+| `checkout.session.completed`, `…async_payment_succeeded`, `…async_payment_failed`, `…expired` | — |
+| `invoice.created`, `invoice.paid`, `invoice.payment_failed` | every other `invoice.*` |
+| `customer.subscription.updated`, `customer.subscription.deleted` | every other `customer.*` |
+| `charge.refunded`, `charge.dispute.closed` (lost only) | every other `charge.*` |
+
+> **Decision: ask for four event groups, not eleven event names.** Stripe's endpoint form lets you tick a
+> whole resource in one click, and a list of eleven names is eleven chances to mistype one — a missed
+> `invoice.paid` silently breaks renewals, and the admin has no way to notice until a subscription fails
+> to renew. Over-subscribing costs only ignored deliveries: `StripeEventMapper` dispatches on the event's
+> object type and then its name, and **every** match has a `default => []`, so an unrecognised event maps
+> to no `PaymentEvent` and the webhook still answers 204. Deliberately, there is no longer a
+> `HANDLED_EVENTS` constant: nothing rendered it once the help text stopped listing names, and a hand-kept
+> copy of the match arms is a copy that goes stale.
 
 Mapping rules:
 
@@ -80,6 +110,9 @@ Mapping rules:
 - Only `subscription_cycle` invoices count as renewals. A failed **first** invoice gives
   `SubscriptionPaymentFailed` without a payment id, so no renewal order is created for it.
 - `cancel_at` counts as a cancellation, like `cancel_at_period_end`.
+- `charge.refunded` → `PaymentRefunded`, identified by the charge's invoice (a renewal) or by
+  `ecommerce_order_reference` from the charge's or the payment intent's metadata. A **lost**
+  `charge.dispute.closed` maps to the same event; a won one to nothing.
 
 ### API version drift
 

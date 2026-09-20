@@ -11,27 +11,26 @@ turn every one of those into a collection.
 Also out:
 
 - Taxes (Stripe Tax could become a provider setting later)
-- Coupons, refunds, invoices and PDFs
+- Coupons
 - Multiple currencies per store
 - Guest checkout
 - Stock, shipping costs, shipping rates, and variants
 - Editing a shipping address after checkout
 - Several fulfillment types per product, or a type per tier
 - Plugin-side reporting of failed integrations
-- Revoking one-time grants (needs refunds first)
+- Generating invoices for a provider that issues none (that provider's own problem; the interface streams
+  whatever it produces)
+- Partial refunds. The provider reports them, the handler logs them and leaves the order alone: modelling
+  them means an amount column and a status that is neither refunded nor not
+- Re-requesting a refund after a rejection, and a buyer-facing "resume subscription"
+- A notification for new refund requests. Any product can have a refund window, so there is no obvious role
+  to notify the way `fulfillmentRole` covers fulfillment and cancellations. The menu count is the stand-in;
+  a store-wide "refunds handled by" role would fix it
 
 Everything that belongs only to a marketplace stays in forumify.net: vendors, partners, referrals and
 payouts. They build on the plugin's events.
 
 ## Designed, not built
-
-### Customer self-service on a subscription
-
-Cancelling is still an admin action (or an integration calling `SubscriptionCancellationService`). The
-buyer's zone is now the place for it: `/store/subscription/{id}` exists, and the plan card's
-`ecommerce_plan_actions` block is the slot the actions go in — cancel, resume, and whatever a provider can
-offer for a failed payment. A past-due plan already tells the buyer the date access ends, but nothing on
-the page lets them fix it yet; the provider's own billing portal is the other candidate.
 
 ### Moving active subscriptions to a new price
 

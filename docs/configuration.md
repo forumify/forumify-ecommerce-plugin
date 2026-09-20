@@ -15,7 +15,7 @@ are `ecommerce.<path>`:
     'payment_providers' => ['manage'],
     'categories' => ['view', 'manage'],
     'products' => ['view', 'manage'],
-    'orders' => ['view', 'fulfill'],
+    'orders' => ['view', 'fulfill', 'refund'],
     'subscriptions' => ['view', 'manage'],
 ],
 ```
@@ -39,7 +39,8 @@ The fake provider's import carries `condition: "'%kernel.environment%' != 'prod'
 `/store/orders`) needs `priority: 10` to win over it.
 
 The admin menu is built by `EcommerceMenuBuilder` as a top-level "Ecommerce" section. The plugin's
-`settingsRoute` is `ecommerce_admin_configuration`.
+`settingsRoute` is `ecommerce_admin_configuration`. Three menu items carry a count of what is waiting —
+orders to fulfill, refund requests, cancellations to handle — because the platform's menu has no badges.
 
 ## Store settings
 

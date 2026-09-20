@@ -18,6 +18,8 @@ listeners on the plugin's events, which already dispatch after the lock's transa
 | **Subscription payment failed** | `SubscriptionPastDueEvent` | States the grace end date. |
 | **Subscription cancelled** | `SubscriptionCancelledEvent` | "Runs until {period end}". An **immediate** cancellation sends only "ended". |
 | **Subscription ended** | `SubscriptionEndedEvent` | |
+| **Order refunded** | `OrderRefundedEvent` | Whoever started the refund, including a lost dispute. |
+| **Refund request declined** | `RefundService::reject()` | Carries no note itself; the admin's note is on the order page. |
 
 > **Decision: "payment received" is decided after the listeners ran.** Checking the status at the end of
 > `OrderPaidEvent` is what keeps an instant purchase down to one mail, without the notification layer having
@@ -31,6 +33,10 @@ renewal, which gets "Order completed" once an admin fulfills it.
 | Notification | Trigger | Recipients |
 | --- | --- | --- |
 | **New order to fulfill** | `OrderPaidEvent`, or a paid renewal order, of a manual type | every user with the product's `fulfillmentRole` |
+| **Cancellation to handle** | a manual type's subscription is cancelled or ends, and again once its paid period runs out | every user with the product's `fulfillmentRole` |
+
+A pending **refund request** has no notification: any product can have a refund window, so there is no role
+to send it to. The Refunds menu item carries the count instead — see [roadmap.md](roadmap.md).
 
 A failed integration (provisioning, say) is the integration's own business to report. The order stays `Paid`
 and shows up under "Paid" in the admin.

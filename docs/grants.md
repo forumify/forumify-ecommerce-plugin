@@ -40,7 +40,9 @@ survives.
 > removed?" depends on history the order alone doesn't hold — what the user already had, and which other
 > live grants exist. Rows make it a query instead of a reconstruction.
 
-**One-time purchases are never revoked.** There is nothing to revoke them on until refunds exist.
+**A refund revokes the order's grants.** `OrderRefundedEvent` → `GrantService::revokeForOrder()`, with the
+same two rules as above. That is the only thing that takes a one-time purchase's grants back; see
+[self-service.md](self-service.md).
 
 ## Code
 

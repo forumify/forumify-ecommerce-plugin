@@ -12,11 +12,12 @@ subscription (`Order.subscription`).
 | --- | --- |
 | `reference` | Public, non-sequential |
 | `user`, `product`, `price`, `subscription` | All `SET NULL`; `user` is nullable too |
-| `status` | `OrderStatus`: pending / paid / completed / failed / cancelled |
+| `status` | `OrderStatus`: pending / paid / completed / failed / cancelled / refunded |
 | `providerKey`, `providerReference` | The provider and its id (checkout session, or invoice for a renewal). `(providerKey, providerReference)` is unique |
 | snapshot | product key + title, tier key + label, amount + currency, price type, interval |
 | `fulfillmentType`, `fulfillmentData`, `fulfillmentNote`, `completedBy` | See [fulfillment.md](fulfillment.md) |
-| timestamps | `createdAt`, `paidAt`, `completedAt` |
+| `refundPeriodDays`, `refundRequest` | Snapshotted from the product; see [self-service.md](self-service.md) |
+| timestamps | `createdAt`, `paidAt`, `completedAt`, `refundedAt` |
 
 > **Decision: snapshot everything, link with `SET NULL`.** Deleting or editing catalog data must never damage
 > order history. The links are a convenience for the admin UI; the snapshot is the record.
@@ -25,13 +26,16 @@ subscription (`Order.subscription`).
 
 ```
 Pending ──pay()──> Paid ──complete()──> Completed
-   │                 ▲
-   ├──fail()────> Failed ──┤
+   │                 ▲       │               │
+   ├──fail()────> Failed ──┤ └──refund()──> Refunded <──refund()──┘
    └──cancel()─> Cancelled ┘
 ```
 
-- **`pay()` works from every state except `Paid`/`Completed`.** Money that arrives late always wins, even
-  after a failure or a cancellation. `paidAt` is set here.
+- **`pay()` works from every state except `Paid`/`Completed`/`Refunded`.** Money that arrives late always
+  wins, even after a failure or a cancellation — but not after a refund, or a replayed webhook would undo
+  it. `paidAt` is set here.
+- `refund()` goes from `Paid` or `Completed` to `Refunded` and is terminal. See
+  [self-service.md](self-service.md).
 - `complete()` only goes `Paid → Completed`, and sets `completedAt`.
 - `fail()` and `cancel()` only work from `Pending`.
 - Every transition returns whether anything actually changed, which is what makes the webhook and the return
@@ -80,6 +84,7 @@ downstream cares that a buyer changed their mind.
 | `OrderPaidEvent` | An initial order is paid. **This is where fulfillment starts.** Carries the subscription it started, if any. |
 | `OrderCompletedEvent` | `FulfillmentService::complete()` moved an order from `Paid` to `Completed`. Informational. |
 | `OrderFailedEvent` | A real payment failure. |
+| `OrderRefundedEvent` | The money went back, whoever started it. Revokes the order's grants. |
 
 **Renewal orders never dispatch `OrderPaidEvent` or `OrderFailedEvent`**, so fulfillment is not triggered
 twice. They have `SubscriptionRenewedEvent` instead. The one exception is `OrderCompletedEvent`, which does
@@ -99,7 +104,8 @@ for payments, and one status chip (`.ecommerce-state`) that reads the same on ev
   Owner only, 404 otherwise. Subscription notifications link here.
 - **`/store/order/{reference}`** — an `Ecommerce\OrderStatus` Live component that polls every 3 seconds
   while the order is pending. `Paid` reads as "Payment received, being processed". Shows the fulfillment
-  type's details template and the admin's note once completed.
+  type's details template and the admin's note once completed, plus the buyer's actions: settle the
+  payment, download the invoice, ask for a refund — see [self-service.md](self-service.md).
 
 `/store/orders` and `/store/order/{reference}` are single-segment routes, so they use `priority: 10` to beat
 `/store/{slug}`.
