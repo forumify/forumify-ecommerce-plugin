@@ -19,6 +19,8 @@ use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderInterface;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderRegistry;
 use Forumify\Ecommerce\Repository\OrderRepository;
+use Forumify\Ecommerce\Revenue\RevenueCapNotifier;
+use Forumify\Ecommerce\Revenue\RevenueCapService;
 use Forumify\Ecommerce\Service\CheckoutService;
 use Forumify\Ecommerce\Service\PaymentEventHandler;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -33,6 +35,7 @@ class CheckoutServiceTest extends TestCase
     private PaymentProviderRegistry&MockObject $registry;
     private OrderRepository&MockObject $orderRepository;
     private PaymentEventHandler&MockObject $eventHandler;
+    private RevenueCapService&MockObject $revenueCap;
     private EventDispatcher $dispatcher;
     private CheckoutService $service;
 
@@ -41,6 +44,7 @@ class CheckoutServiceTest extends TestCase
         $this->registry = $this->createMock(PaymentProviderRegistry::class);
         $this->orderRepository = $this->createMock(OrderRepository::class);
         $this->eventHandler = $this->createMock(PaymentEventHandler::class);
+        $this->revenueCap = $this->createMock(RevenueCapService::class);
 
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator->method('generate')->willReturnCallback(
@@ -48,7 +52,16 @@ class CheckoutServiceTest extends TestCase
         );
 
         $this->dispatcher = new EventDispatcher();
-        $this->service = new CheckoutService($this->registry, $this->orderRepository, $this->eventHandler, $urlGenerator, $this->dispatcher, new NullLogger());
+        $this->service = new CheckoutService(
+            $this->registry,
+            $this->orderRepository,
+            $this->eventHandler,
+            $urlGenerator,
+            $this->dispatcher,
+            $this->revenueCap,
+            $this->createMock(RevenueCapNotifier::class),
+            new NullLogger(),
+        );
     }
 
     public function testFreePriceCompletesWithoutProvider(): void

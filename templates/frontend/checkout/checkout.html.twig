@@ -68,7 +68,9 @@
                         </div>
                     {% endblock %}
                     <div class="flex flex-col gap-3">
-                        {% if price.free %}
+                        {% if blocked %}
+                            <p class="alert-warning">{{ 'ecommerce.checkout.error.revenue_cap'|trans }}</p>
+                        {% elseif price.free %}
                             <button type="submit" class="btn-cta">{{ 'ecommerce.checkout.get_free'|trans }}</button>
                         {% elseif providers is empty %}
                             <p class="alert-warning">{{ 'ecommerce.checkout.error.no_provider'|trans }}</p>

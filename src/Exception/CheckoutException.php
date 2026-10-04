@@ -23,6 +23,11 @@ class CheckoutException extends RuntimeException
         return new self('ecommerce.checkout.error.invalid_provider');
     }
 
+    public static function revenueCapReached(): self
+    {
+        return new self('ecommerce.checkout.error.revenue_cap');
+    }
+
     public static function providerFailed(): self
     {
         return new self('ecommerce.checkout.error.provider_failed');

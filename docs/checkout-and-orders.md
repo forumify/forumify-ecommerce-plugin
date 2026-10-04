@@ -54,9 +54,11 @@ Pending ──pay()──> Paid ──complete()──> Completed
 3. **Confirm.** The checkout page shows what is being bought, the fulfillment type's checkout form (as a
    `fulfillment` child — including for free prices), and the provider choice if there is more than one. It
    submits with a CSRF-protected POST.
-4. **`CheckoutService::checkout()`** creates a pending `Order` with the snapshot and the normalized
-   fulfillment data, locks the price, and dispatches `OrderPlacedEvent`. A listener may throw
-   `CheckoutException` here to abort (e.g. to reserve a name).
+4. **`CheckoutService::checkout()`** first refuses the sale if it would take the store over the revenue its
+   plan allows (see [revenue-caps.md](revenue-caps.md); the page already renders that state instead of the
+   pay button). Otherwise it creates a pending `Order` with the snapshot and the normalized fulfillment
+   data, locks the price, and dispatches `OrderPlacedEvent`. A listener may throw `CheckoutException` here
+   to abort (e.g. to reserve a name).
    - **Amount 0** → the order is paid immediately through `PaymentEventHandler`, with no provider key.
    - **Otherwise** → the provider is chosen: automatically if exactly one enabled provider `supports()` the
      price, otherwise from the buyer's choice. `startCheckout()` returns a redirect.

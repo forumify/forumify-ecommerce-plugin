@@ -5,6 +5,9 @@ ecommerce:
             saved: 'The ecommerce configuration was saved.'
             currency: 'Store currency'
             currency_help: 'All prices in your store use this currency. Existing prices keep the currency they were created with.'
+            store_role: 'Store managers'
+            store_role_help: 'Everyone with this role is notified about the store itself, such as reaching the revenue your plan allows. Individual orders go to the role set on the product.'
+            store_role_placeholder: 'Choose a role'
         product_category:
             crud:
                 single: 'category'
@@ -42,6 +45,12 @@ ecommerce:
             granted_roles_help: 'Customers get these roles once they have paid. For a subscription, they lose them again when it ends.'
             granted_badges: 'Grant badges'
             granted_badges_help: 'Customers get these badges once they have paid. For a subscription, they lose them again when it ends.'
+        revenue:
+            title: 'Monthly revenue, averaged over {months} months'
+            of_cap: 'of the {cap} your plan allows, {percentage}% used'
+            uncapped: 'Your plan has no revenue limit.'
+            near_cap: 'You are close to the revenue your plan allows. Upgrade to keep selling without interruption.'
+            over_cap: 'You reached the revenue your plan allows. Checkout is disabled until your average drops or you upgrade.'
         order:
             plural: 'Orders'
             title: 'Order {reference}'
@@ -203,6 +212,10 @@ ecommerce:
         webhookSecret_help: 'In the Stripe dashboard, add a webhook endpoint with the URL above and select all <code>checkout</code>, <code>invoice</code>, <code>customer</code> and <code>charge</code> events. Then paste its signing secret here. Leave empty to keep the saved secret.'
         webhookSecret_invalid: 'This is not a Stripe webhook signing secret. It starts with whsec_.'
         required: 'This value is required.'
+    revenue_tier:
+        hobbyist: 'Hobbyist'
+        merchant: 'Merchant'
+        marketplace: 'Marketplace'
     order_status:
         pending: 'Pending'
         paid: 'Paid'
@@ -224,6 +237,7 @@ ecommerce:
             invalid_provider: 'Please choose how you want to pay.'
             provider_failed: 'We could not start your payment. You have not been charged, please try again later.'
             invalid_token: 'Your session expired. Please try again.'
+            revenue_cap: 'This store cannot take new orders right now. Please try again later.'
     order:
         title: 'Order {reference}'
         summary: 'Order summary'
@@ -428,6 +442,13 @@ ecommerce:
         refund_rejected:
             title: 'Your refund request for {product} was declined'
             description: 'We looked at your refund request for order {reference}, {product} - {tier}, and could not approve it.'
+        revenue_cap_reached:
+            title: 'Your store reached its revenue limit'
+            description: 'Checkout is disabled: your store averages {average} per month, the most your plan allows is {cap}. Upgrade your plan to start selling again.'
+        revenue_cap_warning:
+            title: 'Your store is near its revenue limit'
+            description: 'Your store averages {average} per month, {percentage}% of the {cap} your plan allows. Checkout is disabled once you go over it.'
+        view_revenue: 'View revenue'
         cancellation_to_handle:
             title: 'Cancellation to handle: {product}'
             description: 'A {product} - {tier} subscription was cancelled and runs until {date, date, long}. Close it out and mark it as handled.'

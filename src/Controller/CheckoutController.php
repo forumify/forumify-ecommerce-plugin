@@ -55,6 +55,7 @@ class CheckoutController extends AbstractController
         $fulfillmentType = $this->fulfillmentTypes->get($price->tier->product->fulfillmentType);
         $fulfillmentForm = $this->createFulfillmentForm($fulfillmentType, $price, $user);
         $fulfillmentForm?->handleRequest($request);
+        $blocked = $this->checkoutService->isBlockedByRevenueCap($price);
 
         if ($request->isMethod('POST')) {
             $redirect = $this->startCheckout($request, $price, $user, $fulfillmentType, $fulfillmentForm);
@@ -67,6 +68,7 @@ class CheckoutController extends AbstractController
             'price' => $price,
             'providers' => $this->checkoutService->getProviderOptions($price),
             'fulfillmentForm' => $fulfillmentForm?->createView(),
+            'blocked' => $blocked,
         ]);
     }
 

@@ -9,6 +9,8 @@ use Forumify\Plugin\PluginMetadata;
 
 class ForumifyEcommercePlugin extends AbstractForumifyPlugin
 {
+    public const PACKAGE = 'forumify/forumify-ecommerce-plugin';
+
     public function getPluginMetadata(): PluginMetadata
     {
         return new PluginMetadata(

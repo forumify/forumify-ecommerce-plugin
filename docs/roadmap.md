@@ -54,6 +54,11 @@ with no code at all.
 
 ## Known gaps
 
+- **A burst of checkouts can cross the revenue cap together.** The cap counts paid orders and projects the
+  one being placed, so several people who all reach checkout while the store is just under its limit can
+  each be allowed and then all pay. The store lands over its cap and is blocked from the next sale, which
+  is the behaviour we want for a monthly average; counting pending orders instead would let abandoned
+  checkouts lock a store out. See [revenue-caps.md](revenue-caps.md).
 - **Renaming a product or tier does not update Stripe.** Stripe Product names are set once, at first sync.
 - **A cancelled subscription whose provider never sends `SubscriptionEnded` is never ended**, unless it also
   went past due (which the grace-period task sweeps). Stripe always sends it; another provider might need a

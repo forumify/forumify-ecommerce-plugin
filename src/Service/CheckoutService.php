@@ -18,6 +18,8 @@ use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderInterface;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderRegistry;
 use Forumify\Ecommerce\Repository\OrderRepository;
+use Forumify\Ecommerce\Revenue\RevenueCapNotifier;
+use Forumify\Ecommerce\Revenue\RevenueCapService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -31,6 +33,8 @@ class CheckoutService
         private readonly PaymentEventHandler $eventHandler,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly RevenueCapService $revenueCapService,
+        private readonly RevenueCapNotifier $revenueCapNotifier,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -38,6 +42,15 @@ class CheckoutService
     public function isPurchasable(ProductPrice $price): bool
     {
         return $price->active && $price->tier->product->status === ProductStatus::Published;
+    }
+
+    /**
+     * A store that would go over the revenue its plan allows cannot sell anything that costs money.
+     * Free products stay available: they add nothing to the revenue that is capped.
+     */
+    public function isBlockedByRevenueCap(ProductPrice $price): bool
+    {
+        return !$price->isFree() && $this->revenueCapService->isBlocked($price->getAmount());
     }
 
     /**
@@ -60,6 +73,11 @@ class CheckoutService
     ): CheckoutRedirect {
         if (!$this->isPurchasable($price)) {
             throw CheckoutException::notPurchasable();
+        }
+
+        if ($this->isBlockedByRevenueCap($price)) {
+            $this->revenueCapNotifier->notifyBlocked($this->revenueCapService->getUsage());
+            throw CheckoutException::revenueCapReached();
         }
 
         if ($price->isFree()) {

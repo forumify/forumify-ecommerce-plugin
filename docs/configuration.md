@@ -47,11 +47,15 @@ orders to fulfill, refund requests, cancellations to handle — because the plat
 Stored through the platform's `SettingRepository` under the `ecommerce.*` prefix and read through
 `StoreSettings`. The admin page is `ConfigurationController` + `ConfigurationType`.
 
-The only setting is the **store currency** (default USD). It is snapshotted onto every price, so changing
-it later never rewrites what was already sold.
+Two settings:
 
-The list is limited to 21 major currencies (`StoreSettings::SUPPORTED_CURRENCIES`) and the field uses
-autocomplete.
+- The **store currency** (default USD). It is snapshotted onto every price, so changing it later never
+  rewrites what was already sold. The list is limited to 21 major currencies
+  (`StoreSettings::SUPPORTED_CURRENCIES`) and the field uses autocomplete.
+- The **store role**: who runs this store. Everyone in it is notified about the store itself rather than
+  about one order — today the revenue limit, see [revenue-caps.md](revenue-caps.md) — through
+  `StoreNotificationService`. Notifications about a single order use the product's `fulfillmentRole`
+  instead.
 
 > **Decision: no "store enabled" setting.** Admins control storefront visibility through the Menu Builder,
 > which already has permissions. A separate toggle would be a second, competing answer to the same question.
@@ -80,6 +84,10 @@ public function getAmount(): Money
 
 **Sub-cent unit prices** would need `DECIMAL` storage, but only once quantities above 1 or tax exist.
 Neither does, so minor units are enough.
+
+**Between currencies.** A store sells in one currency, so nothing in the catalog converts. The only
+conversion is the revenue limit, which is in dollars: `CurrencyConverter` and the daily
+`ecommerce_exchange_rate` table do that, see [revenue-caps.md](revenue-caps.md).
 
 > **Decision: brick/money over a home-made value object.** The first pass had its own `Money` class. It was
 > replaced because rounding, currency metadata and exact rational arithmetic are exactly the parts that are

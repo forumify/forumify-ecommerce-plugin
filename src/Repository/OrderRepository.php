@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Repository;
 
+use DateTimeInterface;
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Types\Types;
 use Forumify\Core\Entity\User;
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\Order;
@@ -80,6 +83,64 @@ class OrderRepository extends AbstractRepository
             ->getOneOrNullResult();
 
         return $order instanceof Order ? $order : null;
+    }
+
+    /**
+     * Everything a store actually earned since a date, per currency, in minor units.
+     * Refunded orders are not in it: a refund gives the money back, so it never counts as revenue.
+     *
+     * @return array<string, int>
+     */
+    public function sumRevenueSince(DateTimeInterface $since): array
+    {
+        /** @var list<array{currency: string, total: string}> $rows */
+        $rows = $this->createQueryBuilder('o')
+            ->select('o.currency AS currency', 'SUM(o.amountMinor) AS total')
+            ->where('o.status IN (:statuses)')
+            ->andWhere('o.paidAt >= :since')
+            ->setParameter('statuses', [OrderStatus::Paid, OrderStatus::Completed])
+            ->setParameter('since', $since)
+            ->groupBy('o.currency')
+            ->getQuery()
+            ->getArrayResult();
+
+        $revenue = [];
+        foreach ($rows as $row) {
+            $revenue[$row['currency']] = (int)$row['total'];
+        }
+
+        return $revenue;
+    }
+
+    /**
+     * The same revenue, bucketed per calendar month ("2026-09") as it is stored.
+     *
+     * @return array<string, array<string, int>> month => currency => minor units
+     */
+    public function sumRevenueByMonth(DateTimeInterface $since): array
+    {
+        $rows = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT DATE_FORMAT(paid_at, \'%Y-%m\') AS month, currency, SUM(amount) AS total'
+                . ' FROM ecommerce_order'
+                . ' WHERE status IN (:statuses) AND paid_at >= :since'
+                . ' GROUP BY month, currency',
+            [
+                'statuses' => [OrderStatus::Paid->value, OrderStatus::Completed->value],
+                'since' => $since,
+            ],
+            [
+                'statuses' => ArrayParameterType::STRING,
+                'since' => Types::DATETIME_IMMUTABLE,
+            ],
+        )->fetchAllAssociative();
+
+        $revenue = [];
+        foreach ($rows as $row) {
+            /** @var array{month: string, currency: string, total: string} $row */
+            $revenue[$row['month']][$row['currency']] = (int)$row['total'];
+        }
+
+        return $revenue;
     }
 
     public function countToFulfill(): int

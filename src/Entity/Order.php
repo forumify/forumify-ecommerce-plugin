@@ -18,6 +18,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table('ecommerce_order')]
 #[ORM\UniqueConstraint(fields: ['providerKey', 'providerReference'])]
+#[ORM\Index(name: 'idx_ecommerce_order_revenue', fields: ['status', 'paidAt'])]
 class Order
 {
     use IdentifiableEntityTrait;

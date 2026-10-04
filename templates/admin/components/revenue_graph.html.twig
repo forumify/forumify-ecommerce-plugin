@@ -1,0 +1,35 @@
+{% set usage = this.usage %}
+{% set capped = usage.cap is not null %}
+<div class="box rounded flex flex-col gap-4 mb-4">
+    {% block ecommerce_revenue_header %}
+        <div class="flex justify-between items-start gap-4">
+            <div class="flex flex-col">
+                <p class="text-bold m-0">{{ 'ecommerce.admin.revenue.title'|trans({ months: this.windowMonths }) }}</p>
+                <p class="text-huge m-0">{{ usage.average|ecommerce_money }}</p>
+                <p class="text-secondary text-small m-0">
+                    {% if capped %}
+                        {{ 'ecommerce.admin.revenue.of_cap'|trans({ cap: usage.cap|ecommerce_money, percentage: usage.percentage }) }}
+                    {% else %}
+                        {{ 'ecommerce.admin.revenue.uncapped'|trans }}
+                    {% endif %}
+                </p>
+            </div>
+            <span class="tag">{{ ('ecommerce.revenue_tier.' ~ usage.tier.value)|trans }}</span>
+        </div>
+    {% endblock %}
+    {% block ecommerce_revenue_cap %}
+        {% if capped %}
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ min(usage.percentage, 100) }}%"></div>
+            </div>
+            {% if usage.overCap %}
+                <p class="alert-warning m-0">{{ 'ecommerce.admin.revenue.over_cap'|trans }}</p>
+            {% elseif usage.nearCap %}
+                <p class="alert-warning m-0">{{ 'ecommerce.admin.revenue.near_cap'|trans }}</p>
+            {% endif %}
+        {% endif %}
+    {% endblock %}
+    {% block ecommerce_revenue_graph %}
+        {% include '@Forumify/components/graph.html.twig' with { height: 160 } %}
+    {% endblock %}
+</div>

@@ -26,6 +26,7 @@ production and which shortcuts hurt. It is not a codebase to extract from.
 | [fulfillment.md](fulfillment.md) | Fulfillment types, `FulfillmentService`, the paid → completed gap |
 | [self-service.md](self-service.md) | What buyers do after buying: settle a payment, invoices, cancelling, refunds |
 | [notifications.md](notifications.md) | Buyer and admin notifications |
+| [revenue-caps.md](revenue-caps.md) | Plugin tiers, the revenue limit, exchange rates |
 | [grants.md](grants.md) | Granting and revoking roles and badges on purchase |
 | [roadmap.md](roadmap.md) | Deliberately out of scope, and designs that aren't built yet |
 

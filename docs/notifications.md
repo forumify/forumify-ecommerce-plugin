@@ -34,6 +34,11 @@ renewal, which gets "Order completed" once an admin fulfills it.
 | --- | --- | --- |
 | **New order to fulfill** | `OrderPaidEvent`, or a paid renewal order, of a manual type | every user with the product's `fulfillmentRole` |
 | **Cancellation to handle** | a manual type's subscription is cancelled or ends, and again once its paid period runs out | every user with the product's `fulfillmentRole` |
+| **Revenue limit reached** | a checkout was refused by the plan's revenue limit | every user with the store role |
+| **Near the revenue limit** | an order was placed or paid while the store sits at 90% of its limit | every user with the store role |
+
+The last two are about the **store**, not about one order, so they go to the store role from the settings
+through `StoreNotificationService` and are throttled to one a day. See [revenue-caps.md](revenue-caps.md).
 
 A pending **refund request** has no notification: any product can have a refund window, so there is no role
 to send it to. The Refunds menu item carries the count instead — see [roadmap.md](roadmap.md).
@@ -56,13 +61,18 @@ AbstractEcommerceNotificationType
   │   ├ OrderPaidNotificationType
   │   ├ OrderFailedNotificationType
   │   └ OrderToFulfillNotificationType
-  └ AbstractSubscriptionNotificationType → templates/emails/notifications/subscription.html.twig
-      ├ SubscriptionPastDueNotificationType
-      ├ SubscriptionCancelledNotificationType
-      └ SubscriptionEndedNotificationType
+  ├ AbstractSubscriptionNotificationType → templates/emails/notifications/subscription.html.twig
+  │   ├ SubscriptionPastDueNotificationType
+  │   ├ SubscriptionCancelledNotificationType
+  │   └ SubscriptionEndedNotificationType
+  └ AbstractStoreNotificationType        → templates/emails/notifications/store.html.twig
+      └ AbstractRevenueCapNotificationType
+          ├ RevenueCapReachedNotificationType
+          └ RevenueCapWarningNotificationType
 ```
 
-Dispatched by `OrderNotificationSubscriber` and `SubscriptionNotificationSubscriber`.
+Dispatched by `OrderNotificationSubscriber`, `SubscriptionNotificationSubscriber` and
+`RevenueCapSubscriber`.
 
 ## Code
 
