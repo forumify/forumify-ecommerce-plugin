@@ -69,7 +69,7 @@ that work item.
   cancellation only produces "ended", which is exactly when the teardown is most urgent.
 - Everyone with the product's `fulfillmentRole` is notified, the same crowd that fulfills its orders.
 - The buyer's plan card reads "Cancellation requested" until an admin marks it handled on the subscription
-  page. The Subscriptions menu item carries the pending count.
+  page. The [dashboard](dashboard.md) lists the pending ones under "Cancellations to handle".
 - `Subscription::resume()` drops the request (`orphanRemoval`): a buyer who un-cancels through the
   provider's portal leaves no phantom task behind.
 - `RemindCancellationRequestsTask` (`@daily`) reminds the fulfillers once when `currentPeriodEnd` has passed
@@ -101,8 +101,8 @@ promised.
 
 1. The buyer asks from the order page (`/store/order/{reference}/refund`) with a reason. One
    `RefundRequest` per order.
-2. An admin approves or rejects it on the order page, with an optional note that the buyer sees. The Refunds
-   menu item carries the pending count.
+2. An admin approves or rejects it on the order page, with an optional note that the buyer sees. The
+   [dashboard](dashboard.md) lists the pending ones under "Refund requests".
 3. Approving calls `RefundService::refund()` → the provider → `PaymentRefunded` → the order becomes
    `Refunded` and `OrderRefundedEvent` fires. Rejecting notifies the buyer and leaves the order alone.
 

@@ -67,7 +67,10 @@ class FulfillmentTest extends EcommerceWebTestCase
         $this->client->loginUser($this->admin);
         $this->client->request('GET', '/admin/ecommerce/orders');
         self::assertSelectorTextContains('.table-wrapper', $order->reference);
-        self::assertSelectorTextContains('nav, aside', 'Orders (1)');
+
+        $this->client->request('GET', '/admin/ecommerce/');
+        self::assertSelectorTextContains('.ecommerce-dashboard-orders', $order->reference);
+        self::assertSelectorTextContains('.ecommerce-dashboard-orders .card-title', '1');
 
         $this->client->request('GET', "/admin/ecommerce/orders/{$order->getId()}");
         self::assertSelectorTextContains('.ecommerce-fulfillment-details', 'Jane Doe');

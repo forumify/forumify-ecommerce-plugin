@@ -1,0 +1,20 @@
+{% extends '@ForumifyEcommercePlugin/admin/dashboard/components/action_list.html.twig' %}
+{% set title = 'ecommerce.admin.dashboard.pending_cancellations' %}
+{% block row %}
+    {% set subscription = item.subscription %}
+    <div class="flex flex-col">
+        <a href="{{ path('ecommerce_admin_subscriptions_view', { id: subscription.id }) }}">
+            {{ subscription.initialOrder.productTitle }} - {{ subscription.initialOrder.tierLabel }}
+        </a>
+        <span class="text-small text-secondary">
+            {{ subscription.user ? subscription.user.displayName : '-' }} ·
+            {{ 'ecommerce.admin.dashboard.period_ends'|trans({ date: subscription.currentPeriodEnd|date('Y-m-d') }) }}
+        </span>
+    </div>
+    <div class="flex items-center gap-2 text-small">
+        {% if subscription.currentPeriodEnd <= date() %}
+            <span class="tag tag-error">{{ 'ecommerce.admin.dashboard.overdue'|trans }}</span>
+        {% endif %}
+        {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_waiting.html.twig' with { since: item.createdAt } only %}
+    </div>
+{% endblock %}

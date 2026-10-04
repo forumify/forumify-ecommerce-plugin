@@ -64,7 +64,10 @@ class RefundTest extends EcommerceWebTestCase
         $this->client->loginUser($this->admin);
         $this->client->request('GET', '/admin/ecommerce/refunds');
         self::assertSelectorTextContains('.table-wrapper', $order->reference);
-        self::assertSelectorTextContains('nav, aside', 'Refunds (1)');
+
+        $this->client->request('GET', '/admin/ecommerce/');
+        self::assertSelectorTextContains('.ecommerce-dashboard-refunds', $order->reference);
+        self::assertSelectorTextContains('.ecommerce-dashboard-refunds', 'I bought the wrong tier.');
 
         $this->client->request('GET', "/admin/ecommerce/orders/{$order->getId()}");
         self::assertSelectorTextContains('body', 'I bought the wrong tier.');

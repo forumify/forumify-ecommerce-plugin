@@ -1,0 +1,6 @@
+<div class="card h-100">
+    <div class="card-title">{{ 'ecommerce.admin.dashboard.revenue_graph'|trans({ months: constant('MONTHS', this) }) }}</div>
+    <div class="card-body">
+        {% include '@Forumify/components/graph.html.twig' with { height: 240 } %}
+    </div>
+</div>

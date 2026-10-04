@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Forumify\Ecommerce\Admin\Component;
+namespace Forumify\Ecommerce\Admin\Component\Dashboard;
 
 use DateTimeImmutable;
 use Forumify\Core\Component\Graph\AbstractGraph;
 use Forumify\Core\Component\Graph\GraphDataPoint;
 use Forumify\Ecommerce\Revenue\RevenueCapService;
-use Forumify\Ecommerce\Revenue\RevenueUsage;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
-#[AsTwigComponent('Ecommerce\\RevenueGraph', '@ForumifyEcommercePlugin/admin/components/revenue_graph.html.twig')]
+#[AsTwigComponent(
+    'Ecommerce\\Dashboard\\RevenueGraph',
+    '@ForumifyEcommercePlugin/admin/dashboard/components/revenue_graph.html.twig',
+)]
 class RevenueGraph extends AbstractGraph
 {
     public const MONTHS = 12;
-
-    private ?RevenueUsage $usage = null;
 
     public function __construct(private readonly RevenueCapService $revenueCapService)
     {
@@ -43,15 +43,5 @@ class RevenueGraph extends AbstractGraph
         }
 
         return $points;
-    }
-
-    public function getUsage(): RevenueUsage
-    {
-        return $this->usage ??= $this->revenueCapService->getUsage();
-    }
-
-    public function getWindowMonths(): int
-    {
-        return RevenueCapService::WINDOW_MONTHS;
     }
 }

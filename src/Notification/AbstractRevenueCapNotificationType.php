@@ -22,7 +22,7 @@ abstract class AbstractRevenueCapNotificationType extends AbstractStoreNotificat
 
     public function getUrl(Notification $notification): string
     {
-        return $this->urlGenerator->generate('ecommerce_admin_orders_list');
+        return $this->urlGenerator->generate('ecommerce_admin_dashboard');
     }
 
     public function getEmailActionLabel(): string

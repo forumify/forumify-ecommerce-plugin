@@ -123,9 +123,9 @@ every period. Any other renewal is completed right away by `PaymentEventHandler`
 - **Product form**: a fulfillment type select, then the type's settings form and the fulfillment role
   (required for manual types). Both are toggled by the `fulfillment_form` Stimulus controller, the same way
   `price_form` works. Changing the type only affects new orders.
-- **Order list**: the status filter's "Paid" entry *is* the "to fulfill" view. The Orders menu item carries
-  the count in its label ("Orders (3)") for users with `orders.fulfill`, because the platform menu has no
-  badges.
+- **Order list**: the status filter's "Paid" entry *is* the "to fulfill" view. The
+  [dashboard](dashboard.md)'s "Paid orders to process" list shows them oldest first, with a "Stuck" tag on
+  non-manual types.
 - **Order page**: the type's details template, and a **"Mark as completed"** action with an optional note for
   the buyer. It is available for every `Paid` order — for non-manual types it is the way to unstick a failed
   integration — and asks for confirmation with a required checkbox.

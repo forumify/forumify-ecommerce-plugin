@@ -1,0 +1,33 @@
+{% set mrr = this.mrr %}
+{% set thisMonth = this.thisMonth %}
+<div class="ecommerce-dashboard-kpis grid gap-6">
+    {% block ecommerce_dashboard_kpi_mrr %}
+        <div class="col-xs-12 col-md-4 box rounded flex flex-col ecommerce-dashboard-mrr">
+            <p class="text-bold m-0">{{ 'ecommerce.admin.dashboard.mrr'|trans }}</p>
+            <p class="text-huge mt-2 mb-0">{{ mrr.total|ecommerce_money }}</p>
+            {% if mrr.pastDue > 0 %}
+                <a class="text-small" href="{{ path('ecommerce_admin_subscriptions_list', { status: 'past_due' }) }}">
+                    {{ 'ecommerce.admin.dashboard.at_risk'|trans({ amount: mrr.atRisk|ecommerce_money, count: mrr.pastDue }) }}
+                </a>
+            {% endif %}
+        </div>
+    {% endblock %}
+    {% block ecommerce_dashboard_kpi_revenue %}
+        <div class="col-xs-12 col-md-4 box rounded flex flex-col ecommerce-dashboard-month">
+            <p class="text-bold m-0">{{ 'ecommerce.admin.dashboard.revenue_this_month'|trans }}</p>
+            <p class="text-huge mt-2 mb-0">{{ thisMonth.revenue|ecommerce_money }}</p>
+            {% if thisMonth.change is not null %}
+                <p class="text-small text-secondary m-0">
+                    {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_change.html.twig' with { change: thisMonth.change } only %}
+                    {{ 'ecommerce.admin.dashboard.vs_last_month'|trans }}
+                </p>
+            {% endif %}
+        </div>
+    {% endblock %}
+    {% block ecommerce_dashboard_kpi_subscriptions %}
+        <div class="col-xs-12 col-md-4 box rounded flex flex-col ecommerce-dashboard-subscriptions">
+            <p class="text-bold m-0">{{ 'ecommerce.admin.dashboard.active_subscriptions'|trans }}</p>
+            <p class="text-huge mt-2 mb-0">{{ mrr.subscriptions }}</p>
+        </div>
+    {% endblock %}
+</div>

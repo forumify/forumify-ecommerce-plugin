@@ -1,0 +1,13 @@
+.ecommerce-dashboard-table th:first-child,
+.ecommerce-dashboard-table td:first-child {
+    padding-left: var(--spacing-4);
+}
+
+.ecommerce-dashboard-table th:last-child,
+.ecommerce-dashboard-table td:last-child {
+    padding-right: var(--spacing-4);
+}
+
+.ecommerce-dashboard-table td {
+    vertical-align: middle;
+}

@@ -3,9 +3,6 @@
 {% block title_page %}{{ title }}{% endblock %}
 {% block body %}
     <h2>{{ title }}</h2>
-    {% block ecommerce_admin_orders_revenue %}
-        {{ component('Ecommerce\\RevenueGraph') }}
-    {% endblock %}
     {% block ecommerce_admin_orders_table %}
         {{ component('Ecommerce\\OrderTable') }}
     {% endblock %}

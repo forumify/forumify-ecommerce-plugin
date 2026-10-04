@@ -55,11 +55,12 @@ class RevenueCapTest extends EcommerceWebTestCase
         self::assertSame([RevenueCapWarningNotificationType::TYPE], $this->notificationTypes($manager));
 
         $this->client->loginUser($this->admin);
-        $this->client->request('GET', '/admin/ecommerce/orders');
+        $this->client->request('GET', '/admin/ecommerce/');
 
-        self::assertSelectorTextContains('.box', '$233.33');
-        self::assertSelectorTextContains('.box', 'of the $250.00 your plan allows, 93% used');
-        self::assertSelectorTextContains('.box .tag', 'Hobbyist');
+        self::assertSelectorTextContains('.ecommerce-dashboard-plan', '$233.33');
+        self::assertSelectorTextContains('.ecommerce-dashboard-plan', 'of the $250.00 your plan allows, 93% used');
+        self::assertSelectorTextContains('.ecommerce-dashboard-plan .tag', 'Hobbyist');
+        self::assertSelectorTextContains('.ecommerce-dashboard-plan', 'You are close to the revenue your plan allows');
     }
 
     private function createStoreManager(): User

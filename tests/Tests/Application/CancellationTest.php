@@ -67,8 +67,10 @@ class CancellationTest extends EcommerceWebTestCase
         self::assertSelectorTextContains('.ecommerce-plan', 'Ends on');
 
         $this->client->loginUser($this->admin);
+        $this->client->request('GET', '/admin/ecommerce/');
+        self::assertSelectorTextContains('.ecommerce-dashboard-cancellations', 'Game server');
+
         $this->client->request('GET', "/admin/ecommerce/subscriptions/{$subscription->getId()}");
-        self::assertSelectorTextContains('nav, aside', 'Subscriptions (1)');
         $this->client->submitForm('Mark as handled');
         self::assertSelectorTextContains('body', 'The cancellation was marked as handled');
 

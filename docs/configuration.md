@@ -11,6 +11,7 @@ are `ecommerce.<path>`:
 ```php
 'admin' => [
     'view',
+    'dashboard',
     'configuration' => ['manage'],
     'payment_providers' => ['manage'],
     'categories' => ['view', 'manage'],
@@ -21,6 +22,8 @@ are `ecommerce.<path>`:
 ```
 
 Renaming the plugin would change every permission string, so don't.
+
+`ecommerce.admin.dashboard` guards the whole [dashboard](dashboard.md), including its revenue figures.
 
 ## Routing
 
@@ -39,8 +42,9 @@ The fake provider's import carries `condition: "'%kernel.environment%' != 'prod'
 `/store/orders`) needs `priority: 10` to win over it.
 
 The admin menu is built by `EcommerceMenuBuilder` as a top-level "Ecommerce" section. The plugin's
-`settingsRoute` is `ecommerce_admin_configuration`. Three menu items carry a count of what is waiting —
-orders to fulfill, refund requests, cancellations to handle — because the platform's menu has no badges.
+`settingsRoute` is `ecommerce_admin_configuration`. Its first item is the [dashboard](dashboard.md), which
+lists what is waiting: orders to fulfill, refund requests, cancellations to handle. The menu items themselves
+carry no counts.
 
 ## Store settings
 

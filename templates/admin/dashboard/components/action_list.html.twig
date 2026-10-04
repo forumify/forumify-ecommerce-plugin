@@ -1,0 +1,19 @@
+<div {{ attributes }}>
+    <div class="card h-100">
+        <div class="card-title">
+            {{ title|trans({ count: this.result.totalCount }) }}
+        </div>
+        {% if this.result.rows is empty %}
+            <p class="card-body text-secondary">{{ 'ecommerce.admin.dashboard.caught_up'|trans }}</p>
+        {% else %}
+            <ul class="card-body">
+                {% for item in this.result.rows %}
+                    <li class="flex justify-between items-start gap-2{% if not loop.last %} mb-3{% endif %}">
+                        {% block row %}{% endblock %}
+                    </li>
+                {% endfor %}
+            </ul>
+            {% include '@Forumify/components/components/pagination.html.twig' with { class: 'card-footer' } %}
+        {% endif %}
+    </div>
+</div>

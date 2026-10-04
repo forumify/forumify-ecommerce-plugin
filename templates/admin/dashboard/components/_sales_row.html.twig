@@ -1,0 +1,41 @@
+<tr class="{{ tier ? 'text-small text-secondary' }}">
+    <td>
+        {% if tier %}
+            <span class="pl-4">{{ sales.title }}</span>
+        {% elseif sales.tiers|length > 1 %}
+            <a
+                data-action="live#action"
+                data-live-action-param="toggle"
+                data-live-product-param="{{ sales.key }}"
+                aria-expanded="{{ expanded ? 'true' : 'false' }}"
+            >
+                <i class="ph {{ expanded ? 'ph-caret-down' : 'ph-caret-right' }}"></i>
+                {{ sales.title }}
+            </a>
+        {% else %}
+            {{ sales.title }}
+        {% endif %}
+    </td>
+    <td>
+        {{ sales.orders }}
+        <span class="text-secondary text-small">
+            ({{ 'ecommerce.admin.dashboard.new_renewals'|trans({ new: sales.newOrders, renewals: sales.renewals }) }})
+        </span>
+    </td>
+    <td>{{ sales.revenue|ecommerce_money }}</td>
+    <td class="hide-phone">
+        <div class="flex items-center gap-2">
+            <div class="progress" style="width: 80px; height: 8px">
+                <div class="progress-bar" style="width: {{ (sales.share * 100)|round }}%"></div>
+            </div>
+            <span class="text-small">{{ (sales.share * 100)|round }}%</span>
+        </div>
+    </td>
+    <td>
+        {% if sales.isNew() %}
+            <span class="text-small text-secondary">{{ 'ecommerce.admin.dashboard.new'|trans }}</span>
+        {% else %}
+            {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_change.html.twig' with { change: sales.change } only %}
+        {% endif %}
+    </td>
+</tr>

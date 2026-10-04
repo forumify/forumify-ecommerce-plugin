@@ -146,8 +146,8 @@ the permission strings and the translation keys keep their `orders` naming.
 ## Admin
 
 - **Order list** — `OrderTable` with status and product filters as Live props above the table. The status
-  filter's "Paid" entry is the "to fulfill" view; the Orders menu item carries the count in its label
-  ("Orders (3)") for users with `orders.fulfill`, because the platform menu has no badges.
+  filter's "Paid" entry is the "to fulfill" view; the [dashboard](dashboard.md) lists them as "Paid orders
+  to process".
 - **Order page** — read-only details plus the provider reference, the fulfillment details template, a
   "Mark as completed" action, and a link to the subscription the order started or renewed.
 

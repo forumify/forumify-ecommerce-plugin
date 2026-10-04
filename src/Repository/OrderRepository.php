@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Repository;
 
+use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Types\Types;
 use Forumify\Core\Entity\User;
@@ -143,9 +145,111 @@ class OrderRepository extends AbstractRepository
         return $revenue;
     }
 
-    public function countToFulfill(): int
+    /**
+     * Revenue per product tier between two dates, split into new orders and renewals, per currency.
+     *
+     * @return list<array{
+     *     productKey: string,
+     *     productTitle: string,
+     *     tierKey: string,
+     *     tierLabel: string,
+     *     currency: string,
+     *     renewal: bool,
+     *     count: int,
+     *     total: int,
+     *     lastPaidAt: string,
+     * }>
+     */
+    public function sumSalesByProduct(?DateTimeImmutable $from, ?DateTimeImmutable $to): array
     {
-        return $this->count(['status' => OrderStatus::Paid]);
+        [$period, $params, $types] = self::paidBetween($from, $to);
+
+        $rows = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT product_key, product_title, tier_key, tier_label, currency,'
+                . ' subscription_id IS NOT NULL AS renewal, COUNT(id) AS count, SUM(amount) AS total,'
+                . ' MAX(paid_at) AS last_paid_at'
+                . ' FROM ecommerce_order'
+                . " WHERE $period"
+                . ' GROUP BY product_key, product_title, tier_key, tier_label, currency, renewal',
+            $params,
+            $types,
+        )->fetchAllAssociative();
+
+        return array_map(static fn(array $row) => [
+            'productKey' => (string)$row['product_key'],
+            'productTitle' => (string)$row['product_title'],
+            'tierKey' => (string)$row['tier_key'],
+            'tierLabel' => (string)$row['tier_label'],
+            'currency' => (string)$row['currency'],
+            'renewal' => (bool)$row['renewal'],
+            'count' => (int)$row['count'],
+            'total' => (int)$row['total'],
+            'lastPaidAt' => (string)$row['last_paid_at'],
+        ], $rows);
+    }
+
+    /**
+     * The buyers who spent the most between two dates, best first, with what they spent per currency.
+     * They are ranked in US dollars through the stored exchange rates, so currencies compare without loading
+     * every buyer. Deleted users are left out.
+     *
+     * @return list<array{userId: int, currency: string, count: int, total: int, customerSince: string}>
+     */
+    public function findTopCustomers(?DateTimeImmutable $from, ?DateTimeImmutable $to, int $limit): array
+    {
+        [$period, $params, $types] = self::paidBetween($from, $to, 'o.');
+        [$rankedPeriod] = self::paidBetween($from, $to, 'r.');
+
+        $rows = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT o.user_id, o.currency, COUNT(o.id) AS count, SUM(o.amount) AS total, top.customer_since'
+                . ' FROM ecommerce_order o'
+                . ' JOIN ('
+                . '     SELECT r.user_id, COUNT(r.id) AS count, SUM(r.amount / COALESCE(x.rate, 1)) AS ranking,'
+                . '         (SELECT MIN(f.paid_at) FROM ecommerce_order f'
+                . '             WHERE f.user_id = r.user_id AND f.status IN (:statuses)) AS customer_since'
+                . '     FROM ecommerce_order r'
+                . '     LEFT JOIN ecommerce_exchange_rate x ON x.currency = r.currency'
+                . "     WHERE $rankedPeriod AND r.user_id IS NOT NULL"
+                . '     GROUP BY r.user_id'
+                . '     ORDER BY ranking DESC, count DESC, r.user_id ASC'
+                . "     LIMIT $limit"
+                . ' ) top ON top.user_id = o.user_id'
+                . " WHERE $period"
+                . ' GROUP BY o.user_id, o.currency, top.ranking, top.count, top.customer_since'
+                . ' ORDER BY top.ranking DESC, top.count DESC, o.user_id ASC',
+            $params,
+            $types,
+        )->fetchAllAssociative();
+
+        return array_map(static fn(array $row) => [
+            'userId' => (int)$row['user_id'],
+            'currency' => (string)$row['currency'],
+            'count' => (int)$row['count'],
+            'total' => (int)$row['total'],
+            'customerSince' => (string)$row['customer_since'],
+        ], $rows);
+    }
+
+    /**
+     * @return array{string, array<string, mixed>, array<string, ArrayParameterType|string>}
+     */
+    private static function paidBetween(?DateTimeImmutable $from, ?DateTimeImmutable $to, string $alias = ''): array
+    {
+        $conditions = ["{$alias}status IN (:statuses)"];
+        $params = ['statuses' => [OrderStatus::Paid->value, OrderStatus::Completed->value]];
+        $types = ['statuses' => ArrayParameterType::STRING];
+
+        foreach (['from' => [$from, '>='], 'to' => [$to, '<']] as $name => [$date, $operator]) {
+            if ($date === null) {
+                continue;
+            }
+
+            $conditions[] = "{$alias}paid_at $operator :$name";
+            $params[$name] = $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+            $types[$name] = Types::DATETIME_IMMUTABLE;
+        }
+
+        return [implode(' AND ', $conditions), $params, $types];
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Forumify\Ecommerce\Entity;
 
+use Brick\Math\BigRational;
 use DateTimeImmutable;
 
 enum BillingInterval: string
@@ -24,5 +25,20 @@ enum BillingInterval: string
         $day = min((int)$date->format('j'), (int)$target->format('t'));
 
         return $target->setDate((int)$target->format('Y'), (int)$target->format('n'), $day);
+    }
+
+    /**
+     * How often a charge every $count of this interval comes around in an average month.
+     */
+    public function getTimesPerMonth(int $count): BigRational
+    {
+        $perYear = match ($this) {
+            self::Day => 365,
+            self::Week => 52,
+            self::Month => 12,
+            self::Year => 1,
+        };
+
+        return BigRational::of($perYear)->dividedBy(12 * $count);
     }
 }

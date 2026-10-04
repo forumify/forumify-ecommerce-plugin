@@ -1,0 +1,50 @@
+{% set customers = this.customers %}
+<div {{ attributes.defaults({ class: 'ecommerce-dashboard-customers' }) }}>
+    <div class="card">
+        <div class="card-title items-center gap-2">
+            <span>{{ 'ecommerce.admin.dashboard.top_customers'|trans }}</span>
+            {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_period_select.html.twig' %}
+        </div>
+        {% if customers is empty %}
+            <p class="card-body text-secondary">{{ 'ecommerce.admin.dashboard.no_sales'|trans }}</p>
+        {% else %}
+            <div class="table-wrapper">
+                <table class="ecommerce-dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'ecommerce.admin.order.customer'|trans }}</th>
+                            <th>{{ 'ecommerce.admin.dashboard.orders'|trans }}</th>
+                            <th>{{ 'ecommerce.admin.dashboard.revenue'|trans }}</th>
+                            <th class="hide-phone">{{ 'ecommerce.admin.subscription.plural'|trans }}</th>
+                            <th class="hide-phone">{{ 'ecommerce.admin.dashboard.customer_since'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                            <tr>
+                                <td>
+                                    <a class="flex items-center gap-2" href="{{ path('forumify_admin_users_edit', { identifier: customer.user.id }) }}">
+                                        {% if customer.user.avatar or setting('forumify.default_avatar') %}
+                                            {% include '@Forumify/components/avatar.html.twig' with { user: customer.user, className: 'avatar-xs' } only %}
+                                        {% endif %}
+                                        {{ customer.user.displayName }}
+                                    </a>
+                                </td>
+                                <td>{{ customer.orders }}</td>
+                                <td>{{ customer.revenue|ecommerce_money }}</td>
+                                <td class="hide-phone">
+                                    {% if customer.subscriptions > 0 %}
+                                        {{ 'ecommerce.admin.dashboard.active_count'|trans({ count: customer.subscriptions }) }}
+                                    {% else %}
+                                        <span class="text-secondary">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="hide-phone">{{ customer.customerSince|date('M Y') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>

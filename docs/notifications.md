@@ -41,7 +41,7 @@ The last two are about the **store**, not about one order, so they go to the sto
 through `StoreNotificationService` and are throttled to one a day. See [revenue-caps.md](revenue-caps.md).
 
 A pending **refund request** has no notification: any product can have a refund window, so there is no role
-to send it to. The Refunds menu item carries the count instead — see [roadmap.md](roadmap.md).
+to send it to. The dashboard lists them instead — see [roadmap.md](roadmap.md).
 
 A failed integration (provisioning, say) is the integration's own business to report. The order stays `Paid`
 and shows up under "Paid" in the admin.

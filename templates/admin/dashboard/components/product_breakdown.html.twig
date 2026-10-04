@@ -1,0 +1,37 @@
+{% set report = this.report %}
+<div {{ attributes.defaults({ class: 'ecommerce-dashboard-products' }) }}>
+    <div class="card">
+        <div class="card-title items-center gap-2">
+            <span>{{ 'ecommerce.admin.dashboard.products'|trans }}</span>
+            {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_period_select.html.twig' %}
+        </div>
+        {% if report.products is empty %}
+            <p class="card-body text-secondary">{{ 'ecommerce.admin.dashboard.no_sales'|trans }}</p>
+        {% else %}
+            <div class="table-wrapper">
+                <table class="ecommerce-dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'ecommerce.admin.order.product'|trans }}</th>
+                            <th>{{ 'ecommerce.admin.dashboard.orders'|trans }}</th>
+                            <th>{{ 'ecommerce.admin.dashboard.revenue'|trans }}</th>
+                            <th class="hide-phone">{{ 'ecommerce.admin.dashboard.share'|trans }}</th>
+                            <th>{{ 'ecommerce.admin.dashboard.change'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in report.products %}
+                            {% set expanded = product.key in this.expanded %}
+                            {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_sales_row.html.twig' with { sales: product, tier: false } %}
+                            {% if expanded %}
+                                {% for tier in product.tiers %}
+                                    {% include '@ForumifyEcommercePlugin/admin/dashboard/components/_sales_row.html.twig' with { sales: tier, tier: true } %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,26 @@
+{% set usage = this.usage %}
+<div class="card h-100 ecommerce-dashboard-plan">
+    <div class="card-title items-center">
+        <span>{{ 'ecommerce.admin.dashboard.plan_usage'|trans }}</span>
+        <span class="tag">{{ ('ecommerce.revenue_tier.' ~ usage.tier.value)|trans }}</span>
+    </div>
+    <div class="card-body flex flex-col gap-2">
+        <p class="text-huge m-0">{{ usage.average|ecommerce_money }}</p>
+        <p class="text-small text-secondary m-0">{{ 'ecommerce.admin.revenue.title'|trans({ months: usage.windowMonths }) }}</p>
+        {% if usage.cap is not null %}
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ min(usage.percentage, 100) }}%"></div>
+            </div>
+            <p class="text-small text-secondary m-0">
+                {{ 'ecommerce.admin.revenue.of_cap'|trans({ cap: usage.cap|ecommerce_money, percentage: usage.percentage }) }}
+            </p>
+            {% if usage.overCap %}
+                <p class="alert-warning m-0">{{ 'ecommerce.admin.revenue.over_cap'|trans }}</p>
+            {% elseif usage.nearCap %}
+                <p class="alert-warning m-0">{{ 'ecommerce.admin.revenue.near_cap'|trans }}</p>
+            {% endif %}
+        {% else %}
+            <p class="text-small text-secondary m-0">{{ 'ecommerce.admin.revenue.uncapped'|trans }}</p>
+        {% endif %}
+    </div>
+</div>

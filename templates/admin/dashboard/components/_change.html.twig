@@ -1,0 +1,9 @@
+{% if change is null %}
+    <span class="text-secondary">-</span>
+{% else %}
+    {% set percentage = (change * 100)|round %}
+    <span class="text-small">
+        <i class="ph {{ percentage >= 0 ? 'ph-arrow-up-right' : 'ph-arrow-down-right' }}"></i>
+        {{ percentage|abs }}%
+    </span>
+{% endif %}

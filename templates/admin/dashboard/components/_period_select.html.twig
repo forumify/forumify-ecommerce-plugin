@@ -1,0 +1,7 @@
+<select class="text-regular" style="width: auto" aria-label="{{ 'ecommerce.admin.dashboard.period'|trans }}" data-model="period">
+    {% for period in this.periods %}
+        <option value="{{ period.value }}"{{ this.period == period.value ? ' selected' }}>
+            {{ ('ecommerce.sales_period.' ~ period.value)|trans }}
+        </option>
+    {% endfor %}
+</select>

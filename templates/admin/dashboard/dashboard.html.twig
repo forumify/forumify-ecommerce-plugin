@@ -1,0 +1,50 @@
+{% extends '@Forumify/admin/base.html.twig' %}
+{% set title = 'ecommerce.admin.dashboard.title'|trans %}
+{% block title_page %}{{ title }}{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/forumifyecommerceplugin/styles/admin.css') }}">
+{% endblock %}
+{% block body %}
+    <h2>{{ title }}</h2>
+    <div class="grid gap-6">
+        {% block ecommerce_dashboard_kpis %}
+            <div class="col-xs-12">
+                {{ component('Ecommerce\\Dashboard\\Kpis') }}
+            </div>
+        {% endblock %}
+        {% block ecommerce_dashboard_revenue %}
+            <div class="col-xs-12 col-lg-6">
+                {{ component('Ecommerce\\Dashboard\\PlanUsage') }}
+            </div>
+            <div class="col-xs-12 col-lg-6">
+                {{ component('Ecommerce\\Dashboard\\RevenueGraph') }}
+            </div>
+        {% endblock %}
+        {% block ecommerce_dashboard_actions %}
+            <h3 class="col-xs-12 m-0">{{ 'ecommerce.admin.dashboard.attention'|trans }}</h3>
+            <div class="col-xs-12 col-lg-4">
+                {{ component('Ecommerce\\Dashboard\\OrdersToProcess', { class: 'ecommerce-dashboard-orders h-100' }) }}
+            </div>
+            <div class="col-xs-12 col-lg-4">
+                {{ component('Ecommerce\\Dashboard\\PendingRefunds', { class: 'ecommerce-dashboard-refunds h-100' }) }}
+            </div>
+            <div class="col-xs-12 col-lg-4">
+                {{ component('Ecommerce\\Dashboard\\PendingCancellations', { class: 'ecommerce-dashboard-cancellations h-100' }) }}
+            </div>
+        {% endblock %}
+        {% block ecommerce_dashboard_sales %}
+            <h3 class="col-xs-12 m-0">{{ 'ecommerce.admin.dashboard.sales'|trans }}</h3>
+            {% block ecommerce_dashboard_products %}
+                <div class="col-xs-12">
+                    {{ component('Ecommerce\\Dashboard\\ProductBreakdown') }}
+                </div>
+            {% endblock %}
+            {% block ecommerce_dashboard_customers %}
+                <div class="col-xs-12">
+                    {{ component('Ecommerce\\Dashboard\\TopCustomers') }}
+                </div>
+            {% endblock %}
+        {% endblock %}
+    </div>
+{% endblock %}

@@ -27,6 +27,7 @@ class ForumifyEcommercePlugin extends AbstractForumifyPlugin
         return [
             'admin' => [
                 'view',
+                'dashboard',
                 'configuration' => ['manage'],
                 'payment_providers' => ['manage'],
                 'categories' => ['view', 'manage'],

@@ -85,9 +85,10 @@ wrong: a listener on `OrderPlacedEvent` runs inside the checkout, where a throw 
 
 ## In the admin
 
-The orders page shows `Ecommerce\RevenueGraph`: the rolling average, the cap and how much of it is used, a
-progress bar, the tier, and revenue per month for the last twelve months on the platform's Chart.js
-component.
+The [dashboard](dashboard.md) shows it: the `Ecommerce\Dashboard\PlanUsage` card has the rolling average,
+the cap and how much of it is used, a progress bar, the tier and the near/over cap warning;
+`Ecommerce\Dashboard\RevenueGraph` plots revenue per month for the last twelve months on the platform's
+Chart.js component, right next to it. The revenue cap notifications' "View revenue" link leads there.
 
 ## Code
 
@@ -96,6 +97,6 @@ component.
 - `src/Service/ExchangeRateService.php`, `src/Scheduler/UpdateExchangeRatesTask.php`
 - `src/Service/StoreNotificationService.php`, `src/Notification/AbstractStoreNotificationType.php`,
   `src/Notification/RevenueCap*NotificationType.php`
-- `src/EventSubscriber/RevenueCapSubscriber.php`, `src/Admin/Component/RevenueGraph.php`
+- `src/EventSubscriber/RevenueCapSubscriber.php`, `src/Admin/Component/Dashboard/{PlanUsage,RevenueGraph}.php`
 - Tests: `RevenueCapTest` (checkout blocked, warning, admin figures), `RevenueUsageTest`,
   `RevenueCapServiceTest`, `RevenueCapNotifierTest`, `CurrencyConverterTest`, `ExchangeRateServiceTest`

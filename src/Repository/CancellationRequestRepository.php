@@ -18,11 +18,6 @@ class CancellationRequestRepository extends AbstractRepository
         return CancellationRequest::class;
     }
 
-    public function countPending(): int
-    {
-        return $this->count(['completedAt' => null]);
-    }
-
     /**
      * Pending requests of subscriptions whose paid period has run out, that were not reminded about yet.
      *

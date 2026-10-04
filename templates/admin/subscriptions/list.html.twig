@@ -3,5 +3,5 @@
 {% block title_page %}{{ title }}{% endblock %}
 {% block body %}
     <h2>{{ title }}</h2>
-    {{ component('Ecommerce\\SubscriptionTable') }}
+    {{ component('Ecommerce\\SubscriptionTable', { statusFilter: app.request.query.get('status', '') }) }}
 {% endblock %}

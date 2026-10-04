@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace PluginTests\Tests\Factories;
 
+use DateTimeImmutable;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\PaymentProvider\Fake\FakePaymentProvider;
 use Forumify\Testing\Factories\Core\UserFactory;
+use ReflectionProperty;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
@@ -19,9 +21,14 @@ class OrderFactory extends PersistentObjectFactory
         return Order::class;
     }
 
-    public function paid(): static
+    public function paid(?DateTimeImmutable $at = null): static
     {
-        return $this->afterInstantiate(static fn(Order $order) => $order->pay());
+        return $this->afterInstantiate(static function (Order $order) use ($at): void {
+            $order->pay();
+            if ($at !== null) {
+                new ReflectionProperty(Order::class, 'paidAt')->setValue($order, $at);
+            }
+        });
     }
 
     public function completed(): static
