@@ -99,23 +99,6 @@ The tests need MySQL 8.4 at `root:root@127.0.0.1:3306/plugin_test` (from `../../
 
 `docs/` holds **developer feature docs**, one per feature, indexed by `docs/README.md` (which also has the architecture overview). Read the relevant one before working on a feature: each doc describes the domain model, the flow, the extension points, and the decisions behind them with their reasoning.
 
-| Doc | Covers |
-| --- | --- |
-| `configuration.md` | Plugin wiring, permissions, routing, store settings, money |
-| `catalog.md` | Categories, products, tiers, prices, images, admin CRUD |
-| `storefront.md` | `/store` pages, SEO |
-| `cms-widgets.md` | CMS page builder widgets, the shared product tile and tier card, global store CSS |
-| `checkout-and-orders.md` | Checkout flow, `Order`, buyer and admin pages |
-| `payment-providers.md` | The abstraction, `PaymentEvent`, `PaymentEventHandler`, the fake provider |
-| `stripe.md` | The Stripe implementation |
-| `subscriptions.md` | Lifecycle, renewal orders, cancellation, past-due grace |
-| `fulfillment.md` | Fulfillment types, `FulfillmentService` |
-| `self-service.md` | Buyer self-service: hosted payment, invoices, cancellation requests, refunds |
-| `notifications.md` | Buyer and admin notifications |
-| `revenue-caps.md` | Plugin tiers, the revenue limit, exchange rates, the store role |
-| `grants.md` | Role and badge grants |
-| `roadmap.md` | Out of scope, designed-not-built, known gaps |
-
 **Keep the docs up to date as part of the work, not afterwards.** A change to a feature updates its doc in the same PR:
 - New or changed behaviour, entities, fields, events, services, routes or permissions → update the feature doc (and its "Code" section if files moved).
 - A decision made or reversed along the way → record it in that doc as a `> **Decision:**` block, **with the reasoning**, so it can be revisited on purpose rather than by accident. This is the part that is lost if it isn't written down immediately.

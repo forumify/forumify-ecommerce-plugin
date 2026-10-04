@@ -7,6 +7,11 @@ These are developer docs, one per feature. Each one describes what the feature d
 behind it, its extension points, and the decisions that shaped it (with the reasoning, so they can be
 revisited on purpose rather than by accident).
 
+For store admins there is a separate user manual at
+[docs.forumify.net](https://docs.forumify.net/plugins/ecommerce-plugin/introduction): how to set up the store,
+connect Stripe and run it day to day. When a change alters what an admin sees or does, update the manual too
+(it lives in the `forumify-docs` repository, under `src/app/plugins/ecommerce-plugin`).
+
 forumify.net is the first target user, and once the plugin is mature it can drop its custom implementation
 and build its marketplace and hosting on top. Its code is a *reference* only: it shows what worked in
 production and which shortcuts hurt. It is not a codebase to extract from.
@@ -27,30 +32,36 @@ production and which shortcuts hurt. It is not a codebase to extract from.
 | [self-service.md](self-service.md) | What buyers do after buying: settle a payment, invoices, cancelling, refunds |
 | [notifications.md](notifications.md) | Buyer and admin notifications |
 | [revenue-caps.md](revenue-caps.md) | Plugin tiers, the revenue limit, exchange rates |
+| [dashboard.md](dashboard.md) | The admin dashboard: work waiting, revenue, MRR, product sales, top customers (planned) |
 | [grants.md](grants.md) | Granting and revoking roles and badges on purchase |
 | [roadmap.md](roadmap.md) | Deliberately out of scope, and designs that aren't built yet |
 
 ## How it fits together
 
-```
-Catalog                     Storefront              Checkout
-ProductCategory             /store                  CheckoutService
-  └ Product                 /store/{slug}             ├ creates a pending Order (a snapshot)
-      └ ProductTier                                   ├ dispatches OrderPlacedEvent
-          └ ProductPrice  ────────────────────────────┘ └ picks a provider and redirects
-                                                                    │
-                                              PaymentProviderInterface (stripe, fake)
-                                                                    │
-                                          webhook / return page → list<PaymentEvent>
-                                                                    │
-                                                        PaymentEventHandler
-                                                     (idempotent, row-locked)
-                                                          │                │
-                                                       Order          Subscription
-                                                          │                │
-                                        OrderPaidEvent ───┤                ├── Subscription*Event
-                                                          │                │
-                                            Fulfillment  ─┴─  Grants  ─────┴─  Notifications
+```mermaid
+flowchart TD
+    subgraph catalog [Catalog]
+        direction TB
+        Category[ProductCategory] --> Product --> Tier[ProductTier] --> Price[ProductPrice]
+    end
+    subgraph storefront [Storefront]
+        Store["/store<br/>/store/{slug}"]
+    end
+    subgraph checkout [Checkout]
+        CheckoutService["CheckoutService<br/>creates a pending Order (a snapshot)<br/>dispatches OrderPlacedEvent"]
+    end
+
+    Price --> CheckoutService
+    Store --> CheckoutService
+    CheckoutService -- picks a provider and redirects --> Provider["PaymentProviderInterface<br/>(stripe, fake)"]
+    Provider -- "webhook / return page<br/>list&lt;PaymentEvent&gt;" --> Handler["PaymentEventHandler<br/>(idempotent, row-locked)"]
+    Handler --> Order
+    Handler --> Subscription
+    Order -- OrderPaidEvent --> Fulfillment
+    Order -- OrderPaidEvent --> Grants
+    Subscription -- "Subscription*Event" --> Grants
+    Subscription -- "Subscription*Event" --> Notifications
+    Order -- "Order*Event" --> Notifications
 ```
 
 Three rules run through the whole plugin:
@@ -68,4 +79,4 @@ Three rules run through the whole plugin:
 ## Conventions
 
 Code conventions (entities with public typed properties, money in minor units, phpcs/phpstan setup,
-testing approach) live in the repo's `CLAUDE.md`.
+testing approach) live in the repo's `AGENTS.md`.
