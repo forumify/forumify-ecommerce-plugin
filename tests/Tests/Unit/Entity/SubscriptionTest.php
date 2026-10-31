@@ -15,6 +15,7 @@ use Forumify\Ecommerce\Entity\ProductTier;
 use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Entity\SubscriptionStatus;
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -73,6 +74,21 @@ class SubscriptionTest extends TestCase
         self::assertTrue($yearly->renew(new DateTimeImmutable('2027-10-01')));
         self::assertNull($yearly->pastDueSince);
         self::assertNull($yearly->getGraceEndsAt());
+    }
+
+    public function testTheInitialOrderAndItsRenewalsAllLinkToTheSubscription(): void
+    {
+        $subscription = self::createSubscription(new DateTimeImmutable('2026-10-01'));
+        $initialOrder = $subscription->initialOrder;
+        $renewal = new Order($subscription->user, $initialOrder->price, 'fake', $subscription);
+
+        self::assertSame($subscription, $initialOrder->subscription);
+        self::assertFalse($initialOrder->isRenewal());
+        self::assertSame($subscription, $renewal->subscription);
+        self::assertTrue($renewal->isRenewal());
+
+        $this->expectException(LogicException::class);
+        $renewal->startSubscription($subscription);
     }
 
     public function testOnlyRecurringProviderOrdersStartSubscriptions(): void

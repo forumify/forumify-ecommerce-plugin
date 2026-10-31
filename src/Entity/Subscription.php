@@ -70,6 +70,8 @@ class Subscription
         $this->providerKey = $initialOrder->providerKey;
         $this->providerReference = $providerReference;
         $this->currentPeriodEnd = $currentPeriodEnd;
+
+        $initialOrder->startSubscription($this);
     }
 
     public function getGraceEndsAt(): ?DateTimeImmutable

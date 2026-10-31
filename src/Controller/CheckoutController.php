@@ -108,6 +108,7 @@ class CheckoutController extends AbstractController
         $form = $this->formFactory->createNamed('fulfillment', $formType, null, [
             'csrf_protection' => false,
             'product' => $price->tier->product,
+            'price' => $price,
             'user' => $user,
         ]);
 

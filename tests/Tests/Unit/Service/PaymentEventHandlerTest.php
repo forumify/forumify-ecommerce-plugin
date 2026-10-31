@@ -31,6 +31,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\CheckoutFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
+use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalVoided;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
 use Forumify\Ecommerce\Repository\OrderRepository;
@@ -51,6 +52,9 @@ class PaymentEventHandlerTest extends TestCase
     /** @var list<Order> */
     private array $renewals = [];
 
+    /** @var list<string> */
+    private array $trace = [];
+
     public function testPaymentIsIdempotent(): void
     {
         $order = $this->createOrder();
@@ -64,6 +68,14 @@ class PaymentEventHandlerTest extends TestCase
         self::assertCount(1, $this->dispatched);
         self::assertInstanceOf(OrderPaidEvent::class, $this->dispatched[0]);
         self::assertSame($order, $this->dispatched[0]->order);
+    }
+
+    public function testEventsAreDispatchedInsideTheLockAfterAFlush(): void
+    {
+        $order = $this->createOrder();
+        $this->createHandler($order)->handle(new CheckoutCompleted($order->reference), 'fake');
+
+        self::assertSame(['lock', 'flush', 'dispatch', 'unlock'], $this->trace);
     }
 
     public function testFailedCheckoutFailsPendingOrderOnce(): void
@@ -199,6 +211,20 @@ class PaymentEventHandlerTest extends TestCase
         self::assertSame(SubscriptionStatus::Active, $subscription->status);
     }
 
+    public function testVoidedRenewalFailsUntilItIsPaidAfterAll(): void
+    {
+        $subscription = new Subscription($this->createOrder(recurring: true), 'sub_1', new DateTimeImmutable('2026-10-01'));
+        $handler = $this->createHandler($subscription->initialOrder, $subscription);
+
+        $handler->handleAll([new SubscriptionRenewalStarted('sub_1', 'in_1'), new SubscriptionRenewalVoided('sub_1', 'in_1')], 'fake');
+        self::assertSame(OrderStatus::Failed, $this->renewals[0]->status);
+        self::assertSame([], $this->dispatched);
+
+        $handler->handle(new SubscriptionRenewed('sub_1', 'in_1', new DateTimeImmutable('2026-11-01')), 'fake');
+        self::assertCount(1, $this->renewals);
+        self::assertSame(OrderStatus::Completed, $this->renewals[0]->status);
+    }
+
     public function testManualRenewalStaysPaidForAnAdminToFulfill(): void
     {
         $initial = $this->createOrder(recurring: true, fulfillmentType: ManualFulfillmentType::KEY, fulfillmentData: ['label' => 'Username', 'value' => 'jannes']);
@@ -232,11 +258,18 @@ class PaymentEventHandlerTest extends TestCase
         $repository->method('withLockedOrder')->willReturnCallback(function (string $reference, callable $callback) use ($order) {
             foreach ([$order, ...$this->renewals] as $candidate) {
                 if ($candidate->reference === $reference) {
-                    return $callback($candidate);
+                    $this->trace[] = 'lock';
+                    $result = $callback($candidate);
+                    $this->trace[] = 'unlock';
+
+                    return $result;
                 }
             }
 
             return null;
+        });
+        $repository->method('flush')->willReturnCallback(function (): void {
+            $this->trace[] = 'flush';
         });
         $repository->method('findOneByProviderReference')->willReturnCallback(
             fn(string $providerKey, string $reference) => array_find(
@@ -255,6 +288,7 @@ class PaymentEventHandlerTest extends TestCase
         $dispatcher = $this->createMock(EventDispatcherInterface::class);
         $dispatcher->method('dispatch')->willReturnCallback(function (object $event) {
             $this->dispatched[] = $event;
+            $this->trace[] = 'dispatch';
 
             return $event;
         });

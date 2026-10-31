@@ -108,6 +108,15 @@ class Order
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     public private(set) ?string $fulfillmentNote = null;
 
+    /** @var array<string, scalar|null> */
+    #[ORM\Column(type: Types::JSON)]
+    public array $metadata = [] {
+        set {
+            $this->assertPending('Metadata can only be attached while an order is pending.');
+            $this->metadata = $value;
+        }
+    }
+
     /**
      * @param array<string, mixed> $fulfillmentData
      */
@@ -153,7 +162,16 @@ class Order
 
     public function isRenewal(): bool
     {
-        return $this->subscription !== null;
+        return $this->subscription !== null && $this->subscription->initialOrder !== $this;
+    }
+
+    public function startSubscription(Subscription $subscription): void
+    {
+        if ($subscription->initialOrder !== $this || $this->subscription !== null) {
+            throw new LogicException('An order can only start the subscription it is the initial order of.');
+        }
+
+        $this->subscription = $subscription;
     }
 
     public function isFree(): bool
@@ -243,6 +261,13 @@ class Order
     public function cancel(): bool
     {
         return $this->leavePending(OrderStatus::Cancelled);
+    }
+
+    private function assertPending(string $message): void
+    {
+        if ($this->status !== OrderStatus::Pending) {
+            throw new LogicException($message);
+        }
     }
 
     private function leavePending(OrderStatus $status): bool

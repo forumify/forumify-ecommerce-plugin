@@ -17,7 +17,14 @@ subscription (`Order.subscription`).
 | snapshot | product key + title, tier key + label, amount + currency, price type, interval |
 | `fulfillmentType`, `fulfillmentData`, `fulfillmentNote`, `completedBy` | See [fulfillment.md](fulfillment.md) |
 | `refundPeriodDays`, `refundRequest` | Snapshotted from the product; see [self-service.md](self-service.md) |
+| `metadata` | JSON, writable only while pending. Integrations attach values at checkout (e.g. a referral code in an `OrderPlacedEvent` listener) |
 | timestamps | `createdAt`, `paidAt`, `completedAt`, `refundedAt` |
+
+> **Decision: `metadata` is a bag, not a query surface.** It exists so an integration can remember
+> something between checkout and payment (the webhook that pays the order has no request, cookie or
+> session), without a side table per integration. Nothing filters or joins on it: anything that needs that
+> gets a real column or relation. It locks once the order leaves `Pending`, so it records the checkout and
+> nothing later rewrites it.
 
 > **Decision: snapshot everything, link with `SET NULL`.** Deleting or editing catalog data must never damage
 > order history. The links are a convenience for the admin UI; the snapshot is the record.

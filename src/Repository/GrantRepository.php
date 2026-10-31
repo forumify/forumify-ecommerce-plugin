@@ -39,10 +39,13 @@ class GrantRepository extends AbstractRepository
     }
 
     /**
+     * The grants of a one-time purchase. A subscription's grants hang off its first order too, but they belong to
+     * the subscription.
+     *
      * @return list<Grant>
      */
-    public function findByOrder(Order $order): array
+    public function findOneTimeByOrder(Order $order): array
     {
-        return $this->findBy(['order' => $order]);
+        return $this->findBy(['order' => $order, 'subscription' => null]);
     }
 }

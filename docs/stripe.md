@@ -71,14 +71,23 @@ invoice.
 
 ## Self-service capabilities
 
-Stripe declares all three of [self-service.md](self-service.md)'s capabilities:
+Stripe declares all three of [self-service.md](self-service.md)'s capabilities, plus `Settlement`:
 
-- **Refund** — the payment intent is resolved from the order's provider reference (a session for a first
-  payment, an invoice for a renewal) and refunded in full.
+- **Refund** — the payment intent is resolved from the order's provider reference and refunded in full. A
+  one-time checkout session has its own `payment_intent`. A **subscription** session has none (Stripe only
+  sets it in `payment` mode): its first payment is paid through the session's `invoice`, and a renewal through
+  its own invoice. An invoice's payment intent is looked up through the invoice payments API
+  (`invoicePayments->all(['invoice' => …, 'status' => 'paid'])`), because the invoice's `payment_intent` field
+  is gone since API version 2025-03-31 and its `payments` list is not returned by default.
 - **Invoice** — the invoice's `invoice_pdf`, returned as a URL the buyer is redirected to.
 - **HostedPayment** — a renewal's `hosted_invoice_url`, which is where the buyer pays a failed renewal and
   replaces their card. (The Billing Portal is the alternative, but it has to be configured in the Stripe
   dashboard first; the hosted invoice page does not.)
+
+- **Settlement** — the same payment intent as a refund, retrieved with
+  `latest_charge.balance_transaction` expanded. The balance transaction's `amount` and `net` are in the
+  account's settlement currency, which can differ from the order's. Null while the charge has no balance
+  transaction yet.
 
 ## Webhook events
 
@@ -88,12 +97,12 @@ events**. Those four resources cover everything the mapper acts on:
 | Acted on | Ignored, but delivered |
 | --- | --- |
 | `checkout.session.completed`, `…async_payment_succeeded`, `…async_payment_failed`, `…expired` | — |
-| `invoice.created`, `invoice.paid`, `invoice.payment_failed` | every other `invoice.*` |
+| `invoice.created`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`, `invoice.marked_uncollectible` | every other `invoice.*` |
 | `customer.subscription.updated`, `customer.subscription.deleted` | every other `customer.*` |
 | `charge.refunded`, `charge.dispute.closed` (lost only) | every other `charge.*` |
 
-> **Decision: ask for four event groups, not eleven event names.** Stripe's endpoint form lets you tick a
-> whole resource in one click, and a list of eleven names is eleven chances to mistype one — a missed
+> **Decision: ask for four event groups, not thirteen event names.** Stripe's endpoint form lets you tick a
+> whole resource in one click, and a list of thirteen names is thirteen chances to mistype one — a missed
 > `invoice.paid` silently breaks renewals, and the admin has no way to notice until a subscription fails
 > to renew. Over-subscribing costs only ignored deliveries: `StripeEventMapper` dispatches on the event's
 > object type and then its name, and **every** match has a `default => []`, so an unrecognised event maps
@@ -110,9 +119,25 @@ Mapping rules:
 - Only `subscription_cycle` invoices count as renewals. A failed **first** invoice gives
   `SubscriptionPaymentFailed` without a payment id, so no renewal order is created for it.
 - `cancel_at` counts as a cancellation, like `cancel_at_period_end`.
-- `charge.refunded` → `PaymentRefunded`, identified by the charge's invoice (a renewal) or by
-  `ecommerce_order_reference` from the charge's or the payment intent's metadata. A **lost**
-  `charge.dispute.closed` maps to the same event; a won one to nothing.
+- A renewal invoice that is `voided` or `marked_uncollectible` → `SubscriptionRenewalVoided`, which fails its
+  pending order. Stripe can still collect an uncollectible invoice later; its `invoice.paid` then pays it.
+- `charge.refunded` → `PaymentRefunded`. A **lost** `charge.dispute.closed` maps to the same event; a won one
+  to nothing. The order is found by, in turn:
+  1. `ecommerce_order_reference` in the charge's or its payment intent's metadata — a one-time payment
+     (`payment_intent_data.metadata`)
+  2. otherwise the payment's invoice: named on the charge by webhooks before API version 2025-03-31, found
+     through the invoice payments API after it (`invoicePayments->all(['payment' => …])`)
+  3. a `subscription_create` invoice → the order reference in `parent.subscription_details.metadata`, the
+     snapshot of the metadata our checkout put on the subscription (`subscription_data.metadata`): the
+     subscription's first order, whose provider reference is the checkout session, not the invoice
+  4. any other invoice → its id, which is a renewal order's provider reference
+
+> **Decision: subscription payments are found through their invoice.** Stripe copies
+> `subscription_data.metadata` onto the subscription, never onto the payment intents of its invoices, and
+> since 2025-03-31 a charge no longer names its invoice. An earlier version read only `charge.invoice` and the
+> payment intent's metadata: it passed the tests (which mocked the old charge) and the manual run (the Stripe
+> CLI forwards on `2024-04-10`), but on a webhook endpoint created today every refund or lost dispute of a
+> subscription payment mapped to no order and was dropped with a 204.
 
 ### API version drift
 
@@ -139,9 +164,19 @@ In the sandbox against a Stripe test-mode account with
 
 Every webhook returned 204, and one Stripe customer was reused for all purchases.
 
+Refunds, on 2026-10-04, against the test API on `2026-08-26.dahlia`:
+
+- a scratch script refunded a one-time payment intent, a subscription's first invoice and a renewal invoice
+  (on a test clock) and ran the real `charge.refunded` charges through `StripeEventMapper`: each resolved to
+  its order (by reference, by the subscription's metadata, by the renewal's invoice id)
+- in the sandbox with `stripe listen`: a subscription checkout, then the admin's cancel page with "at the end
+  of the period" and "Also refund the last payment" — the subscription was set to cancel at period end, the
+  refund then ended it right away (`customer.subscription.deleted`), the payment was refunded through the
+  session's first invoice, its grants were revoked, and the echoed `charge.refunded` was a no-op
+
 ## Code
 
 - `src/PaymentProvider/Stripe/`
 - Tests: `StripeCatalogTest`, `StripePaymentProviderTest`, `StripeTestTrait` (mocked `StripeClient`: price
-  sync create/reuse/replace, session parameters for one-time vs subscription, the full event mapping, bad
-  signature rejection); `StripeTest` (a correctly signed fixture payload completes an order)
+  sync create/reuse/replace, session parameters for one-time vs subscription, the full event mapping including
+  refunds on both API shapes, refunding each kind of order, bad signature rejection); `StripeTest` (a correctly signed fixture payload completes an order)

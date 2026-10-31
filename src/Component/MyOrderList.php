@@ -42,9 +42,8 @@ class MyOrderList extends AbstractDoctrineList
 
         if ($this->subscription !== null) {
             $query
-                ->andWhere('e.subscription = :subscription OR e = :initialOrder')
-                ->setParameter('subscription', $this->subscription)
-                ->setParameter('initialOrder', $this->subscription->initialOrder);
+                ->andWhere('e.subscription = :subscription')
+                ->setParameter('subscription', $this->subscription);
         }
 
         return $query;

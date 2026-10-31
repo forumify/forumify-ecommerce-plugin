@@ -127,6 +127,9 @@
                 </table>
                 {% if handleRefundForm %}
                     <p class="help-text mb-4">{{ 'ecommerce.admin.refund.handle_help'|trans }}</p>
+                    {% if subscription and subscription.status.value != 'ended' %}
+                        <p class="help-text mb-4">{{ 'ecommerce.admin.refund.ends_subscription'|trans }}</p>
+                    {% endif %}
                     {{ form_start(handleRefundForm) }}
                     {{ form_row(handleRefundForm.note) }}
                     <div class="flex flex-wrap gap-2">

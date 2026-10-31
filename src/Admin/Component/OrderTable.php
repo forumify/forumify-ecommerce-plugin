@@ -12,7 +12,6 @@ use Forumify\Core\Component\Table\AbstractDoctrineTable;
 use Forumify\Core\Service\TimezoneResolver;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
-use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Money\PriceFormatter;
 use Forumify\Ecommerce\Repository\ProductRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -149,12 +148,8 @@ class OrderTable extends AbstractDoctrineTable
         }
 
         if ($this->subscription !== null) {
-            $initialOrder = sprintf(
-                'SELECT IDENTITY(s.initialOrder) FROM %s s WHERE s.id = :subscription',
-                Subscription::class,
-            );
             $qb
-                ->andWhere("IDENTITY(e.subscription) = :subscription OR e.id IN ($initialOrder)")
+                ->andWhere('IDENTITY(e.subscription) = :subscription')
                 ->setParameter('subscription', $this->subscription);
         }
 

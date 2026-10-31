@@ -66,7 +66,7 @@ class FakePaymentController extends AbstractController
     private static function paid(Order $order): PaymentEvent
     {
         $subscription = $order->subscription;
-        if ($subscription === null) {
+        if ($subscription === null || !$order->isRenewal()) {
             return FakePaymentProvider::completed($order->reference);
         }
 

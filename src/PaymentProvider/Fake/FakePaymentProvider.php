@@ -26,6 +26,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
 use Forumify\Ecommerce\PaymentProvider\InvoiceDocument;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderCapability;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderInterface;
+use Forumify\Ecommerce\PaymentProvider\Settlement;
 use Forumify\Ecommerce\Repository\SubscriptionRepository;
 use Symfony\Component\DependencyInjection\Attribute\WhenNot;
 use Symfony\Component\HttpFoundation\Exception\JsonException;
@@ -81,6 +82,7 @@ class FakePaymentProvider implements PaymentProviderInterface
             PaymentProviderCapability::Refund,
             PaymentProviderCapability::Invoice,
             PaymentProviderCapability::HostedPayment,
+            PaymentProviderCapability::Settlement,
         ];
     }
 
@@ -152,6 +154,11 @@ class FakePaymentProvider implements PaymentProviderInterface
             $this->invoice->render($order),
             'invoice-' . strtolower($order->reference) . '.pdf',
         );
+    }
+
+    public function getSettlement(Order $order): ?Settlement
+    {
+        return $order->paidAt === null ? null : new Settlement($order->getAmount(), $order->getAmount());
     }
 
     /**

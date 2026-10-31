@@ -73,10 +73,9 @@ class OrderRepository extends AbstractRepository
     public function findLatestPaidForSubscription(Subscription $subscription): ?Order
     {
         $order = $this->createQueryBuilder('o')
-            ->where('o.subscription = :subscription OR o = :initialOrder')
+            ->where('o.subscription = :subscription')
             ->andWhere('o.status IN (:statuses)')
             ->setParameter('subscription', $subscription)
-            ->setParameter('initialOrder', $subscription->initialOrder)
             ->setParameter('statuses', [OrderStatus::Paid, OrderStatus::Completed])
             ->orderBy('o.paidAt', 'DESC')
             ->addOrderBy('o.id', 'DESC')
@@ -166,7 +165,9 @@ class OrderRepository extends AbstractRepository
 
         $rows = $this->getEntityManager()->getConnection()->executeQuery(
             'SELECT product_key, product_title, tier_key, tier_label, currency,'
-                . ' subscription_id IS NOT NULL AS renewal, COUNT(id) AS count, SUM(amount) AS total,'
+                . ' subscription_id IS NOT NULL AND NOT EXISTS ('
+                . '     SELECT 1 FROM ecommerce_subscription s WHERE s.initial_order_id = ecommerce_order.id'
+                . ' ) AS renewal, COUNT(id) AS count, SUM(amount) AS total,'
                 . ' MAX(paid_at) AS last_paid_at'
                 . ' FROM ecommerce_order'
                 . " WHERE $period"

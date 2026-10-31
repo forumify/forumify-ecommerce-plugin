@@ -21,6 +21,7 @@ class ManualCheckoutType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setRequired(['product', 'user']);
+        $resolver->setDefined(['price']);
         $resolver->setAllowedTypes('product', Product::class);
     }
 

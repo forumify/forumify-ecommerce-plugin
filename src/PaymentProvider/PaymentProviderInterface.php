@@ -72,4 +72,10 @@ interface PaymentProviderInterface
     public function getHostedPaymentUrl(Order $order): ?string;
 
     public function getInvoice(Order $order): ?InvoiceDocument;
+
+    /**
+     * What the provider paid out for a paid order, in the currency it settles in, or null while that isn't
+     * known yet.
+     */
+    public function getSettlement(Order $order): ?Settlement;
 }

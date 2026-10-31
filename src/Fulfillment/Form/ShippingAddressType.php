@@ -30,7 +30,7 @@ class ShippingAddressType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['product' => null, 'user' => null]);
+        $resolver->setDefaults(['product' => null, 'price' => null, 'user' => null]);
         $resolver->setAllowedTypes('user', ['null', User::class]);
     }
 

@@ -20,14 +20,21 @@ PaymentProviderInterface                    (tag: ecommerce.payment_provider)
   syncOrder(Order): list<PaymentEvent>      used by the return page
   handleWebhook(Request): list<PaymentEvent>  verifies the signature, then normalizes
   cancelSubscription(Subscription, bool $atPeriodEnd): list<PaymentEvent>
-  getCapabilities(): list<PaymentProviderCapability>   Refund | Invoice | HostedPayment
+  getCapabilities(): list<PaymentProviderCapability>   Refund | Invoice | HostedPayment | Settlement
   refund(Order): list<PaymentEvent>
   getHostedPaymentUrl(Order): ?string       a page to settle an unpaid order and fix the card
   getInvoice(Order): ?InvoiceDocument       ::url(...) to redirect to, or ::file(...) to stream
+  getSettlement(Order): ?Settlement         gross and net (after fees) in the provider's settlement currency
 ```
 
-The last four exist for the buyer's self-service pages; a provider that can't do one of them leaves it out
-of `getCapabilities()` and nothing offers it. See [self-service.md](self-service.md).
+`refund()`, `getHostedPaymentUrl()` and `getInvoice()` exist for the buyer's self-service pages; a provider
+that can't do one of them leaves it out of `getCapabilities()` and nothing offers it. See
+[self-service.md](self-service.md).
+
+`getSettlement()` is for integrations that need what actually arrived, such as affiliate commission on the net
+amount. It returns null while the provider doesn't know yet (Stripe settles some payment methods later), so a
+caller has to be ready to ask again. Use `PaymentProviderRegistry::findCapableFor($order, Settlement)` to get
+the provider.
 
 > **Decision: `cancelSubscription()` returns events instead of `void`.**
 > `SubscriptionCancellationService` applies them right away, so the admin sees the result immediately. The
@@ -48,6 +55,7 @@ plugin understands:
 | `SubscriptionPaymentFailed` | externalSubscriptionId, ?externalPaymentId |
 | `SubscriptionUpdated` | externalSubscriptionId, cancelAtPeriodEnd |
 | `SubscriptionEnded` | externalSubscriptionId |
+| `SubscriptionRenewalVoided` | externalSubscriptionId, externalPaymentId — the provider gave up on a renewal; its pending order fails |
 | `PaymentRefunded` | ?orderReference, ?externalPaymentId, ?amountMinor — a refund, a dashboard refund or a lost dispute |
 
 > **Decision: an expired checkout is cancelled, not failed.** An expired session is an abandoned checkout.
@@ -81,10 +89,20 @@ It:
 - applies each event inside a transaction with the order or subscription row **locked and reloaded**
   (`OrderRepository::withLockedOrder()`, `LockingRepositoryTrait`)
 - is idempotent: transitions that already happened are no-ops
-- dispatches the plugin's Symfony events **after the commit**, so integrators never see an event twice and
-  never see one for a transaction that later rolled back
+- dispatches the plugin's Symfony events **inside that transaction**, after a flush (a listener that locks the
+  same order again, like `FulfillmentService::complete()`, reloads it from the database)
 
 That combination is what lets the webhook and the return page race safely.
+
+> **Decision: listeners run inside the transaction, not after the commit.** They used to run after it, so an
+> integrator never saw an event that later rolled back. But a listener that threw then lost its work for
+> good: the order was already `Paid`, the provider's retry found nothing left to change, and the role or the
+> provisioning never happened (and "Mark as completed" doesn't grant). Now a throwing listener rolls the
+> transition back with it, the webhook answers 500, and the provider's retry applies the transition and runs
+> every listener again. The price: **a listener can see the same event twice** (once in a rolled-back
+> attempt), so a listener with effects outside the database — provisioning, an external API — must be
+> idempotent. Database work and queued messages (notifications use the Doctrine transport) roll back with
+> the rest. Listeners also hold the row lock while they run, so slow external calls belong in a message.
 
 > **Decision: entity methods, not symfony/workflow.** Most transitions record facts reported by the provider,
 > which a guard must not veto. Our events also need to fire after the lock's transaction commits and carry

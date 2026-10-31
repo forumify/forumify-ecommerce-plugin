@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PluginTests\Tests\Unit\PaymentProvider\Stripe;
 
+use Brick\Money\Money;
 use DateTimeImmutable;
 use Forumify\Ecommerce\Entity\BillingInterval;
 use Forumify\Ecommerce\Entity\Order;
@@ -19,6 +20,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
+use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalVoided;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
 use Forumify\Ecommerce\PaymentProvider\Stripe\StripeCatalog;
@@ -29,9 +31,19 @@ use Forumify\Ecommerce\Repository\PaymentProviderConfigRepository;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Stripe\Charge;
 use Stripe\Checkout\Session;
+use Stripe\Collection;
+use Stripe\Invoice;
+use Stripe\PaymentIntent;
+use Stripe\Refund;
+use Stripe\Service\ChargeService;
 use Stripe\Service\Checkout\CheckoutServiceFactory;
 use Stripe\Service\Checkout\SessionService;
+use Stripe\Service\InvoicePaymentService;
+use Stripe\Service\InvoiceService;
+use Stripe\Service\PaymentIntentService;
+use Stripe\Service\RefundService;
 use Stripe\Service\SubscriptionService;
 use Stripe\Subscription as StripeSubscription;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,6 +57,7 @@ class StripePaymentProviderTest extends TestCase
 
     private SessionService&MockObject $sessions;
     private SubscriptionService&MockObject $subscriptions;
+    private RefundService&MockObject $refunds;
     private StripeCatalog&MockObject $catalog;
     private StripePaymentProvider $provider;
 
@@ -59,10 +72,14 @@ class StripePaymentProviderTest extends TestCase
         $checkout = $this->createMock(CheckoutServiceFactory::class);
         $checkout->method('__get')->with('sessions')->willReturn($this->sessions);
 
+        $this->refunds = $this->createMock(RefundService::class);
+
         $clientFactory = $this->createMock(StripeClientFactory::class);
         $clientFactory->method('create')->willReturn($this->mockStripeClient([
             'checkout' => $checkout,
             'subscriptions' => $this->subscriptions,
+            'refunds' => $this->refunds,
+            ...$this->mockPaymentLookups(),
         ]));
 
         $config = new PaymentProviderConfig(StripePaymentProvider::KEY);
@@ -160,15 +177,40 @@ class StripePaymentProviderTest extends TestCase
         yield 'cancelled at a date' => ['customer.subscription.updated', $subscription(['cancel_at' => self::PERIOD_END]), [new SubscriptionUpdated('sub_1', true)]];
         yield 'resumed' => ['customer.subscription.updated', $subscription([]), [new SubscriptionUpdated('sub_1', false)]];
         yield 'subscription ended' => ['customer.subscription.deleted', $subscription(['status' => 'canceled']), [new SubscriptionEnded('sub_1')]];
-        yield 'renewal refunded' => [
-            'charge.refunded',
-            ['object' => 'charge', 'id' => 'ch_1', 'invoice' => 'in_1', 'amount_refunded' => 999],
-            [new PaymentRefunded(externalPaymentId: 'in_1', amountMinor: 999)],
-        ];
+        yield 'renewal voided' => ['invoice.voided', $invoice('subscription_cycle'), [new SubscriptionRenewalVoided('sub_1', 'in_1')]];
+        yield 'renewal uncollectible' => ['invoice.marked_uncollectible', $invoice('subscription_cycle'), [new SubscriptionRenewalVoided('sub_1', 'in_1')]];
+        yield 'first invoice voided' => ['invoice.voided', $invoice('subscription_create'), []];
+
+        $charge = static fn(array $fields) => ['object' => 'charge', 'id' => 'ch_1', 'amount_refunded' => 999, 'metadata' => [], ...$fields];
         yield 'one-time payment refunded' => [
             'charge.refunded',
-            ['object' => 'charge', 'id' => 'ch_1', 'invoice' => null, 'amount_refunded' => 999, 'metadata' => ['ecommerce_order_reference' => 'ORDER1']],
+            $charge(['payment_intent' => 'pi_one']),
             [new PaymentRefunded('ORDER1', amountMinor: 999)],
+        ];
+        yield 'one-time payment refunded, reference on the charge' => [
+            'charge.refunded',
+            $charge(['metadata' => ['ecommerce_order_reference' => 'ORDER1']]),
+            [new PaymentRefunded('ORDER1', amountMinor: 999)],
+        ];
+        yield 'first subscription payment refunded' => [
+            'charge.refunded',
+            $charge(['payment_intent' => 'pi_first']),
+            [new PaymentRefunded('ORDER1', amountMinor: 999)],
+        ];
+        yield 'renewal refunded' => [
+            'charge.refunded',
+            $charge(['payment_intent' => 'pi_renewal']),
+            [new PaymentRefunded(externalPaymentId: 'in_1', amountMinor: 999)],
+        ];
+        yield 'renewal refunded, older API version' => [
+            'charge.refunded',
+            $charge(['payment_intent' => 'pi_renewal', 'invoice' => 'in_1']),
+            [new PaymentRefunded(externalPaymentId: 'in_1', amountMinor: 999)],
+        ];
+        yield 'dispute lost on a renewal' => [
+            'charge.dispute.closed',
+            ['object' => 'dispute', 'id' => 'dp_1', 'status' => 'lost', 'charge' => 'ch_renewal', 'amount' => 999],
+            [new PaymentRefunded(externalPaymentId: 'in_1', amountMinor: 999)],
         ];
         yield 'dispute won' => [
             'charge.dispute.closed',
@@ -176,6 +218,57 @@ class StripePaymentProviderTest extends TestCase
             [],
         ];
         yield 'unhandled event' => ['payment_intent.created', ['object' => 'payment_intent', 'id' => 'pi_1'], []];
+    }
+
+    public function testRefundFindsThePaymentOfEveryKindOfOrder(): void
+    {
+        $oneTime = new Order($this->createUser(), $this->createPrice(), StripePaymentProvider::KEY);
+        $oneTime->providerReference = 'cs_one';
+        $first = new Order($this->createUser(), $this->createPrice(interval: BillingInterval::Month), StripePaymentProvider::KEY);
+        $first->providerReference = 'cs_first';
+        $renewal = new Order(
+            $first->user,
+            $first->price ?? self::fail(),
+            StripePaymentProvider::KEY,
+            new Subscription($first, 'sub_1', new DateTimeImmutable('+1 month')),
+        );
+        $renewal->providerReference = 'in_1';
+
+        $this->sessions->method('retrieve')->willReturnCallback(static fn(string $id) => Session::constructFrom(match ($id) {
+            'cs_one' => ['id' => $id, 'mode' => 'payment', 'payment_intent' => 'pi_one', 'invoice' => 'in_one'],
+            'cs_first' => ['id' => $id, 'mode' => 'subscription', 'payment_intent' => null, 'invoice' => 'in_first'],
+        }));
+        $refunded = [];
+        $this->refunds->expects(self::exactly(3))->method('create')->willReturnCallback(
+            static function (array $params) use (&$refunded) {
+                $refunded[] = $params['payment_intent'];
+
+                return Refund::constructFrom(['id' => 're_1', 'amount' => 999]);
+            },
+        );
+
+        foreach ([$oneTime, $first, $renewal] as $order) {
+            self::assertEquals([new PaymentRefunded($order->reference, amountMinor: 999)], $this->provider->refund($order));
+        }
+        self::assertSame(['pi_one', 'pi_first', 'pi_renewal'], $refunded);
+    }
+
+    public function testSettlementReadsTheBalanceTransactionOfTheOrdersPayment(): void
+    {
+        $order = new Order($this->createUser(), $this->createPrice(interval: BillingInterval::Month), StripePaymentProvider::KEY);
+        self::assertNull($this->provider->getSettlement($order));
+
+        $order->providerReference = 'cs_first';
+        $this->sessions->method('retrieve')->willReturn(
+            Session::constructFrom(['id' => 'cs_first', 'mode' => 'subscription', 'payment_intent' => null, 'invoice' => 'in_first']),
+        );
+
+        $settlement = $this->provider->getSettlement($order);
+
+        self::assertNotNull($settlement);
+        self::assertTrue($settlement->gross->isEqualTo(Money::ofMinor(921, 'EUR')));
+        self::assertTrue($settlement->net->isEqualTo(Money::ofMinor(864, 'EUR')));
+        self::assertTrue($settlement->getFee()->isEqualTo(Money::ofMinor(57, 'EUR')));
     }
 
     public function testWebhookWithBadSignatureIsRejected(): void
@@ -214,6 +307,64 @@ class StripePaymentProviderTest extends TestCase
 
         self::assertEquals([new SubscriptionUpdated('sub_1', true)], $this->provider->cancelSubscription($subscription, true));
         self::assertEquals([new SubscriptionEnded('sub_1')], $this->provider->cancelSubscription($subscription, false));
+    }
+
+    /**
+     * Stripe as it answers on API version 2025-03-31 and later: a charge no longer names its invoice, and a
+     * subscription's payment intent carries no metadata.
+     *
+     * @return array<string, object>
+     */
+    private function mockPaymentLookups(): array
+    {
+        $paymentIntents = $this->createMock(PaymentIntentService::class);
+        $paymentIntents->method('retrieve')->willReturnCallback(static fn(string $id) => PaymentIntent::constructFrom([
+            'id' => $id,
+            'metadata' => $id === 'pi_one' ? ['ecommerce_order_reference' => 'ORDER1'] : [],
+            'latest_charge' => [
+                'object' => 'charge',
+                'id' => "ch_{$id}",
+                'balance_transaction' => ['object' => 'balance_transaction', 'amount' => 921, 'net' => 864, 'currency' => 'eur'],
+            ],
+        ]));
+
+        $invoicePaymentIntents = ['in_first' => 'pi_first', 'in_1' => 'pi_renewal'];
+        $invoicePayments = $this->createMock(InvoicePaymentService::class);
+        $invoicePayments->method('all')->willReturnCallback(static function (array $params) use ($invoicePaymentIntents) {
+            $invoice = $params['invoice'] ?? array_search($params['payment']['payment_intent'], $invoicePaymentIntents, true);
+            $data = $invoice === false ? [] : [[
+                'object' => 'invoice_payment',
+                'invoice' => $invoice,
+                'status' => 'paid',
+                'payment' => ['type' => 'payment_intent', 'payment_intent' => $invoicePaymentIntents[$invoice]],
+            ]];
+
+            return Collection::constructFrom(['object' => 'list', 'data' => $data]);
+        });
+
+        $invoices = $this->createMock(InvoiceService::class);
+        $invoices->method('retrieve')->willReturnCallback(static fn(string $id) => Invoice::constructFrom([
+            'id' => $id,
+            'billing_reason' => $id === 'in_first' ? 'subscription_create' : 'subscription_cycle',
+            'parent' => ['type' => 'subscription_details', 'subscription_details' => [
+                'subscription' => 'sub_1',
+                'metadata' => ['ecommerce_order_reference' => 'ORDER1'],
+            ]],
+        ]));
+
+        $charges = $this->createMock(ChargeService::class);
+        $charges->method('retrieve')->willReturnCallback(static fn(string $id) => Charge::constructFrom([
+            'id' => $id,
+            'payment_intent' => 'pi_renewal',
+            'metadata' => [],
+        ]));
+
+        return [
+            'paymentIntents' => $paymentIntents,
+            'invoicePayments' => $invoicePayments,
+            'invoices' => $invoices,
+            'charges' => $charges,
+        ];
     }
 
     /**

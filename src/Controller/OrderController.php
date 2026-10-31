@@ -160,6 +160,7 @@ class OrderController extends AbstractController
             'order' => $order,
             'form' => $form->createView(),
             'orderPath' => $orderPath,
+            'endsSubscription' => $this->refundService->findSubscriptionToEnd($order) !== null,
         ]);
     }
 

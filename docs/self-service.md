@@ -112,7 +112,9 @@ promised.
 ### Refunds that start at the provider
 
 `PaymentRefunded` carries **either** an order reference **or** the provider's payment id, because a Stripe
-`charge.refunded` resolves through the payment intent's metadata (one-time) or the invoice id (renewal).
+`charge.refunded` resolves through the payment intent's metadata (one-time), the metadata of the subscription
+the first invoice started (a subscription's first payment), or the invoice id (renewal). See
+[stripe.md](stripe.md).
 `PaymentEventHandler` accepts it for renewal orders too — the only payment event that does.
 
 A refund an admin made in Stripe's own dashboard, and a **lost dispute** (`charge.dispute.closed`), land on
@@ -128,10 +130,28 @@ the same event and the same `Order::refund()`. A won dispute changes nothing.
 
 ### What a refund undoes
 
-`OrderRefundedEvent` revokes that order's grants (`GrantService::revokeForOrder()`), which is what
-[grants.md](grants.md) was waiting for to revoke one-time purchases. It does **not** cancel a subscription:
-those are separate decisions, and the admin's cancel page can do both in one action ("Also refund the last
-payment").
+`OrderRefundedEvent` revokes the grants of a **one-time** order (`GrantService::revokeForOrder()`). A
+subscription's grants are left alone: they last as long as the subscription does.
+
+**Refunding a payment of a running subscription through the plugin ends that subscription right away**
+(`RefundService::refund()`), whether it is the first payment or a renewal, and whether it comes from an
+approved request or from the admin's cancel page ("Also refund the last payment", which therefore ends it now
+even when the end of the period was picked). Ending it is what takes its grants back and fails its pending
+renewals. The buyer's refund form and the admin's approve form both say so first.
+
+The subscription is ended **before** the money goes back: if the provider can't end it, nothing is refunded
+(`RefundException::subscriptionNotEnded()`), so a failure never leaves a refunded buyer on a subscription that
+keeps charging them.
+
+A refund made at the provider (Stripe's dashboard, a lost dispute) only refunds the order. The provider is
+leading: if it keeps the subscription running, so do we, and the subscription keeps its grants.
+
+> **Decision: a refund through the plugin ends the subscription.** Grants used to hang off the refunded
+> order, so refunding a subscription's first payment took its role away while the subscription kept
+> renewing — the buyer paid every month for nothing — and refunding a renewal took nothing away at all. A
+> subscription's grants now follow only the subscription, and a refund we make ends it: the buyer asked for
+> their money back, so they must not be charged again. A goodwill refund that keeps the subscription running
+> is not offered; it can be done in the provider's dashboard.
 
 ## Permissions
 
@@ -147,7 +167,8 @@ existing `ecommerce.admin.subscriptions.manage`.
 - `src/PaymentProvider/PaymentProviderCapability.php`, `InvoiceDocument.php`, `Event/PaymentRefunded.php`
 - `src/Controller/OrderController.php` (buyer actions), `src/Admin/Controller/RefundRequestController.php`
 - `src/PaymentProvider/Fake/FakeInvoice.php`
-- Tests: `RefundTest` (request → approve → grants revoked; reject; a provider-side refund), `CancellationTest`
+- Tests: `RefundTest` (request → approve → grants revoked; reject; a provider-side refund),
+  `GrantTest::testRefundingASubscriptionPaymentEndsTheSubscription`, `CancellationTest`
   (buyer cancels a manual subscription, the admin handles it; an instant one needs nobody; the reminder;
   admin cancel + refund in one action), `SubscriptionTest::testBuyerSettlesAPastDueRenewalWithTheProvider`,
   `OrderTest` (refund transitions and the refund window)

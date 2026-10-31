@@ -15,6 +15,9 @@
                     price: order.amount|ecommerce_money,
                 }) }}
             </p>
+            {% if endsSubscription %}
+                <p class="mb-6">{{ 'ecommerce.refund.ends_subscription'|trans }}</p>
+            {% endif %}
         {% endblock %}
         {% block ecommerce_refund_form %}
             <div class="box">

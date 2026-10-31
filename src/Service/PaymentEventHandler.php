@@ -26,6 +26,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
+use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalVoided;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
 use Forumify\Ecommerce\Repository\OrderRepository;
@@ -56,9 +57,13 @@ class PaymentEventHandler
         }
     }
 
+    /**
+     * Plugin events are dispatched inside the transaction that holds the row lock. A listener that throws rolls
+     * the state change back with it, so the provider's retry applies the change, and runs the listeners, again.
+     */
     public function handle(PaymentEvent $event, ?string $providerKey): void
     {
-        $domainEvents = match (true) {
+        match (true) {
             $event instanceof CheckoutCompleted => $this->applyToOrder(
                 $event->orderReference,
                 $providerKey,
@@ -99,32 +104,32 @@ class PaymentEventHandler
                 $providerKey,
                 static fn(Subscription $subscription) => self::updateSubscription($subscription, $event),
             ),
+            $event instanceof SubscriptionRenewalVoided => $this->applyToSubscription(
+                $event->externalSubscriptionId,
+                $providerKey,
+                fn(Subscription $subscription) => $this->voidRenewal($subscription, $event),
+            ),
             $event instanceof SubscriptionEnded => $this->applyToSubscription(
                 $event->externalSubscriptionId,
                 $providerKey,
                 fn(Subscription $subscription) => $this->endSubscription($subscription),
             ),
-            default => [],
+            default => null,
         };
-
-        foreach ($domainEvents as $domainEvent) {
-            $this->eventDispatcher->dispatch($domainEvent);
-        }
     }
 
     /**
      * @param callable(Order): list<Event> $transition
-     * @return list<Event>
      */
     private function applyToOrder(
         string $reference,
         ?string $providerKey,
         callable $transition,
         bool $allowRenewals = false,
-    ): array {
-        $apply = function (Order $order) use ($providerKey, $transition, $allowRenewals): array {
+    ): void {
+        $apply = function (Order $order) use ($providerKey, $transition, $allowRenewals): void {
             if ($order->isRenewal() && !$allowRenewals) {
-                return [];
+                return;
             }
 
             if ($order->providerKey !== $providerKey) {
@@ -133,32 +138,49 @@ class PaymentEventHandler
                     'orderProvider' => $order->providerKey,
                     'eventProvider' => $providerKey,
                 ]);
-                return [];
+                return;
             }
 
-            return $transition($order);
+            $this->dispatchAll($transition($order));
         };
 
-        return $this->orderRepository->withLockedOrder($reference, $apply) ?? [];
+        $this->orderRepository->withLockedOrder($reference, $apply);
     }
 
     /**
      * @param callable(Subscription): list<Event> $transition
-     * @return list<Event>
      */
-    private function applyToSubscription(string $externalId, ?string $providerKey, callable $transition): array
+    private function applyToSubscription(string $externalId, ?string $providerKey, callable $transition): void
     {
         if ($providerKey === null) {
-            return [];
+            return;
         }
 
-        return $this->subscriptionRepository->withLockedSubscription($providerKey, $externalId, $transition) ?? [];
+        $this->subscriptionRepository->withLockedSubscription(
+            $providerKey,
+            $externalId,
+            fn(Subscription $subscription) => $this->dispatchAll($transition($subscription)),
+        );
     }
 
     /**
-     * @return list<Event>
+     * Flushed first: a listener that locks the same order again refreshes it from the database.
+     *
+     * @param list<Event> $events
      */
-    private function refundOrder(PaymentRefunded $event, ?string $providerKey): array
+    private function dispatchAll(array $events): void
+    {
+        if ($events === []) {
+            return;
+        }
+
+        $this->orderRepository->flush();
+        foreach ($events as $event) {
+            $this->eventDispatcher->dispatch($event);
+        }
+    }
+
+    private function refundOrder(PaymentRefunded $event, ?string $providerKey): void
     {
         $reference = $event->orderReference;
         if ($reference === null && $event->externalPaymentId !== null && $providerKey !== null) {
@@ -168,10 +190,10 @@ class PaymentEventHandler
         }
 
         if ($reference === null) {
-            return [];
+            return;
         }
 
-        return $this->applyToOrder($reference, $providerKey, function (Order $order) use ($event): array {
+        $this->applyToOrder($reference, $providerKey, function (Order $order) use ($event): array {
             if ($event->amountMinor !== null && $event->amountMinor < $order->amountMinor) {
                 $this->logger->warning('Ignored a partial refund, the plugin only tracks full refunds.', [
                     'order' => $order->reference,
@@ -260,6 +282,22 @@ class PaymentEventHandler
         }
 
         return $subscription->markPastDue() ? [new SubscriptionPastDueEvent($subscription)] : [];
+    }
+
+    /**
+     * @return list<Event>
+     */
+    private function voidRenewal(Subscription $subscription, SubscriptionRenewalVoided $event): array
+    {
+        $order = $this->orderRepository->findOneByProviderReference(
+            $subscription->providerKey,
+            $event->externalPaymentId,
+        );
+        if ($order?->subscription === $subscription) {
+            $order->fail();
+        }
+
+        return [];
     }
 
     /**

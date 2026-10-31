@@ -7,7 +7,6 @@ namespace Forumify\Ecommerce\Repository;
 use Forumify\Core\Entity\User;
 use Forumify\Core\Repository\AbstractRepository;
 use Forumify\Ecommerce\Entity\BillingInterval;
-use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\Subscription;
 use Forumify\Ecommerce\Entity\SubscriptionStatus;
 
@@ -27,11 +26,6 @@ class SubscriptionRepository extends AbstractRepository
     public function findOneByProviderReference(string $providerKey, string $providerReference): ?Subscription
     {
         return $this->findOneBy(['providerKey' => $providerKey, 'providerReference' => $providerReference]);
-    }
-
-    public function findOneByInitialOrder(Order $order): ?Subscription
-    {
-        return $this->findOneBy(['initialOrder' => $order]);
     }
 
     /**

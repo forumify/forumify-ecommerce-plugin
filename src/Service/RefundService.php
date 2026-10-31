@@ -11,7 +11,10 @@ use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\RefundRequest;
 use Forumify\Ecommerce\Entity\RefundRequestStatus;
+use Forumify\Ecommerce\Entity\Subscription;
+use Forumify\Ecommerce\Entity\SubscriptionStatus;
 use Forumify\Ecommerce\Exception\RefundException;
+use Forumify\Ecommerce\Exception\SubscriptionException;
 use Forumify\Ecommerce\Notification\RefundRejectedNotificationType;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderCapability;
 use Forumify\Ecommerce\PaymentProvider\PaymentProviderRegistry;
@@ -25,6 +28,7 @@ class RefundService
         private readonly PaymentProviderRegistry $registry,
         private readonly PaymentEventHandler $eventHandler,
         private readonly RefundRequestRepository $refundRequestRepository,
+        private readonly SubscriptionCancellationService $cancellationService,
         private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
     ) {
@@ -44,6 +48,20 @@ class RefundService
     }
 
     /**
+     * The subscription that refunding this order ends: the one it started or renewed, while it still runs.
+     */
+    public function findSubscriptionToEnd(Order $order): ?Subscription
+    {
+        $subscription = $order->subscription;
+
+        return $subscription !== null && $subscription->status !== SubscriptionStatus::Ended ? $subscription : null;
+    }
+
+    /**
+     * Refunding any payment of a subscription ends that subscription right away: it is what takes its grants back,
+     * and a buyer who got their money back must not be charged again. It ends before the money goes back, so a
+     * failure never leaves a refunded buyer on a subscription that keeps billing.
+     *
      * @throws RefundException
      */
     public function refund(Order $order): void
@@ -54,6 +72,15 @@ class RefundService
 
         $provider = $this->registry->findCapableFor($order, PaymentProviderCapability::Refund)
             ?? throw RefundException::providerUnavailable();
+
+        $subscription = $this->findSubscriptionToEnd($order);
+        if ($subscription !== null) {
+            try {
+                $this->cancellationService->cancel($subscription, atPeriodEnd: false);
+            } catch (SubscriptionException) {
+                throw RefundException::subscriptionNotEnded();
+            }
+        }
 
         try {
             $events = $provider->refund($order);

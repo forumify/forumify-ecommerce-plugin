@@ -40,15 +40,18 @@ survives.
 > removed?" depends on history the order alone doesn't hold — what the user already had, and which other
 > live grants exist. Rows make it a query instead of a reconstruction.
 
-**A refund revokes the order's grants.** `OrderRefundedEvent` → `GrantService::revokeForOrder()`, with the
-same two rules as above. That is the only thing that takes a one-time purchase's grants back; see
+**A refund revokes a one-time order's grants.** `OrderRefundedEvent` → `GrantService::revokeForOrder()`, with
+the same two rules as above. A subscription's grants hang off its first order too, but only its end revokes
+them (`GrantRepository::findOneTimeByOrder()` skips them): a refund through the plugin ends the subscription,
+and a provider-side refund leaves it running — see [self-service.md](self-service.md). That is the only thing that takes a one-time purchase's grants back; see
 [self-service.md](self-service.md).
 
 ## Code
 
 - `src/Entity/Grant.php`, `src/Repository/GrantRepository.php`
 - `src/Service/GrantService.php`, `src/EventSubscriber/GrantSubscriber.php`
-- Tests: `GrantTest` (a subscription grants a role; ending it revokes the role), `GrantServiceTest`
+- Tests: `GrantTest` (a subscription grants a role; ending it revokes the role; a refund only revokes it by
+  ending the subscription; a failing listener leaves the payment for the provider to retry), `GrantServiceTest`
   (two overlapping grants; a pre-existing role survives)
 
 > The grant tests use `KernelTestCase` with factories — mocking the collections was more code than the

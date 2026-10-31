@@ -32,7 +32,7 @@ interface FulfillmentTypeInterface
     public function getProductSettingsFormType(): ?string;
 
     /**
-     * The form the buyer fills in at checkout. It gets the "product" and "user" options.
+     * The form the buyer fills in at checkout. It gets the "product", "price" and "user" options.
      *
      * @return class-string<FormTypeInterface<mixed>>|null
      */

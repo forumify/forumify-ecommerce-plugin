@@ -13,6 +13,7 @@ use Forumify\Ecommerce\PaymentProvider\Event\PaymentRefunded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionEnded;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionPaymentFailed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalStarted;
+use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewalVoided;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionRenewed;
 use Forumify\Ecommerce\PaymentProvider\Event\SubscriptionUpdated;
 use Stripe\Charge;
@@ -129,6 +130,10 @@ class StripeEventMapper
             'invoice.payment_failed' => [
                 new SubscriptionPaymentFailed($subscriptionId, $renewal ? $invoice->id : null),
             ],
+            'invoice.voided',
+            'invoice.marked_uncollectible' => $renewal
+                ? [new SubscriptionRenewalVoided($subscriptionId, $invoice->id)]
+                : [],
             default => [],
         };
     }
@@ -176,44 +181,68 @@ class StripeEventMapper
         return [$this->refunded($client, $client->charges->retrieve($chargeId), $dispute->amount)];
     }
 
+    /**
+     * A one-time payment carries its order reference in its metadata. A subscription's payment does not: it is
+     * found through its invoice, which is a renewal's own payment id, or, for the first payment, carries the
+     * reference in the metadata of the subscription it started. Webhooks on API versions before 2025-03-31 still
+     * name the invoice on the charge; newer ones only through the invoice payments.
+     */
     private function refunded(StripeClient $client, Charge $charge, ?int $amountMinor): PaymentRefunded
     {
-        $invoiceId = self::id($charge['invoice'] ?? null);
-        if ($invoiceId !== null) {
-            return new PaymentRefunded(externalPaymentId: $invoiceId, amountMinor: $amountMinor);
+        $reference = self::metadataReference($charge['metadata'] ?? null);
+        if ($reference !== null) {
+            return new PaymentRefunded($reference, amountMinor: $amountMinor);
         }
 
-        return new PaymentRefunded(self::orderReference($client, $charge), amountMinor: $amountMinor);
+        $invoiceId = self::id($charge['invoice'] ?? null);
+        $paymentIntentId = self::id($charge['payment_intent'] ?? null);
+        if ($invoiceId === null && $paymentIntentId !== null) {
+            $paymentIntent = $client->paymentIntents->retrieve($paymentIntentId);
+            $reference = self::metadataReference($paymentIntent['metadata'] ?? null);
+            if ($reference !== null) {
+                return new PaymentRefunded($reference, amountMinor: $amountMinor);
+            }
+
+            $invoiceId = self::findInvoiceId($client, $paymentIntentId);
+        }
+
+        if ($invoiceId === null) {
+            return new PaymentRefunded(amountMinor: $amountMinor);
+        }
+
+        $invoice = $client->invoices->retrieve($invoiceId);
+        if ($invoice->billing_reason === Invoice::BILLING_REASON_SUBSCRIPTION_CREATE) {
+            return new PaymentRefunded(
+                self::metadataReference($invoice['parent']['subscription_details']['metadata'] ?? null),
+                amountMinor: $amountMinor,
+            );
+        }
+
+        return new PaymentRefunded(externalPaymentId: $invoiceId, amountMinor: $amountMinor);
     }
 
-    private static function orderReference(StripeClient $client, Charge $charge): ?string
+    public static function findInvoiceId(StripeClient $client, string $paymentIntentId): ?string
     {
-        $reference = $charge->metadata[self::ORDER_REFERENCE_KEY] ?? null;
-        if (is_string($reference)) {
-            return $reference;
-        }
+        $payments = $client->invoicePayments->all([
+            'payment' => ['type' => 'payment_intent', 'payment_intent' => $paymentIntentId],
+            'limit' => 1,
+        ]);
 
-        $paymentIntentId = self::id($charge['payment_intent'] ?? null);
-        if ($paymentIntentId === null) {
-            return null;
-        }
+        return self::id($payments->data[0]['invoice'] ?? null);
+    }
 
-        $reference = $client->paymentIntents->retrieve($paymentIntentId)->metadata[self::ORDER_REFERENCE_KEY] ?? null;
+    public static function findPaymentIntentId(StripeClient $client, string $invoiceId): ?string
+    {
+        $payments = $client->invoicePayments->all(['invoice' => $invoiceId, 'status' => 'paid', 'limit' => 1]);
+
+        return self::id($payments->data[0]['payment']['payment_intent'] ?? null);
+    }
+
+    private static function metadataReference(mixed $metadata): ?string
+    {
+        $reference = $metadata[self::ORDER_REFERENCE_KEY] ?? null;
 
         return is_string($reference) ? $reference : null;
-    }
-
-    public static function invoicePaymentIntentId(Invoice $invoice): ?string
-    {
-        $payments = $invoice['payments']['data'] ?? [];
-        foreach ($payments as $payment) {
-            $paymentIntent = self::id($payment['payment']['payment_intent'] ?? null);
-            if ($paymentIntent !== null) {
-                return $paymentIntent;
-            }
-        }
-
-        return self::id($invoice['payment_intent'] ?? null);
     }
 
     private function invoicePeriodEnd(StripeClient $client, Invoice $invoice, string $subscriptionId): DateTimeImmutable

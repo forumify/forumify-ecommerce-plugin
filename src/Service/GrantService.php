@@ -71,9 +71,12 @@ class GrantService
         $this->revokeGrants($this->grantRepository->findBySubscription($subscription));
     }
 
+    /**
+     * Only what a one-time purchase granted: a subscription's grants last until the subscription ends.
+     */
     public function revokeForOrder(Order $order): void
     {
-        $this->revokeGrants($this->grantRepository->findByOrder($order));
+        $this->revokeGrants($this->grantRepository->findOneTimeByOrder($order));
     }
 
     /**

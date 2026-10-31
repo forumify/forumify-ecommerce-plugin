@@ -125,6 +125,7 @@ ecommerce:
             rejected: 'The refund request was rejected.'
             invalid: 'The refund request could not be handled.'
             handle_help: 'Approving sends the full amount back through the payment provider. Rejecting leaves the order as it is.'
+            ends_subscription: 'This order belongs to a subscription that is still running. Approving ends that subscription right away, so it is not charged again and the customer loses what it gave them.'
         subscription:
             single: 'Subscription'
             plural: 'Subscriptions'
@@ -146,7 +147,7 @@ ecommerce:
             cancelled_at_period_end: 'The subscription will end at the end of its current period.'
             cancelled_now: 'The subscription was ended.'
             refund_last: 'Also refund the last payment'
-            refund_last_help: 'Sends that payment back through the payment provider, on top of cancelling.'
+            refund_last_help: 'Sends that payment back through the payment provider. A refund always ends the subscription right away, even when you picked the end of the period.'
             refund_last_order: 'The last payment is {reference}, for {price}.'
             refunded_last: 'The last payment was refunded.'
             cancellation: 'Cancellation'
@@ -333,6 +334,7 @@ ecommerce:
         submit: 'Send request'
         back: 'Back to the order'
         requested: 'Your refund request was sent. We will let you know.'
+        ends_subscription: 'A refund ends your subscription right away: it is not renewed again, and you lose what it gives you.'
         until: 'You can ask for a refund until {date}'
         available: 'You can ask for a refund of this order'
         status:
@@ -344,6 +346,7 @@ ecommerce:
             provider_unavailable: 'The payment provider of this order is not available right now.'
             provider_failed: 'The payment provider could not refund this order. Please try again later.'
             already_requested: 'You already asked for a refund of this order.'
+            subscription_not_ended: 'The subscription of this order could not be ended, so it was not refunded. Please try again later.'
     refund_status:
         pending: 'Pending'
         approved: 'Approved'
@@ -450,7 +453,7 @@ ecommerce:
             country: 'Country'
             choose_country: 'Choose a country'
     notification:
-        view_orders: 'View my purchases'
+        view_order: 'View your order'
         fulfill_order: 'View order'
         order_paid:
             title: 'Payment received for {product}'

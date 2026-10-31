@@ -14,4 +14,7 @@ enum PaymentProviderCapability
 
     /** getHostedPaymentUrl() returns a page where the buyer can settle an unpaid order. */
     case HostedPayment;
+
+    /** getSettlement() reports what the provider paid out for an order, after its fees. */
+    case Settlement;
 }

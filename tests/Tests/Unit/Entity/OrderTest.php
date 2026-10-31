@@ -13,6 +13,7 @@ use Forumify\Ecommerce\Entity\PriceType;
 use Forumify\Ecommerce\Entity\Product;
 use Forumify\Ecommerce\Entity\ProductPrice;
 use Forumify\Ecommerce\Entity\ProductTier;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 
 class OrderTest extends TestCase
@@ -64,6 +65,17 @@ class OrderTest extends TestCase
         self::assertSame($admin, $order->completedBy);
         self::assertSame('Tracking: https://track.test/1', $order->fulfillmentNote);
         self::assertFalse($order->pay());
+    }
+
+    public function testMetadataCanOnlyBeAttachedWhilePending(): void
+    {
+        $order = $this->createOrder();
+        $order->metadata = ['referralCode' => 'abc'];
+        $order->pay();
+
+        self::assertSame(['referralCode' => 'abc'], $order->metadata);
+        $this->expectException(LogicException::class);
+        $order->metadata = [];
     }
 
     public function testOnlyPaidOrCompletedOrdersRefund(): void

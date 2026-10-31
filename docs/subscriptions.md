@@ -61,11 +61,21 @@ Every renewal is an `Order` linked to the subscription (`Order.subscription`, `S
 provider's payment id (Stripe: the invoice id) as its provider reference. `(providerKey, providerReference)`
 is unique on orders, which is what makes these events idempotent.
 
+The initial order is linked too: the `Subscription` constructor calls `Order::startSubscription()`. So
+`order.subscription` is every payment of a subscription, and `isRenewal()` is "linked, but not its initial
+order".
+
+> **Decision: the initial order links to its subscription as well.** It used to be renewals only, which made
+> `order.subscription` read as "the subscription this order belongs to" while being `null` for the order
+> that started it. Every caller then had to fall back to a lookup by `initialOrder`, and every list of a
+> subscription's orders had to add `OR o = :initialOrder`.
+
 | Event | Effect |
 | --- | --- |
 | `SubscriptionRenewalStarted` | Creates a **pending** renewal order. The subscription **stays active**. |
 | `SubscriptionPaymentFailed` | Subscription → past due. With a payment id, also creates the pending order if the start event was missed. The order stays pending while the provider retries. |
 | `SubscriptionRenewed` | Completes the order (creating it if needed), and **only then** moves `currentPeriodEnd`. |
+| `SubscriptionRenewalVoided` | Fails that pending renewal order (the provider voided it or wrote it off). If it is paid after all, `SubscriptionRenewed` still pays it. |
 | `SubscriptionEnded` | Fails the subscription's pending renewal orders. |
 
 > **Decision: a started renewal does not mean past due.** Past due means a payment attempt *failed*, as in
@@ -99,7 +109,7 @@ service. A manual fulfillment type's cancellation also opens a `CancellationRequ
 out — see [self-service.md](self-service.md).
 
 The admin's cancel page can **also refund the last payment** in the same action, for the "subscribed to the
-wrong price" case.
+wrong price" case. A refund always ends the subscription right away — see [self-service.md](self-service.md).
 
 ## Past due
 

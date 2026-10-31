@@ -27,7 +27,7 @@ interface FulfillmentTypeInterface
     /** Settings stored in Product::$fulfillmentSettings, or null. */
     public function getProductSettingsFormType(): ?string;
 
-    /** Input asked from the buyer at checkout (options: product, user), or null. */
+    /** Input asked from the buyer at checkout (options: product, price, user), or null. */
     public function getCheckoutFormType(): ?string;
 
     /** The checkout form's data → scalars for Order::$fulfillmentData (ids + display labels, never entities). */
@@ -139,7 +139,7 @@ under "Paid".
 The order page shows `Paid` as "Payment received, being processed", plus the details template and, once
 completed, the admin's note. "My orders" shows the status too.
 
-## Types forumify.net will add (not built here)
+## Types forumify.net adds (not built here)
 
 **`forumify_cloud`**
 - Checkout form: the instance name, validated for uniqueness. A real reservation can be made in `OrderPlacedEvent`.
@@ -152,13 +152,18 @@ completed, the admin's note. "My orders" shows the status too.
 - This replaces pre-creating the instance before checkout, so abandoned checkouts no longer leave orphan
   instances. It also removes `HostingOrderConfirmationNotificationType`.
 
-**`forumify_marketplace`**
-- Checkout form: pick one of the user's customers (OAuth clients), normalized to `{customerId, clientName}`.
-- `OrderPaidEvent` → create a forumify.net `License(customer, order, ?subscription)` and complete the order.
-- `SubscriptionEndedEvent` → remove the license. A one-time license is never revoked.
-- Customer pages list licenses and reach their orders and subscriptions through them. The plugin never learns
-  what a customer is.
-- This removes `ProductConfirmationNotification`.
+**`forumify.plugin`** (marketplace plugins)
+- A forumify.net `Customer` is one forumify instance (self-hosted or cloud) with its own OAuth client. The
+  checkout form picks one of the buyer's customers, normalized to `{customerId, clientId}`.
+- `OrderPaidEvent` → create a forumify.net `License(customer, order)` and complete the order. A `License` row
+  *is* an active license: history lives on the orders and subscriptions.
+- `SubscriptionEndedEvent` and a one-time order's `OrderRefundedEvent` → delete the license. A license
+  without a subscription is perpetual.
+- The tier key is what an instance unlocks (`PluginVersionChecker` compares it), so tier keys of plugin
+  products must not change.
+- Referral attribution goes in `Order::$metadata` at `OrderPlacedEvent`; commission is computed from
+  `getSettlement()` once the order is paid.
+- The plugin never learns what a customer is.
 
 ## Code
 

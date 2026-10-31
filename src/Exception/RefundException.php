@@ -23,6 +23,11 @@ class RefundException extends RuntimeException
         return new self('ecommerce.refund.error.provider_failed');
     }
 
+    public static function subscriptionNotEnded(): self
+    {
+        return new self('ecommerce.refund.error.subscription_not_ended');
+    }
+
     public static function alreadyRequested(): self
     {
         return new self('ecommerce.refund.error.already_requested');

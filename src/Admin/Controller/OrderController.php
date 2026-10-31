@@ -11,7 +11,6 @@ use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\RefundRequestStatus;
 use Forumify\Ecommerce\Fulfillment\FulfillmentTypeRegistry;
-use Forumify\Ecommerce\Repository\SubscriptionRepository;
 use Forumify\Ecommerce\Service\FulfillmentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -25,7 +24,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class OrderController extends AbstractController
 {
     public function __construct(
-        private readonly SubscriptionRepository $subscriptionRepository,
         private readonly FulfillmentTypeRegistry $fulfillmentTypes,
         private readonly FulfillmentService $fulfillmentService,
     ) {
@@ -57,7 +55,7 @@ class OrderController extends AbstractController
 
         return $this->render('@ForumifyEcommercePlugin/admin/orders/view.html.twig', [
             'order' => $order,
-            'subscription' => $order->subscription ?? $this->subscriptionRepository->findOneByInitialOrder($order),
+            'subscription' => $order->subscription,
             'completeForm' => $completeForm,
             'refundRequest' => $refundRequest,
             'handleRefundForm' => $handleRefundForm,
