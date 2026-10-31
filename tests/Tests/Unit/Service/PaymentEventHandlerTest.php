@@ -146,7 +146,7 @@ class PaymentEventHandlerTest extends TestCase
         $subscription = $this->saved[0];
         self::assertSame($subscription, $this->dispatched[0]->subscription);
         self::assertSame([$order, 'fake', 'sub_1'], [$subscription->initialOrder, $subscription->providerKey, $subscription->providerReference]);
-        self::assertEqualsWithDelta(new DateTimeImmutable('+1 month'), $subscription->currentPeriodEnd, 5);
+        self::assertEqualsWithDelta(BillingInterval::Month->addTo(new DateTimeImmutable(), 1), $subscription->currentPeriodEnd, 5);
 
         $withoutProviderSubscription = $this->createOrder(recurring: true);
         $this->createHandler($withoutProviderSubscription)->handle(new CheckoutCompleted($withoutProviderSubscription->reference), 'fake');

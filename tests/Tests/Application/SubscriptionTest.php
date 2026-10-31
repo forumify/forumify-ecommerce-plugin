@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PluginTests\Tests\Application;
 
 use DateTimeImmutable;
+use Forumify\Ecommerce\Entity\BillingInterval;
 use Forumify\Ecommerce\Entity\Order;
 use Forumify\Ecommerce\Entity\OrderStatus;
 use Forumify\Ecommerce\Entity\Subscription;
@@ -41,7 +42,7 @@ class SubscriptionTest extends EcommerceWebTestCase
         self::assertSame(SubscriptionStatus::Active, $subscription->status);
         self::assertSame('fake_sub_' . $subscription->initialOrder->reference, $subscription->providerReference);
         $firstPeriodEnd = $subscription->currentPeriodEnd;
-        self::assertEqualsWithDelta(new DateTimeImmutable('+1 month'), $firstPeriodEnd, 60);
+        self::assertEqualsWithDelta(BillingInterval::Month->addTo(new DateTimeImmutable(), 1), $firstPeriodEnd, 60);
 
         $this->client->request('GET', '/store/orders');
         self::assertSelectorTextContains('.ecommerce-plan', 'Milsim');
