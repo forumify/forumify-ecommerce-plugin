@@ -169,11 +169,9 @@ class ProductController extends AbstractCrudController
             ]);
         }
 
-        $images = array_map(
-            static fn(string $path) => new ProductImage($product, $path),
-            UploadType::toPaths($form->get('images')->getData()),
-        );
-        $this->imageRepository->saveAll($images);
+        foreach (UploadType::toPaths($form->get('images')->getData()) as $path) {
+            $this->imageRepository->save(new ProductImage($product, $path));
+        }
 
         $this->addFlash('success', 'ecommerce.admin.gallery.saved');
         return $this->redirectToGallery($product);

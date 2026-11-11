@@ -91,6 +91,13 @@ sortable table, and deleting a row deletes the file.
 `Product::$image` stays the **cover** image (the catalog tile), and `Product::getGallery()` is the cover followed
 by the gallery images.
 
+> **Decision:** a multi-file upload saves and flushes each image on its own, not through `saveAll()`. The
+> platform's `SortablePositionListener` assigns `MAX(position) + 1` from the database on persist, so images
+> persisted in one batch all got the same position and could never be reordered. Fixing that in the platform
+> was considered, but a generic fix can't know a repository's position scope (`getHighestPosition()` is scoped
+> per parent in several repositories), so it either keeps querying per entity or risks wrong positions. A
+> gallery upload is a handful of files, so one flush per image is cheap.
+
 ## Admin
 
 `ProductCategoryController` and `ProductController` extend the platform's `AbstractCrudController`.

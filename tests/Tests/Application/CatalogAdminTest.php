@@ -6,6 +6,7 @@ namespace PluginTests\Tests\Application;
 
 use Forumify\Ecommerce\Entity\BillingInterval;
 use Forumify\Ecommerce\Entity\PriceType;
+use Forumify\Ecommerce\Entity\ProductImage;
 use Forumify\Ecommerce\Entity\ProductStatus;
 use Forumify\Ecommerce\Repository\ProductCategoryRepository;
 use Forumify\Ecommerce\Repository\ProductImageRepository;
@@ -13,6 +14,7 @@ use Forumify\Ecommerce\Repository\ProductPriceRepository;
 use Forumify\Ecommerce\Repository\ProductRepository;
 use PluginTests\Tests\Factories\ProductFactory;
 use PluginTests\Tests\Factories\ProductPriceFactory;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class CatalogAdminTest extends EcommerceWebTestCase
 {
@@ -104,22 +106,39 @@ class CatalogAdminTest extends EcommerceWebTestCase
     {
         $product = ProductFactory::createOne(['image' => 'cover.png']);
 
-        foreach ([1, 2] as $_) {
+        foreach ([1, 2] as $fileCount) {
             $crawler = $this->client->request('GET', "/admin/ecommerce/products/{$product->getId()}/images/create");
             $form = $crawler->selectButton('Save')->form();
-            $form['product_images[images][file]'][0]->upload(TEST_DATA_DIR . '/product.png');
-            $this->client->submit($form);
+            $files = array_map(
+                static fn() => new UploadedFile(self::copyFixture('product.png'), 'product.png', test: true),
+                range(1, $fileCount),
+            );
+            $this->client->followRedirects(false);
+            $this->client->request($form->getMethod(), $form->getUri(), $form->getPhpValues(), [
+                'product_images' => ['images' => ['file' => $files]],
+            ]);
+            $this->client->followRedirects();
+            $this->client->followRedirect();
             self::assertSelectorTextContains('body', 'The images were added to the gallery.');
         }
 
         $images = self::getContainer()->get(ProductImageRepository::class)->findBy(['product' => $product->getId()], ['position' => 'ASC']);
-        self::assertCount(2, $images);
+        $positions = array_map(fn(ProductImage $image) => $image->getPosition(), $images);
+        self::assertCount(3, array_unique($positions));
 
         $this->client->request('GET', "/admin/ecommerce/products/images/{$images[0]->getId()}/delete");
         self::assertSelectorTextContains('body', 'The image was removed from the gallery.');
 
         $product = self::getContainer()->get(ProductRepository::class)->find($product->getId());
-        self::assertSame(['cover.png', $images[1]->image], $product->getGallery());
+        self::assertSame(['cover.png', $images[1]->image, $images[2]->image], $product->getGallery());
+    }
+
+    private static function copyFixture(string $name): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'ecommerce');
+        copy(TEST_DATA_DIR . "/$name", $path);
+
+        return $path;
     }
 
     /**
