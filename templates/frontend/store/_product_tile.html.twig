@@ -15,7 +15,10 @@
     {% endblock %}
     {% block ecommerce_product_tile_body %}
         <div class="ecommerce-product-tile-body flex flex-col flex-grow gap-2">
-            <h2 class="ecommerce-product-tile-title">{{ product.title }}</h2>
+            {% block ecommerce_product_tile_title %}
+                <h2 class="ecommerce-product-tile-title">{{ product.title }}</h2>
+            {% endblock %}
+            {% block ecommerce_product_tile_byline %}{% endblock %}
             {% if showDescription and product.shortDescription %}
                 <p class="ecommerce-product-tile-summary">{{ product.shortDescription }}</p>
             {% endif %}

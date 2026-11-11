@@ -75,6 +75,9 @@ A `?category=` link gets that category's title, description and canonical.
   `ecommerce_category_*`, `ecommerce_plan_*` — so themes and other plugins have somewhere to hook in.
   `ecommerce_tier_checkout` is the block that owns the buy button, `ecommerce_plan_actions` the one that
   owns a subscription's actions.
+  `ecommerce_product_byline` (under the product page's title) and `ecommerce_product_tile_byline` (under a
+  tile's title) are empty on purpose: they are where an integration puts who made the product, such as a
+  vendor or author.
 - The buyer's pages reuse the store's own vocabulary: the plan card shows its price with the same
   `.ecommerce-amount` treatment as a tier card, and `.ecommerce-product-tile-image` supplies the thumbnail
   placeholder. See [checkout-and-orders.md](checkout-and-orders.md#buyer-pages).

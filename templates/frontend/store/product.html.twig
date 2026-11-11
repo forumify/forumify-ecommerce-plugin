@@ -75,17 +75,24 @@
                     {% endblock %}
                     <div class="ecommerce-product-intro">
                         {% block ecommerce_product_intro %}
-                            <h1>{{ product.title }}</h1>
-                            {% if product.shortDescription %}
-                                <p class="ecommerce-product-summary">{{ product.shortDescription }}</p>
-                            {% endif %}
-                            {% if product.categories is not empty %}
-                                <ul class="ecommerce-product-categories flex flex-wrap gap-2 mb-6">
-                                    {% for productCategory in product.categories %}
-                                        <li><a href="{{ path('ecommerce_store', { category: productCategory.slug }) }}">{{ productCategory.title }}</a></li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
+                            {% block ecommerce_product_title %}
+                                <h1>{{ product.title }}</h1>
+                            {% endblock %}
+                            {% block ecommerce_product_byline %}{% endblock %}
+                            {% block ecommerce_product_summary %}
+                                {% if product.shortDescription %}
+                                    <p class="ecommerce-product-summary">{{ product.shortDescription }}</p>
+                                {% endif %}
+                            {% endblock %}
+                            {% block ecommerce_product_categories %}
+                                {% if product.categories is not empty %}
+                                    <ul class="ecommerce-product-categories flex flex-wrap gap-2 mb-6">
+                                        {% for productCategory in product.categories %}
+                                            <li><a href="{{ path('ecommerce_store', { category: productCategory.slug }) }}">{{ productCategory.title }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% endblock %}
                         {% endblock %}
                         {% block ecommerce_product_purchase %}
                             {% if tiers|length == 1 %}

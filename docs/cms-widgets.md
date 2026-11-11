@@ -107,7 +107,8 @@ a tile looks the same everywhere and only has to be changed once.
 
 It takes `product` plus `showImage`, `showDescription` and `showPrice` (all default `true`), and keeps the
 `ecommerce_product_tile_image` and `ecommerce_product_tile_body` blocks, so a theme can override the
-partial itself or embed it and replace one half.
+partial itself or embed it and replace one half. Inside the body, `ecommerce_product_tile_title` holds the
+title and the empty `ecommerce_product_tile_byline` sits right under it, for a line such as the vendor.
 
 ## Styling
 
